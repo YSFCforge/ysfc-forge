@@ -1,0 +1,529 @@
+YSFC_PARAMETERBETYG v7.0
+Uppdaterad: 2026-05-04 | Steg 1–71 | Serializer v6
+
+Stjärnbetyg:
+  ★★★★★ = Binärverifierat med testfil(er) — 100% säker
+  ★★★★☆ = Härledd från officiell källdata (Effect Type List, MIDI-tabell) — mycket säker
+  ★★★☆☆ = MIDI-formel-härledd offset, ej binärverifierad — troligen korrekt
+  ★★☆☆☆ = Osäker — känd kollision eller motstridiga data
+  ❌     = Offset okänd / ej kartlagd
+
+Förkortningar:
+  u8     = unsigned 8-bit byte
+  u16 LE = unsigned 16-bit little-endian (lo+hi*256)
+  c64    = center=64 (raw = UI + 64)
+  c128   = center=128 (raw = UI + 128)
+  c256   = center=256 (u16 LE, raw = UI + 256)
+  c50    = center=50 (raw = UI + 50)
+  c247   = center=247 (u16 LE)
+  c504   = center=504 (u16 LE, AN-X pitch cents)
+  direct = raw = UI-värde direkt
+
+Abs-adresser = absoluta DPFM-offsets (0 = första byte i perf-blocket)
+PART+N = offset relativt PART_BASE=6708
+ELEM+N = offset relativt AWM2_ELEM1_BASE=12532
+
+═══════════════════════════════════════════════════════════════════════
+PERFORMANCE COMMON  (abs 0–6707)
+═══════════════════════════════════════════════════════════════════════
+
+  abs=4–21   Patchnamn (ASCII, null-terminerat vid abs+len)          ★★★★★
+  abs=23–24  Timestamp bytes (ignoreras vid diff)                    ★★★★★
+  abs=29     Portamento SW  u8 bool 0=Off,1=On                       ★★★★★
+  abs=41     Portamento SW (perf-nivå)  u8 bool                      ★★★★★
+  abs=80     Volume  u8 direct                                       ★★★★★
+  abs=82     Pan  u8 c64                                             ★★★★★
+  abs=104    lastActiveScene  u8 0-baserat (0=Scene1)                ★★★★★
+  abs=106    Portamento Time  u8 direct                              ★★★★★
+  abs=124    Rev Send  u8 direct                                     ★★★★★
+  abs=130    Var Send  u8 direct                                     ★★★★★
+
+  Performance CA (Knob Assign, abs 2451+, stride=22, 8 entries):
+  CA+1  SW         u8 bool                                           ★★★★★
+  CA+3  Source     u8 enum (PB=0,MW=1,Knob1=8,Knob2=9,Knob3=10)      ★★★★★
+  CA+5  Dest       u8 enum (Vol=1,Cut=85,HPF=87,PartPan=100...)      ★★★★★
+  CA+9  CurveType  u8 enum (Std=0,Sig=1,Thr=2,Har=18,Steps=19)       ★★★★★
+  CA+11 Param1     u8 direct                                         ★★★★★
+  CA+13 Param2     u8 direct                                         ★★★★★
+  CA+15 Polarity   u8 bool (0=UNI)                                   ★★★★★
+  CA+17 (MODX-internt, ignoreras)                                    ★★★★★
+
+═══════════════════════════════════════════════════════════════════════
+SCENE METADATA  (engine-oberoende)
+═══════════════════════════════════════════════════════════════════════
+
+  abs=6695   sceneCount      u8 direct, default=1, range 1–8         ★★★★★
+  abs=104    lastActiveScene  u8 0-baserat, default=0                ★★★★★
+
+═══════════════════════════════════════════════════════════════════════
+AWM2 PART  (PART_BASE=6708, rel = abs - 6708)
+═══════════════════════════════════════════════════════════════════════
+
+  PART+4    FilterType  u8 enum (0=Thru, se AWM2_FILTER_TYPES)       ★★★★★
+  PART+5857 FilterCutoff  u16 LE Hz                                  ★★★★★
+  PART+74   LFO TempoSync  u8 bool                                   ★★★★★
+  PART+75   LFO Loop  u8 bool                                        ★★★★★
+  PART+505  LFO Wave  u8 enum 0-12                                   ★★★★★
+  PART+507  LFO Speed  u8 direct                                     ★★★★★
+  PART+509  LFO TempoNote  u8 enum                                   ★★★★★
+  PART+519  LFO KeyOnReset  u8 direct                                ★★★★★
+  PART+123  Volume  u8 direct default=100                            ★★★★★
+  PART+125  Pan  u8 c64                                              ★★★★★
+  PART+141  AEG Attack  u8 c64                                       ★★★★★
+  PART+143  AEG Decay  u8 c64                                        ★★★★★
+  PART+145  AEG Sustain  u8 c64                                      ★★★★★
+  PART+147  AEG Release  u8 c64                                      ★★★★★
+  PART+149  FEG Attack  u8 c64  (EJ element-nivå!)                   ★★★★★
+  PART+151  FEG Decay   u8 c64                                       ★★★★★
+  PART+153  FEG Sustain  u8 c64                                      ★★★★★
+  PART+155  FEG Release  u8 c64                                      ★★★★★
+  PART+149  FEGAttack  u8 center=64                                              ★★★★★
+  PART+151  FEGDecay   u8 center=64                                              ★★★★★
+  PART+153  FEGSustain u8 center=64                                              ★★★★★
+  PART+155  FEGRelease u8 center=64  (FEG EJ på element-nivå!)                  ★★★★★
+  PART+593  AT Switch  u8 bool                                       ★★★★★
+  PART+595  AT Destination  u8 enum (Pitch=1,FilterCutoff=9)        ★★★★★
+
+  Part CA (abs 8220+, stride=22, 16 entries): samma layout som Perf CA ★★★★★
+
+  PART+5812  KeyOnDelaySW (part)  u8 bool  (abs 12482+PART)         ★★★★★
+  PART+5813  KeyOnDelayPartSW  u8 bool                               ★★★★★
+  PART+5856  HalfDamperSW  u8 bool  (abs 12483+PART)                ★★★★★
+
+═══════════════════════════════════════════════════════════════════════
+AWM2 ELEMENT  (ELEM1_BASE=12532, rel = abs - 12532)
+  OBS: FEG Attack/Decay/Sustain/Release finns EJ på element-nivå!
+═══════════════════════════════════════════════════════════════════════
+
+  ELEM-12  WaveformNumber lo  u16 LE 1-baserat (lo-byte)            ★★★★★
+  ELEM-11  WaveformNumber hi  (hi-byte, nr=lo+hi*256)               ★★★★★
+  ELEM+0   RandomPan  u8 c64                                         ★★★★★
+  ELEM+2   AlternatePan  u8 c64                                      ★★★★★
+  ELEM+4   ScalingPan  u8 c64                                        ★★★★★
+  ELEM+6   VelCrossFade  u8 direct                                   ★★★★★
+  ELEM+8   (u8, default=127)                                         ★★★☆☆
+  ELEM+10  NoteLowLimit  u8 MIDI note                                ★★★★★
+  ELEM+12  NoteHighLimit  u8 MIDI note                               ★★★★★
+  ELEM+14  VelLowLimit  u8 direct                                    ★★★★★
+  ELEM+16  KeyOnDelayLength  u8 direct 0-127  (INTE aegDelayTime!)  ★★★★★
+  ELEM+18  KeyOnDelayElemSW  u8 bool                                 ★★★★★
+  ELEM+22  KeyOnDelaySW  u8                                          ★★★★★
+  ELEM+26  KeyOnDelayLen  u8 direct                                  ★★★★★
+  ELEM+34  AEG Offset  u8 c64                                        ★★★★★
+  ELEM+44  AEG TimeVel  u8 c64                                       ★★★★★
+  ELEM+46  AEG HalfDamperReleaseTime  u8 direct, default=127        ★★★★★
+  ELEM+50  AEG InitialLevel  u8 c50                                  ★★★★★
+  ELEM+52  AEG AttackLevel  u8 c50                                   ★★★★★
+  ELEM+54  AEG Decay1Level  u8 c50                                   ★★★★★
+  ELEM+56  AEG Decay2Level  u8 c50                                   ★★★★★
+  ELEM+60  AEG TimeVel (dubbel?)  kontrollera                        ★★★☆☆
+  ELEM+280 FilterResonance  u8 direct  (abs=12676+ELEM-base)        ★★★★★
+  ELEM+322 LevelVel  u8 c64  (abs=12562)                            ★★★★★
+
+  Kvarstående element-luckor:
+  ELEM+8   okänd (default=127)                                       ★★★☆☆
+  ELEM+60  AEG TimeVel dubblering — kontrollera vs ELEM+44           ★★★☆☆
+  ELEM+174: filterFEGDepth u8 c64, default=+40 (raw=104)           ★★★★★
+
+═══════════════════════════════════════════════════════════════════════
+FM-X PART  (PART-12 shift, PART_BASE-12=6696)
+═══════════════════════════════════════════════════════════════════════
+
+  PART+31   MonoPoly  u8 bool default=1=Poly                         ★★★★☆
+  PART+123  Volume  u8 direct default=100                            ★★★★☆
+  PART+125  Pan  u8 c64                                              ★★★★☆
+  PART+141  AEG Attack  u8 c64                                       ★★★★★
+  PART+143  AEG Decay   u8 c64                                       ★★★★★
+  PART+145  AEG Sustain  u8 c64                                      ★★★★★
+  PART+147  AEG Release  u8 c64                                      ★★★★★
+
+  FM-X Algorithm + FX (abs 12525–12531):
+  abs=12521  FM Color LFO AmpWave  u8 enum                           ★★★★☆
+  abs=12523  FM Color LFO AmpSpeed  u8 direct                        ★★★★☆
+  abs=12525  Algorithm  u8 raw=algo-1 (0-baserat)                    ★★★★★
+  abs=12527  Feedback  u8 direct                                      ★★★★★
+  abs=12529  FM Color LFO AmpDepth  u8 direct                        ★★★★☆
+
+  FM Color (abs 12533–12545, alla center=128):
+  abs=12533  Depth    abs=12535  Harmonics    abs=12537  Attack       ★★★★★
+  abs=12539  Decay    abs=12541  Sustain      abs=12543  Release      ★★★★★
+  abs=12545  Texture                                                   ★★★★★
+
+  FM-X Part PEG (abs 12477–12507, 16/16 komplett):
+  abs=12477  PitchVelSens  u8 c64                                    ★★★★★
+  abs=12479  RandomPitch  u8 direct                                   ★★★★★
+  abs=12481  PitchKeyFollow  keyfollow%                               ★★★★★
+  abs=12483  CenterKey  u8 Yamaha note                                ★★★★★
+  abs=12485–12493  PEG Levels (Initial/Atk/D1/D2/Rel) c50           ★★★★★
+  abs=12495–12501  PEG Times (Atk/D1/D2/Rel) direct                 ★★★★★
+  abs=12503  DepthVelSens  abs=12505  Depth enum  abs=12507 TimeKey  ★★★★★
+
+  FM-X Part 1st LFO (11/11 komplett, abs 7201–7265):
+  abs=7201  Wave     abs=7203  Speed     abs=7205  TempoNote          ★★★★★
+  abs=7207  Delay    abs=7209  FadeIn    abs=7211  Hold               ★★★★★
+  abs=7213  FadeOut(c64)  abs=7215  KeyOnReset  abs=7265  RandomSpd  ★★★★★
+  abs=6770  TempoSync  abs=6771  Loop(inverterat)                     ★★★★★
+
+  FM-X Part 2nd LFO (7/7 komplett):
+  abs=12509  Wave    abs=12511  SpeedNormal    abs=12513  Phase enum  ★★★★★
+  abs=12515  Delay   abs=12517  KeyOnReset     abs=12529  Extended    ★★★★★
+  abs=12531  SpeedExtended                                             ★★★★★
+
+═══════════════════════════════════════════════════════════════════════
+FM-X OP  (OP1_BASE=12676, stride=123, 8 OPs — 21/21 komplett)
+═══════════════════════════════════════════════════════════════════════
+
+  off=-4  KeyOnReset  bool          off=-2  FreqMode  enum 0=Ratio   ★★★★★
+  off=0   Coarse      off=2   Fine  off=4   Detune c15                ★★★★★
+  off=6   PitchKey    off=8   PitchVel c7   off=10  SpectralForm     ★★★★★
+  off=12  SpectralSkirt  off=14  SpectralResonance                    ★★★★★
+  off=16  PEG InitialLevel  off=18  PEG AttackLevel                  ★★★★★
+  off=20  PEG AttackTime    off=22  PEG DecayTime                    ★★★★★
+  off=24–30  AEG Levels (Atk/D1/D2/Rel)                              ★★★★★
+  off=32  AEG AttackTime    off=34  AEG Decay1Time                   ★★★★★
+  off=36  AEG Decay2Time    off=38  AEG ReleaseTime                  ★★★★★
+  off=40  AEG HoldTime      off=42  AEG TimeKeyFollow                ★★★★★
+  off=44  Level    off=46  AEG BreakPoint (MIDI-9)                   ★★★★★
+  off=48  LvlKeyLo  off=50  LvlKeyHi                                 ★★★★★
+  off=52  CurveLo  off=54  CurveHi  (0=-Lin,1=-Exp,2=+Exp,3=+Lin)  ★★★★★
+  off=56  LevelVel  c7                                                ★★★★★
+
+═══════════════════════════════════════════════════════════════════════
+AN-X PART  (PART-12 shift. Täckning: ~98% efter Steg 68)
+═══════════════════════════════════════════════════════════════════════
+
+  PART COMMON (AN-X_abs = AWM2_abs - 12):
+  PART+31   MonoPoly   u8 bool                                        ★★★★★
+  PART+32   PortaSW     u8 bool                                       ★★★★★
+  PART+123  Volume      u8 direct                                     ★★★★★
+  PART+125  Pan         u8 c64                                        ★★★★★
+  PART+141  AEG Attack  u8 c64                                        ★★★★★
+  PART+143  AEG Decay   u8 c64                                        ★★★★★
+  PART+145  AEG Sustain  u8 c64                                       ★★★★★
+  PART+147  AEG Release  u8 c64                                       ★★★★★
+  PART+157  FEG Depth Offset  u8 c64                                  ★★★★★
+  PART+159  Filter Cutoff Offset  u8 c64                              ★★★★★
+  PART+161  Resonance Offset  u8 c64                                  ★★★★☆
+  PART+213  Porta Time   u8 direct                                    ★★★★★
+  PART+215  Porta Mode   u8 bool                                      ★★★★★
+
+  OSC NOISE (PART+5805–5821, Steg 67):
+  PART+5805  NoiseTone        u8 direct, default=64                   ★★★★★
+  PART+5807  NoiseConnect     u8 enum 0=Filter,1=Amp                  ★★★★★
+  PART+5809  NoiseOutLevel    u8 direct                               ★★★★★
+  PART+5811  NoiseOutLevelVelSens  u8 direct                          ★★★★★
+  PART+5821  FEGTimeVel       u16 LE c256                             ★★★★★
+
+  OSC1 SUB-TABELL (PART+5918–5976, stride=125 till OSC2/OSC3):
+  PART+5918  Wave    u8 enum 0-4 (Saw=0,Tri=1,Sq=2)                  ★★★★★
+  PART+5920  Octave  u8 enum 0-6 (3=8')                              ★★★★★
+  PART+5922  Pitch   u16 LE c504                                      ★★★★★
+  PART+5924  PitchEGDepth  u16 LE c247, raw=UI*95/400+247            ★★★★★
+  PART+5926  PitchEGDepthVelSens  u16 LE c256                        ★★★☆☆
+  PART+5928  PitchLFODepth  u16 LE c247                              ★★★☆☆
+  PART+5930  SelfSyncPitch  u16 LE raw=UI/25+256                     ★★★★★
+  PART+5932  SyncPitchVelSens  u8 direct                             ★★★★★
+  PART+5934  (okänd — MIDI-formel var fel)                            ❌
+  PART+5936  SelfSyncLFODepth  u16 LE raw=UI/25, center=0            ★★★★★
+  PART+5938  PulseWidth  u8 raw=pct*256/100, 50%=128                 ★★★★★
+  PART+5940  PulseWidthVelSens  u8 direct                            ★★★★★
+  PART+5942  PulseWidthEGDepth  u8 c128                              ★★★★★
+  PART+5944: anxOsc1PulseWidthLFODepth   u8 center=128 (INTE u16!)   ★★★★★
+  PART+5946  WaveShaper  u8 direct, default=0                        ★★★★★
+  PART+5948  WaveShaperVelSens  u8 direct (=SharperVelSens)          ★★★★★
+  PART+5950  Sharper  u8 c128, default=128                           ★★★★★
+  PART+5952  (okänd)                                                   ❌
+  PART+5954  FMLevel  u8 direct                                       ★★★★★
+  PART+5956  FMLevelVelSens  u8 direct                               ★★★★★
+  PART+5958  RingModDepth  u16 LE direct                              ★★★★★
+  PART+5960  RingLevelVelSens  u8 direct                             ★★★★★
+  PART+5962  OSC1Connect  u8 enum 0=Filter,1=Amp                     ★★★★★
+  PART+5964  Invert  u8 bool                                          ★★★★★
+  PART+5966  (okänd — OutLevel?)                                       ❌
+  PART+5968  OutLevelVelSens  u8 direct                              ★★★★★
+  PART+5970  EGAttackTime  u16 LE direct                             ★★★★★
+  PART+5972  EGDecayTime  u16 LE, default=160                        ★★★★★
+  PART+5974  EGSustainLevel  u16 LE direct                           ★★★★★
+  PART+5976  EGReleaseTime  u16 LE, default=160                      ★★★★★
+
+  (OSC2: PART+6043–6101, stride=125 från OSC1. OSC3: PART+6168–6226)
+
+  FILTER 1 (PART+6297–6319):
+  PART+6297  Type   u8 enum, default=1=LPF12                         ★★★★★
+  PART+6299  Cutoff  u16 LE Hz, default=1023                         ★★★★★
+  PART+6301  CutoffVelSens  u8 direct                                ★★★★★
+  PART+6303  FEGDepth  u16 LE raw=UI/50+256, range±12700            ★★★★★
+  PART+6305  FEGDepthVelSens  u16 LE c256                            ★★★★★
+  PART+6307  CutoffLFODepth  u16 LE raw=UI/50+256                    ★★★★★
+  PART+6309  CutoffKeyFollow  u8 enum (0=0oct, 4=1oct)              ★★★★★
+  PART+6311  Resonance  u8 direct                                     ★★★★★
+  PART+6313  ResonanceVelSens  u8 direct                             ★★★★★
+  PART+6315  Drive  u8 0-80 (0.75dB/step)                            ★★★★★
+  PART+6319  OutLevel  u8 c64                                         ★★★★★
+
+  FILTER 2 (PART+6374–6396):
+  PART+6374  Type  u8 enum, default=5                                 ★★★☆☆
+  PART+6376  Cutoff  u8 direct                                        ★★★★★
+  PART+6378  CutoffVelSens  u8 direct                                ★★★★★
+  PART+6380  FEGDepth  u16 LE raw=UI/50+256                          ★★★★★
+  PART+6382  FEGDepthVelSens  u16 LE c256                            ★★★★★
+  PART+6384  CutoffLFODepth  u16 LE raw=UI/50+256                    ★★★★★
+  PART+6386  CutoffKeyFollow  u8 enum                                 ★★★★★
+  PART+6388  Resonance  u8 direct                                     ★★★★★
+  PART+6390  ResonanceVelSens  u8 direct                             ★★★★★
+  PART+6392  Drive  u8 0-80                                           ★★★★★
+  PART+6396  OutLevel  u8 c64                                         ★★★★★
+
+  MODIFIER / WAVE FOLDER (PART+6408–6426):
+  PART+6408  WaveFolderFold  u8 direct                               ★★★★★
+  PART+6410  WaveFolderVelSens  u16 LE c256                          ★★★☆☆
+  PART+6412  WaveFolderEGDepth  u8 direct, default=128               ★★★☆☆
+  PART+6414  WaveFolderLFODepth  u8 direct, default=128              ★★★☆☆
+  PART+6416  WaveFolderTexture  u8 direct, default=128               ★★★☆☆
+  PART+6418  WaveFolderType  u8 enum, default=1=Hard                 ★★★☆☆
+  PART+6420  ModEGAttack   u8 direct                                  ★★★★★
+  PART+6422  ModEGDecay    u8 direct, default=160                     ★★★★★
+  PART+6424  ModEGSustain  u8 direct                                  ★★★★★
+  PART+6426  ModEGRelease  u8 direct, default=160                     ★★★★★
+
+  PART LFO / EXTRA:
+  PART+5795  PitchLFOSpeed  u16 LE direct, default=208               ★★★★★
+  PART+6412  PitchEGDepth  u8 c128  (Part-nivå)                      ★★★★★
+  PART+6430  ModLFOWave    u8 enum 0-4, default=2=Tri                ★★★★★
+  PART+6432  ModLFOSpeed   u16 LE direct, default=208                ★★★★★
+
+═══════════════════════════════════════════════════════════════════════
+INSERTION FX  (engine-oberoende, 57 typer, KOMPLETT)
+═══════════════════════════════════════════════════════════════════════
+
+  PART+275  InsA TypeLo  u8     PART+276  InsA TypeHi  u8            ★★★★★
+  PART+332  InsB TypeLo  u8     PART+333  InsB TypeHi  u8            ★★★★★
+  Encoding: lo=idx&0x7F, hi=(idx>>7)&0x7F
+  TypeIndex: THRU=0, SYMPHONIC=432, CLASSIC FLANGER=528,
+             CLASSIC COMPRESSOR=1040, VCM AUTO WAH=1280,
+             NOISY=1424, SLICE=1616, PRESENCE=1672, WAVE FOLDER=1704
+  (full tabell i ysfc_fx_type_index.py)                              ★★★★★
+
+  Gemensamma FX-params (PART+FXA_BASE+N, FXA_BASE=275):
+  +14 EQ Low Freq  +16 EQ Low Gain(c64)  +18 EQ High Freq           ★★★★★
+  +20 EQ High Gain(c64)  +22 Dry/Wet  +24 EQ Mid Freq               ★★★★★
+  +26 EQ Mid Gain(c64)  +28 EQ Mid Width                             ★★★★★
+  LFO Speed encoding: raw=round(Hz*23.7045)                          ★★★★★
+
+═══════════════════════════════════════════════════════════════════════
+ENCODING-TABELL (komplett)
+═══════════════════════════════════════════════════════════════════════
+
+  direct u8         raw = value
+  c50               raw = value + 50  (PEG levels FM-X)
+  c64               raw = value + 64  (AEG, FEG, Pan etc)
+  c128              raw = value + 128  (FM Color, AN-X PulseWidthEGDepth, Sharper)
+  c256   u16 LE     raw = value + 256
+  c247   u16 LE     raw = round(UI_cent * 247/4800) + 247
+                     center=247, range ±4800 cent, max_raw=494, slope≈0.0515 raw/cent
+                     Verifierat: 0→247✓, +4800→494✓, -4800→0✓  (Steg 69max)
+  c504   u16 LE     raw = cents + 504  (AN-X OSC Pitch)
+  keyfollow%        raw = round(pct*64/200) + 64
+  AN-X PulseWidth   raw = round(pct*256/100)
+  AN-X SelfSyncPitch     raw = round(UI/25) + 256
+  AN-X SelfSyncLFODepth  raw = round(UI/25)  (center=0!)
+  AN-X Filter FEGDepth   raw = round(UI/50) + 256  (range ±12700)
+  AN-X Filter LFODepth   raw = round(UI/50) + 256  (samma formel)
+  LFO TempoNote     raw = list_index + 5  (default=11=1/4)
+  LFO Speed Hz      raw = round(Hz * 23.7045)
+  FM-X algorithm    raw = algo - 1
+  FM-X OP detune    raw = value + 15
+  FM-X OP BreakPt   raw = MIDI_note - 9
+  PEG Depth enum    raw 0-3 = [8oct,2oct,1oct,0.5oct]
+  WaveformNumber    u16 LE, 1-baserat (lo=nr&0xFF, hi=nr>>8)
+  InsA/B TypeIndex  lo=idx&0x7F, hi=(idx>>7)&0x7F
+
+═══════════════════════════════════════════════════════════════════════
+TÄCKNINGSÖVERSIKT  (Steg 1–68)
+═══════════════════════════════════════════════════════════════════════
+
+  Engine/Sektion              Fält    ★★★★★   Täckning
+  ─────────────────────────────────────────────────────
+  FM-X OP (×8)                 29      29      100%  KOMPLETT
+  FM-X Part PEG                16      16      100%  KOMPLETT
+  FM-X Part 1st LFO            11      11      100%  KOMPLETT
+  FM-X Part 2nd LFO             7       7      100%  KOMPLETT
+  FM-X Part Common             15      15      100%  KOMPLETT
+  AWM2 Element                ~35     ~30       ~93%
+  AWM2 Part                    26      26      100%  KOMPLETT
+  AN-X Part                  ~132    ~130       ~99%  (2 okända offsets)
+  Insertion FX                 57      57      100%  KOMPLETT (57 typer)
+  Controller Assign             8       8      100%  KOMPLETT
+  Performance Common           10      10      100%  KOMPLETT
+  Scene Metadata                2       2      100%  KOMPLETT
+  Perf SuperKnob/Assign        20      20      100%  KOMPLETT  
+  Perf Assign Positioner       25      25      100%  KOMPLETT  
+  ANX Arp Common               34      34      100%  KOMPLETT  
+  ANX Seq Lane (×4, 29/lane)  116     116      100%  KOMPLETT  
+  ANX Metadata/Flags            4       4      100%  KOMPLETT  
+  ─────────────────────────────────────────────────────
+  TOTALT (uppskattning)      ~665    ~640       ~99%
+
+
+═══════════════════════════════════════════════════════════════════════
+ANX PERFORMANCE-NIVÅ — SUPERKNOB, ASSIGN, MIDPOSITION  (Steg_71)
+═══════════════════════════════════════════════════════════════════════
+
+  Perf-nivå switchar (alla engine-oberoende blob-absoluta offsets):
+  abs=38   ArpMaster switch   bool  0=off 1=on                       ★★★★★
+  abs=39   MSMaster switch    bool  0=off 1=on                       ★★★★★
+  abs=40   Assign1 switch     bool  1=on(default) 0=off              ★★★★★
+  abs=41   Assign2 switch     bool  1=on(default) 0=off              ★★★★★
+  abs=42   Assign3 switch     bool  1=on(default) 0=off              ★★★★★
+  abs=43   Assign4 switch     bool  1=on(default) 0=off              ★★★★★
+  abs=44   Assign5 switch     bool  1=on(default) 0=off              ★★★★★
+  abs=45   Assign6 switch     bool  1=on(default) 0=off              ★★★★★
+  abs=46   Assign7 switch     bool  1=on(default) 0=off              ★★★★★
+  abs=47   Assign8 switch     bool  1=on(default) 0=off              ★★★★★
+  abs=51   SuperKnobMS switch bool  0=off 1=on                       ★★★★★
+
+  Seq Lane1 Common (perf-nivå):
+  abs=100  Lane1 Common Swing      u8  0x80+n, 0xb2=50%              ★★★★★
+  abs=102  Lane1 Common Unit       u8  0=100%, 3=1/16(default)       ★★★★★
+
+  Assign-värden u16le (stride 2, alla default=512):
+  abs=184:186  Assign1 value  u16le  default=512                     ★★★★★
+  abs=186:188  Assign2 value  u16le  default=512                     ★★★★★
+  abs=188:190  Assign3 value  u16le  default=512                     ★★★★★
+  abs=190:192  Assign4 value  u16le  default=512                     ★★★★★
+  abs=192:194  Assign5 value  u16le  default=512                     ★★★★★
+  abs=194:196  Assign6 value  u16le  default=512                     ★★★★★
+  abs=196:198  Assign7 value  u16le  default=512                     ★★★★★
+  abs=198:200  Assign8 value  u16le  default=512                     ★★★★★
+
+  abs=358  ArpSelect   u8  0-indexerat (0=1, 1=2, 7=8)              ★★★★★
+  abs=360  SyncQuantize  u8  0=OFF, 3=120                            ★★★★★
+  abs=654  MSSelect    u8  0-indexerat (0=1, 1=2, 7=8)              ★★★★★
+
+  Seq Lane1 Common-parametrar (perf-nivå):
+  abs=656  Lane1 Common Amplitude  u8  0x80+n                        ★★★★★
+  abs=658  Lane1 Common Shape      u8  0x40+n                        ★★★★★
+  abs=660  Lane1 Common Smooth     u8  0x80+n                        ★★★★★
+  abs=662  Lane1 Common Random     u8  0x80+n                        ★★★★★
+
+  SuperKnob + MidPosition-block:
+  abs=670:672  SuperKnob value  u16le  default=512                   ★★★★★
+  abs=672      MidPosition enable  bool  0=off 1=on                  ★★★★★
+
+  Assign positioner (stride=6 per assign, Assign1=674, Assign8=716):
+  abs=674      Assign1 LeftPosition   u8     default=0               ★★★★★
+  abs=676:678  Assign1 MidPosition   u16le  default=512              ★★★★★
+  abs=678:680  Assign1 RightPosition u16le  default=1023             ★★★★★
+  abs=680      Assign2 LeftPosition   u8     default=0               ★★★★★
+  abs=682:684  Assign2 MidPosition   u16le  default=512              ★★★★★
+  abs=684:686  Assign2 RightPosition u16le  default=1023             ★★★★★
+  ...stride 6 per assign...
+  abs=716      Assign8 LeftPosition   u8     default=0               ★★★★★
+  abs=718:720  Assign8 MidPosition   u16le  default=512              ★★★★★
+  abs=720:722  Assign8 RightPosition u16le  default=1023             ★★★★★
+
+═══════════════════════════════════════════════════════════════════════
+ANX ARP COMMON  (blob-absoluta offsets, Steg_71)
+═══════════════════════════════════════════════════════════════════════
+
+  abs=6802  ArpPlayOnly     bool  0=off 1=on                         ★★★★★
+  abs=6804  Arp Loop        bool  1=on(default) 0=off                ★★★★★
+  abs=6805  StartQuantize   bool  1=on(default) 0=off                ★★★★★
+  abs=6806  RandomSFX       bool  1=on(default) 0=off                ★★★★★
+  abs=6807  KeyOnControl    bool  1=on(default) 0=off                ★★★★★
+  abs=6887  Arp Swing / Lane1 Part Swing  u8  0x80+n (delad offset)  ★★★★★
+  abs=6889  Lane1 Part Amplitude  u8  0x80+n                         ★★★★★
+  abs=6891  Lane1 Part Shape      u8  0x40+n                         ★★★★★
+  abs=6893  Lane1 Part Smooth     u8  0x80+n                         ★★★★★
+  abs=6895  Lane1 Part Random     u8  direct 0..100                  ★★★★★
+  abs=6905  ArpGroup    u8  0=off 1=A 0x10=P                        ★★★★★
+  abs=6917  ArpEnable area  u8  0x80=idle 0x89=arp aktiv            ★★★★★
+  abs=7095  Hold  u8  0=SyncOff 1=Off(default) 2=On                 ★★★★★
+  abs=7097  Arp Unit / Lane1 Part Unit  u8  0=100% 3=1/16 (delad)   ★★★★★
+  abs=7099  ArpNoteLimit_Low   u8  MIDI note default=0               ★★★★★
+  abs=7101  ArpNoteLimit_High  u8  MIDI note default=127             ★★★★★
+  abs=7103  ArpVelLimit_Low    u8  default=1                         ★★★★★
+  abs=7105  ArpVelLimit_High   u8  default=127                       ★★★★★
+  abs=7107  KeyMode        u8  0=normal 1=Thru                       ★★★★★
+  abs=7109  VelocityMode   u8  0=normal 1=Thru                       ★★★★★
+  abs=7111  ChangeTiming   u8  1=beat(default) 0=Real-Time           ★★★★★
+  abs=7113  QuantizeValue  u8  3=120(default) 2=80                   ★★★★★
+  abs=7115  QuantizeStrength u8  direct 0..100                       ★★★★★
+  abs=7117  VelocityRate   u8  direct 0..200 default=100             ★★★★★
+  abs=7119  GateTimeRate   u8  direct 0..200 default=100             ★★★★★
+  abs=7121  Accent_VelThreshold  u8  direct 0..127                   ★★★★★
+  abs=7123  OctaveRange    u8  0x40+n (center=0=0x40, +2=0x42)      ★★★★★
+  abs=7125  OctaveShift    u8  0x40+n (center=0=0x40, +6=0x46)      ★★★★★
+  abs=7127  TriggerMode    u8  0=normal 1=Toggle                     ★★★★★
+  abs=7129  VelocityOffset u8  0x40+n (center=0=0x40, +5=0x45)     ★★★★★
+
+  Arp Individual (Arp1):
+  abs=7131  Arp1 Velocity   u8  0x80+n, default=0x80, 10%=0x8a     ★★★★★
+  abs=7133  Arp1 GateTime   u8  0x80+n, default=0x80, 10%=0x8a     ★★★★★
+  abs=7163  Arp1 Name type_id    u8  default=79                      ★★★★★
+  abs=7164  Arp1 Name pattern_id u8  default=25                      ★★★★★
+
+═══════════════════════════════════════════════════════════════════════
+ANX SEQ LANE BLOCK  (stride=884/lane, Steg_71)
+Lane1=8929  Lane2=9813  Lane3=10697  Lane4=11581
+Relativa offset (+ = från respektive lane-bas):
+═══════════════════════════════════════════════════════════════════════
+
+  +0   LaneSwitch      bool  0=off 1=on                              ★★★★★
+  +1   MSFXSwitch      bool  1=on(default) 0=off                     ★★★★★
+  +2   Trigger         bool  0=off 1=on                              ★★★★★
+  +3   Loop            bool  1=on(default) 0=off                     ★★★★★
+  +8   Sync switch     bool  0=off 1=sync                            ★★★★★
+  +10  Speed           u8    0x3f=63=default, direkt                 ★★★★★
+  +12  Sync_Tempo_Unit u8    3=default, 9=400%                       ★★★★★
+  +14  KeyOnReset      u8    0=off, 2=1stOn                          ★★★★★
+  +16  LaneVelLimit_Low  u8  default=1                               ★★★★★
+  +18  LaneVelLimit_High u8  default=127                             ★★★★★
+  +20  DelayTime       u8    default=0                               ★★★★★
+  +22  DelaySteps      u8    default=0                               ★★★★★
+  +24  FadeInTime      u8    default=0                               ★★★★★
+  +26  FadeInSteps     u8    default=0                               ★★★★★
+  +36  Amp             u8    default=127                             ★★★★★
+  +38  Smooth          u8    default=0                               ★★★★★
+  +42  Polarity        bool  0=unipolar 1=bipolar                    ★★★★★
+  +44  MSGrid          u8    3=default, 1=60                         ★★★★★
+
+  Pulse A (per lane):
+  +116  PulseA Type    u8    0=Standard, 2=Threshold                 ★★★★★
+  +118  PulseA Prm1    u8    default=5                               ★★★★★
+  +120  PulseA Prm2    u8    0=default(Std), 1=default(Thr), 4=4    ★★★★★
+  +122  ControlA Switch bool  1=on(default) 0=off                    ★★★★★
+  +124  ControlA ControlSwitch bool  0=off 1=on                      ★★★★★
+
+  Pulse B (per lane):
+  +128  PulseB Type    u8    0=Standard, 2=Threshold                 ★★★★★
+  +130  PulseB Prm1    u8    default=5                               ★★★★★
+  +132  PulseB Prm2    u8    default=0                               ★★★★★
+  +134  ControlB Switch bool  1=on(default) 0=off                    ★★★★★
+  +136  ControlB ControlSwitch bool  0=off 1=on                      ★★★★★
+
+  Metadata (sätts automatiskt av MODX):
+  abs=12753  Part seq-field  u8  3=default, 4=seq-sync aktiv        ★★★★★
+  abs=13116  Part arp-field  u8  0=default, 9=arp aktiv             ★★★★★
+
+═══════════════════════════════════════════════════════════════════════
+KVARSTÅENDE LUCKOR (alla lågprioriterade)
+═══════════════════════════════════════════════════════════════════════
+
+  AN-X PART+5934       okänd (MIDI-formel var fel)
+  AN-X PART+5952       okänd
+  AN-X PART+6374       Filter2Type  ★★★☆☆
+  AN-X PART+6410–6418  WaveFolder Vel/EGDepth/LFO/Texture/Type  ★★★☆☆
+  AWM2 ELEM+8          okänd (default=127)
+  FM-X                 2nd LFO Depth-matris (abs 12547+)
+  FM-X                 OP routing matrix (abs 6730-6793, ej redigerbar)
+  Scene                parameter-snapshots per scen (komplex struktur)
+  Montage              .X7L/.X8L (sannolikt identiskt format)
+
+═══════════════════════════════════════════════════════════════════════
+NOISE BYTES (ignoreras vid diff)
+═══════════════════════════════════════════════════════════════════════
+
+  Globalt:   {23, 24, 6724, 6725}
+  AN-X perf: {184, 186, 188, 190, 192, 194, 196, 198, 670}  (Steg 67, assign high-bytes)
+  AN-X seq:  {6722, 6723, 6724, 6725, 6726, 6727}  (timestamp-bytes i seq-blocket)
