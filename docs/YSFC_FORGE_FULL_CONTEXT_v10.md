@@ -1,29 +1,5 @@
 # YSFC Forge — Full Context v10.0
-*Updated: 2026-05-03 | Steps 1–62 + Container analysis | MAPPING COMPLETE*
-
----
-
-## Start prompt for new chat
-
-```
-We are continuing a YSFC Forge project — reverse-engineering the Yamaha MODX/Montage Y2L format
-and building a patch editor.
-
-Deliverables (all in outputs/):
-  ysfc_serializer.py v5.5   — 422/462 fields mapped (91%)
-  ysfc_forge_v1.10.html     — HTML/JS merge tool (verified on MODX M8x)
-  ysfc_fx_type_index.py     — 57 InsertionFX TypeIndex values
-  YSFC_PARAMETER_RATINGS_v5.txt
-  YSFC_FORGE_FULL_CONTEXT_v10.md — this file
-
-STATUS: Mapping phase complete + container structure fully documented (v10).
-Next focus: PATCH EDITOR.
-  - FM-X: OP 21/21 ★★★★★, Part PEG 16/16, 1st LFO 11/11, 2nd LFO 7/7
-  - AWM2: Element ~87%, Part 100%
-  - AN-X: ~85% (PulseWidth corrected, EG complete)
-  - CA: 100% engine-independent, FX table complete (57 types)
-  - Container: EPFM/DPFM/ESYS/DSYS/EFVT/DFVT fully documented ★★★★★
-```
+*Updated: 2026-05-03 | Steps 1–71 + Container analysis | MAPPING COMPLETE*
 
 ---
 
@@ -31,12 +7,12 @@ Next focus: PATCH EDITOR.
 
 **Goal:** Reverse-engineer the Y2L format, build a merge tool + patch editor.
 
-**Forge app:** Fully functional merge tool, verified on MODX M8x.
+**Forge app:** Fully functional merge tool, verified on MODX M8.
 **Serializer:** v5.5, 422 of 462 documented fields mapped (91%).
 
 ---
 
-## Mapping Status (Steps 1–62)
+## Mapping Status (Steps 1–71)
 
 | Engine/Section | Fields | ★★★★★ | ★★★★☆ | Coverage |
 |----------------|--------|--------|--------|----------|
@@ -61,7 +37,7 @@ Next focus: PATCH EDITOR.
 *(Binary-verified 2026-05-03 against AWM2/FM-X/AN-X init files + 1/2/4-perf files)*
 
 **Timestamp bytes** (ignored in diffs): PERF+23, +24, +6724, +6725  
-**CA+17** is MODX-internal (not a visible parameter, ignored)  
+**CA+17** is MODX M internal (not a visible parameter, ignored)  
 **OP Mute/Solo** is NOT saved in YSFC (real-time state only)
 
 ---
@@ -73,7 +49,7 @@ File[0:12]  = b'YAMAHA-YSFC\x00'
 File[12:20] = version string (e.g. b'5.1.2\x00\x00\x00')
 File[20:62] = padding
 File[62]    = 0x2a (fixed constant)
-File[63]    = checksum (not validated by MODX)
+File[63]    = checksum (not validated by MODX M)
 ```
 
 ---
@@ -481,19 +457,8 @@ Y2L format, AWM2, AN-X basics, FM-X OP foundation
 
 ### Error mapping
 
-`Storage read/write error` on MODX/ESP Plugin = expansion pack missing.  
+`Storage read/write error` on MODX M/ESP Plugin
 This is **not** a file format error. The container and DPFM structure may be entirely correct.  
-Only solution: install the correct expansion pack (Y2E file) on MODX/ESP.
-
-### Confirmed from Soundmondo.Y2L
-
-- 98 performances total
-- 85 require expansion (wf > 256 in at least one element)
-- 13 work with built-in sounds only (wf 1-256 in all elements):
-  C7 Grand +, CFX Concert +, S700 for Montage +, CFX Stage +, C7 +,
-  Mellow Hamburg Gra +, Concert GrandPiano +, Natural Grand S6 +,
-  CFX Single Grand 1 +, Korg M1 Piano 16, CFX PopStudioGrand +,
-  U1 Upright Bright +, Traditional Upright+
 
 ### waveformBank (blob[12522])
 
@@ -501,14 +466,6 @@ The value is `1` for ALL performances (both built-in and expansion) — cannot b
 to distinguish expansion from built-in. Use the waveformNumber threshold of 256 instead.
 
 ---
-
-## Blob format: Difference between Soundmondo.Y2L and factory files (2026-05-04)
-
-### Confirmed root cause of "Storage read/write error" for Soundmondo performances
-
-The problem is **EXCLUSIVE** to `Soundmondo.Y2L`. Factory files (ESP_8_performances.Y2L,
-init files, Performance files) work correctly — Forge exports them byte-identical to the originals
-(aside from known timestamp bytes blob[6722:6726]).
 
 ### Blob header layout (blob[0:25])
 
@@ -524,21 +481,6 @@ blob[24]    = first parameter byte (real performance data)
 blob[25:]   = remaining performance parameters
 ```
 
-### Soundmondo-specific errors in the blob header
-
-Soundmondo.Y2L has NON-ZERO values in the padding and flash address fields:
-
-| Performance | null@blob | Soundmondo blob[null:24] | ESP (correct) blob[null:24] |
-|---|---|---|---|
-| CFX + FM EP + | 17 | `030001000000` | `000000000000` |
-| Waterloo SM | 15 | `6431030001000000` | `00000015bcc9fe` (flash addr!) |
-| Take on me SM | 17 | `0000810000` | `000015bccea1` (flash addr!) |
-| Korg M1 Piano 16 | 20 | `0000` (in parameter area) | `0000` |
-
-ESP Plugin corrects these when exporting — writing the correct flash address for
-waveforms that point to ROM samples. MODX validates blob[20:24] on load →
-wrong value = "Storage read/write error".
-
 ### Forge fix: sanitizePerfBlob()
 
 `sanitizePerfBlob()` runs on every blob in buildYSFC:
@@ -546,24 +488,11 @@ wrong value = "Storage read/write error".
 2. Writes correct blob[20:24] from `BLOB_NAME_CORRECTIONS` table (based on ESP reference files)
 3. For performances NOT in the table: blob[20:24] is zeroed (conservative fallback)
 
-`BLOB_NAME_CORRECTIONS` table (verified against ESP_8_performances.Y2L):
-- `CFX + FM EP +` → blob[17:24] = `00000000000000`
-- `Waterloo SM` → blob[15:24] = `000000000015bcc9fe`
-- `Take on me SM` → blob[17:24] = `00000015bccea1`
-- `Korg M1 Piano 16` → blob[20:24] = `00000000`
-
-### Why factory files work
-
-ESP_8_performances.Y2L was exported DIRECTLY by ESP Plugin → blobs already have correct values.
-Forge copies these verbatim → output is identical to ESP export → works perfectly.
-
-Soundmondo.Y2L was exported by a different system (Soundmondo website) using a legacy format
-where blob[null+1:24] contains other metadata instead of the correct MODX format.
 
 ### Timestamp bytes (not validated)
 
-blob[6722:6726] = timestamp/ID written by MODX on save. Varies per export.
-These are NOT validated by MODX. Forge does not need to match them.
+blob[6722:6726] = timestamp/ID written by MODX M on save. Varies per export.
+These are NOT validated by MODX M. Forge does not need to match them.
 
 ---
 
