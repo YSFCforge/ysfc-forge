@@ -16,12 +16,12 @@ Open the HTML files in any modern browser. Drag, drop, merge, edit and export `.
 |------|------|-------------|
 | **Forge Librarian** | `tools/ysfc_forge_v1.19.html` | Merge performances from multiple Y2L/Y2U files into one export |
 | **Performance Editor** | `tools/ysfc_performance_editor_v3.html` | Edit FM-X, AWM2 and AN-X parameters directly in the browser |
-| **ESP Librarian** | `tools/ysfc_esp_librarian_v7.html` | Standalone prototype librarian to merge performances |
-| **Smart Performance Name Compressor** | `tools/ysfc_smart_name_compressor.html` | Standalone prototype for easy standardized naming conventions of Yamaha MODX M performances |
-| **Synth Converter** | `tools/ysfc_synth_converter.html` | Convert DIVA, Vital and Synth1 patches between different formats (8+) |
-| **DIVA Patch Translator** | `tools/ysfc_diva_h2p_converter_v2_15.html` | Learn about DIVA patches and convert DIVA patches to Y2L/Y2U files and load them into Yamaha MODX M / ESP Plugin / Montage M |
-| **Vital Patch Translator** | `tools/ysfc_vital_converter_v4_12.html` | Learn about Vital patches and convert Vital patches to Y2L/Y2U files and load them into Yamaha MODX M / ESP Plugin / Montage M |
-| **Synth1 Patch Translator** | `tools/ysfc_synth1_converter_v5_12.html` | Learn about Synth1 patches and convert Synth1 patches to Y2L/Y2U files and load them into Yamaha MODX M / ESP Plugin / Montage M |
+| **ESP Librarian** | `utilities/ysfc_esp_librarian_v7.html` | Standalone prototype librarian to merge performances |
+| **Smart Performance Name Compressor** | `utilities/ysfc_smart_name_compressor.html` | Standalone prototype for easy standardized naming conventions of Yamaha MODX M performances |
+| **Synth Converter** | `utilities/ysfc_synth_converter.html` | Convert DIVA, Vital and Synth1 patches between different formats (8+) |
+| **DIVA Patch Translator** | `translators/ysfc_diva_h2p_converter_v2_15.html` | Learn about DIVA patches and convert DIVA patches to Y2L/Y2U files and load them into Yamaha MODX M / ESP Plugin / Montage M |
+| **Vital Patch Translator** | `translators/ysfc_vital_converter_v4_12.html` | Learn about Vital patches and convert Vital patches to Y2L/Y2U files and load them into Yamaha MODX M / ESP Plugin / Montage M |
+| **Synth1 Patch Translator** | `translators/ysfc_synth1_converter_v5_12.html` | Learn about Synth1 patches and convert Synth1 patches to Y2L/Y2U files and load them into Yamaha MODX M / ESP Plugin / Montage M |
 
 > **No installation.** Download an HTML file, open it in Chrome, Firefox or Safari, and start working.
 
