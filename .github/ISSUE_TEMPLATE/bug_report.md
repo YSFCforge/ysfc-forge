@@ -6,8 +6,6 @@ labels: bug
 
 **Which tool does this affect?**
 - [ ] Forge Librarian (ysfc_forge_v1.19) ← actively maintained
-- [ ] Performance Editor
-- [ ] ESP Librarian
 - [ ] Other tool
 
 > Note: Active bug tracking is focused on Forge Librarian. Other tools are provided as-is.
