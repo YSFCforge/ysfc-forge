@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart Performance Name Compressor</title>
+  <style>
+    :root {
+      --bg: #f4f4f5;
+      --panel: #ffffff;
+      --text: #18181b;
+      --muted: #71717a;
+      --border: #d4d4d8;
+      --accent: #2563eb;
+      --good: #16a34a;
+      --warn: #d97706;
+      --bad: #dc2626;
+      --chip: #eef2ff;
+      --soft: #f8fafc;
+    }
+
+    [data-theme="dark"] {
+      --bg: #09090b;
+      --panel: #18181b;
+      --text: #fafafa;
+      --muted: #a1a1aa;
+      --border: #3f3f46;
+      --accent: #60a5fa;
+      --chip: #1e293b;
+      --soft: #111827;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    .app { max-width: 1180px; margin: 0 auto; padding: 32px 18px 48px; }
+    header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 24px; }
+    h1 { margin: 0 0 8px; font-size: clamp(1.8rem, 3vw, 2.6rem); letter-spacing: -0.04em; }
+    .subtitle { margin: 0; color: var(--muted); max-width: 820px; }
+
+    .header-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+
+    .lang-toggle { display: inline-flex; gap: 6px; padding: 4px; border: 1px solid var(--border); background: var(--panel); border-radius: 999px; }
+    .lang-btn { background: transparent; color: var(--text); border: 0; padding: 7px 10px; border-radius: 999px; font-weight: 800; }
+    .lang-btn.active { background: var(--accent); color: white; }
+
+    .theme-toggle, button.secondary {
+      border: 1px solid var(--border);
+      background: var(--panel);
+      color: var(--text);
+      padding: 10px 14px;
+      border-radius: 999px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .tabs { display: flex; flex-wrap: wrap; gap: 10px; margin: 0 0 18px; }
+    .tab { background: var(--panel); color: var(--text); border: 1px solid var(--border); }
+    .tab.active { background: var(--accent); color: white; border-color: var(--accent); }
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    .grid { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 18px; }
+    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } header { flex-direction: column; } }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    }
+
+    label { display: block; font-weight: 700; margin-bottom: 8px; }
+
+    textarea, input, select {
+      width: 100%;
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 13px 14px;
+      font: inherit;
+      outline: none;
+    }
+
+    textarea { min-height: 120px; resize: vertical; }
+    textarea:focus, input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent), transparent 78%); }
+
+    .row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 14px; }
+    .row3 { display: grid; grid-template-columns: 1.2fr 0.8fr 0.7fr; gap: 12px; margin-top: 14px; }
+    @media (max-width: 700px) { .row, .row3 { grid-template-columns: 1fr; } }
+
+    .button-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+    button { border: 0; background: var(--accent); color: white; padding: 11px 16px; border-radius: 999px; font-weight: 700; cursor: pointer; }
+    button.danger { background: var(--bad); }
+
+    .result-main {
+      font-size: clamp(1.7rem, 4vw, 2.8rem);
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      padding: 18px;
+      border-radius: 20px;
+      background: color-mix(in srgb, var(--accent), transparent 90%);
+      border: 1px solid color-mix(in srgb, var(--accent), transparent 70%);
+      overflow-wrap: anywhere;
+      min-height: 82px;
+      display: flex;
+      align-items: center;
+    }
+
+    .counter { margin-top: 10px; font-weight: 700; }
+    .counter.good { color: var(--good); }
+    .counter.warn { color: var(--warn); }
+    .counter.bad { color: var(--bad); }
+
+    .meter { margin-top: 8px; height: 10px; border-radius: 999px; background: color-mix(in srgb, var(--border), transparent 25%); overflow: hidden; }
+    .meter span { display: block; height: 100%; width: 0%; background: var(--good); transition: width 150ms ease; }
+    .meter span.warn { background: var(--warn); }
+    .meter span.bad { background: var(--bad); }
+
+    .alternatives { display: grid; gap: 10px; margin-top: 18px; }
+    .alt { display: flex; justify-content: space-between; gap: 12px; align-items: center; border: 1px solid var(--border); border-radius: 16px; padding: 12px; cursor: pointer; }
+    .alt:hover { border-color: var(--accent); }
+    .alt-name { font-weight: 800; letter-spacing: 0.02em; }
+    .alt-meta { color: var(--muted); font-size: 0.9rem; white-space: nowrap; }
+
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .chip { background: var(--chip); color: var(--text); border: 1px solid var(--border); border-radius: 999px; padding: 6px 10px; font-size: 0.9rem; }
+    .hint { color: var(--muted); font-size: 0.95rem; margin-top: 10px; }
+
+    .dictionary { max-height: 460px; overflow: auto; display: grid; gap: 8px; }
+    .dict-row { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; padding: 9px 0; border-bottom: 1px solid var(--border); align-items: center; }
+    .dict-row code { color: var(--accent); font-weight: 800; }
+    .dict-row small { color: var(--muted); }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 14px; overflow: hidden; border-radius: 16px; }
+    th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    th { background: var(--soft); font-size: 0.92rem; color: var(--muted); }
+    td code { color: var(--accent); font-weight: 800; }
+    .table-wrap { overflow: auto; max-height: 520px; border: 1px solid var(--border); border-radius: 18px; }
+    .ok { color: var(--good); font-weight: 800; }
+    .warntext { color: var(--warn); font-weight: 800; }
+    .notice { padding: 12px 14px; border: 1px solid var(--border); background: var(--soft); border-radius: 16px; color: var(--muted); }
+  </style>
+</head>
+<body data-theme="light">
+  <div class="app">
+    <header>
+      <div>
+        <h1>Smart Performance Name Compressor</h1>
+        <p class="subtitle">Fristående prototyp för Yamaha MODX M / Montage M. Du kan arbeta helt på svenska, helt på engelska eller behålla originalspråk. Extern översättning är valfri fallback, aldrig tvingande.</p>
+      </div>
+      <div class="header-actions">
+        <div class="lang-toggle" aria-label="Välj gränssnittsspråk">
+          <button class="lang-btn active" id="uiLangSv" type="button" title="Svenska">🇸🇪 SV</button>
+          <button class="lang-btn" id="uiLangEn" type="button" title="English">🇺🇸 EN</button>
+        </div>
+        <button class="theme-toggle" id="themeToggle">Mörkt tema</button>
+      </div>
+    </header>
+
+    <nav class="tabs">
+      <button class="tab active" data-tab="single">Enstaka namn</button>
+      <button class="tab" data-tab="bulk">Bulk-läge</button>
+      <button class="tab" data-tab="dictionary">Ordlista</button>
+    </nav>
+
+    <section class="panel active" id="singlePanel">
+      <main class="grid">
+        <section class="card">
+          <label for="sourceName">Originalnamn</label>
+          <textarea id="sourceName" placeholder="Exempel: Varm analog pad bred stereo / Warm analog pad wide stereo">Varm analog pad bred stereo</textarea>
+
+          <div class="row">
+            <div>
+              <label for="mode">Namnstrategi</label>
+              <select id="mode">
+                <option value="auto">Auto – bäst musikalisk betydelse</option>
+                <option value="typeFirst">Typ först – PAD/BASS/LEAD först</option>
+                <option value="compact">Compact – hårdare förkortning</option>
+                <option value="sourceFirst">Källa först – DX7/JP8/MOOG först</option>
+              </select>
+            </div>
+            <div>
+              <label for="maxLen">Maxlängd</label>
+              <input id="maxLen" type="number" min="8" max="32" value="20" />
+            </div>
+          </div>
+
+          <div class="row">
+            <div>
+              <label for="languageMode">Språkläge för Yamaha-namn</label>
+              <select id="languageMode">
+                <option value="sv">Svenska namn</option>
+                <option value="en">Engelska namn</option>
+                <option value="preserve">Behåll originalspråk / ordlistans kortnamn</option>
+              </select>
+            </div>
+            <div>
+              <label for="translationPolicy">Extern översättning</label>
+              <select id="translationPolicy">
+                <option value="off">Av – använd bara lokal ordlista</option>
+                <option value="noHits">Endast om inga lokala träffar hittas</option>
+                <option value="always">Alltid översätt först</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row">
+            <div>
+              <label for="translatorProvider">Extern översättare</label>
+              <select id="translatorProvider">
+                <option value="libretranslate">LibreTranslate default</option>
+                <option value="custom">Custom endpoint</option>
+              </select>
+            </div>
+            <div>
+              <label for="externalEndpoint">Endpoint</label>
+              <input id="externalEndpoint" placeholder="Tomt = https://libretranslate.com/translate" />
+            </div>
+          </div>
+
+          <div class="row">
+            <div>
+              <label for="variant">Variant</label>
+              <select id="variant">
+                <option value="">Ingen</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="01">01</option><option value="02">02</option>
+              </select>
+            </div>
+            <div>
+              <label for="prefix">Valfritt prefix</label>
+              <input id="prefix" placeholder="T.ex. YFSC" maxlength="6" />
+            </div>
+          </div>
+
+          <div class="button-row">
+            <button id="copyBtn">Kopiera namn</button>
+            <button class="secondary" id="clearBtn">Rensa</button>
+            <button class="secondary" id="examplesBtn">Testa exempel</button>
+          </div>
+
+          <p class="hint">Svenskt läge översätter inte till engelska om extern översättning är Av. Etablerade synthtermer behålls, så resultatet kan bli t.ex. PAD VARM BRED istället för PAD WARM WIDE.</p>
+        </section>
+
+        <section class="card">
+          <label>Yamaha-säkert namn</label>
+          <div class="result-main" id="resultName">PAD VARM BRED</div>
+          <div class="counter good" id="counter">16/20 tecken ✅</div>
+          <div class="meter"><span id="meterFill"></span></div>
+          <div class="chips" id="detectedChips"></div>
+          <div class="alternatives" id="alternatives"></div>
+        </section>
+      </main>
+    </section>
+
+    <section class="panel" id="bulkPanel">
+      <section class="card">
+        <label for="bulkInput">Bulk-input, ett patchnamn per rad</label>
+        <textarea id="bulkInput" style="min-height:180px;" placeholder="Warm analog pad wide stereo&#10;Varm analog pad bred stereo&#10;DX7 electric piano bright chorus">Warm analog pad wide stereo
+Varm analog pad bred stereo
+DX7 electric piano bright chorus
+Ljus FM elpiano med chorus
+Stor 80-tal synth brass stack
+Mörk djup moog bas mono</textarea>
+        <div class="button-row">
+          <button id="bulkConvertBtn">Konvertera bulk</button>
+          <button class="secondary" id="copyBulkBtn">Kopiera resultat som CSV</button>
+          <button class="secondary" id="copyBulkNamesBtn">Kopiera bara Yamaha-namn</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>#</th><th>Original</th><th>Yamaha-namn</th><th>Längd</th><th>Matchningar / översättning</th></tr></thead>
+            <tbody id="bulkTable"></tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+
+    <section class="panel" id="dictionaryPanel">
+      <section class="grid">
+        <div class="card">
+          <label>Lägg till egen översättning/synonym</label>
+          <div class="row3">
+            <div>
+              <label for="customTerms">Synonymer, separera med komma</label>
+              <input id="customTerms" placeholder="t.ex. skimrande, shimmering, glitter" />
+            </div>
+            <div>
+              <label for="customOut">Kortnamn</label>
+              <input id="customOut" placeholder="t.ex. SKIM eller SHIM" maxlength="10" />
+            </div>
+            <div>
+              <label for="customGroup">Grupp</label>
+              <select id="customGroup">
+                <option value="character">Karaktär</option>
+                <option value="type">Typ</option>
+                <option value="source">Källa/stil</option>
+                <option value="effect">Effekt</option>
+                <option value="motion">Rörelse</option>
+                <option value="play">Spelsätt</option>
+              </select>
+            </div>
+          </div>
+          <div class="button-row">
+            <button id="addCustomBtn">Spara egen regel</button>
+            <button class="secondary" id="exportDictBtn">Exportera egna regler</button>
+            <button class="secondary" id="importDictBtn">Importera JSON</button>
+            <button class="danger" id="resetCustomBtn">Radera egna regler</button>
+          </div>
+          <textarea id="dictJson" style="margin-top:14px; min-height:100px;" placeholder="Här visas/exporteras/importeras egna regler som JSON"></textarea>
+          <p class="notice">Egna regler sparas i webbläsaren med localStorage. De finns kvar när du laddar om sidan, men bara på den här datorn/webbläsaren.</p>
+        </div>
+
+        <div class="card">
+          <label>Aktiv svensk/engelsk ordlista</label>
+          <div class="dictionary" id="dictionary"></div>
+        </div>
+      </section>
+    </section>
+  </div>
+
+  <script>
+    const MAX_YAMAHA_NAME_LENGTH = 20;
+    const STORAGE_KEY = "yfsc_custom_name_dictionary_v1";
+    const SETTINGS_KEY = "yfsc_name_compressor_settings_v2";
+    const DEFAULT_LIBRETRANSLATE_ENDPOINT = "https://libretranslate.com/translate";
+
+    const baseDictionary = [
+      // Offline mini-lexikon: vanliga ljudbeskrivande ord på italienska, spanska, franska, tyska, norska och danska.
+      // Detta används av samma lokala ordliste-motor och fungerar utan internet/API.
+      { terms:["caldo","calda","caldi","calde","caliente","cálido","calida","cálida","chaud","chaude","warm","warmer","varm","varmt"], outEn:"WARM", outSv:"VARM", group:"character", priority:88 },
+      { terms:["freddo","fredda","frio","frío","fria","fría","froid","froide","kalt","kühl","kuhl","kold","koldt"], outEn:"COLD", outSv:"KALL", group:"character", priority:70 },
+      { terms:["scuro","scura","oscuro","oscura","sombre","dunkel","mørk","mork","mørkt","morkt"], outEn:"DARK", outSv:"MÖRK", group:"character", priority:78 },
+      { terms:["brillante","brillant","hell","licht","lumineux","lumineuse","claro","clara","lys","lyst"], outEn:"BR", outSv:"LJUS", group:"character", priority:78 },
+      { terms:["suave","morbido","morbida","doux","douce","weich","soft","blød","blod","blødt","blodt","myk","mykt"], outEn:"SOFT", outSv:"MJUK", group:"character", priority:76 },
+      { terms:["duro","dura","dur","dure","hart","hård","hard","hårdt","hardt"], outEn:"HARD", outSv:"HÅRD", group:"character", priority:76 },
+      { terms:["profondo","profonda","profundo","profunda","deep","tief","dyb","dybt","dyp","dypt"], outEn:"DEEP", outSv:"DJUP", group:"character", priority:76 },
+      { terms:["grande","gros","grosse","gross","groß","stor","stort","big","huge"], outEn:"BIG", outSv:"STOR", group:"character", priority:68 },
+      { terms:["grasso","grassa","gordo","gorda","gras","fett","fet","tykk","tykt","thick"], outEn:"FAT", outSv:"FET", group:"character", priority:74 },
+      { terms:["largo","larga","large","weit","bred","brett","wide","bredt"], outEn:"WIDE", outSv:"BRED", group:"effect", priority:68 },
+      { terms:["stereo","estereo","estéreo","stéréo"], outEn:"ST", outSv:"ST", group:"effect", priority:68 },
+      { terms:["basso","bassa","bajo","baja","basse","bass","bas","baixo"], outEn:"BASS", outSv:"BAS", group:"type", priority:100 },
+      { terms:["piano elettrico","piano eléctrico","piano electrico","piano électrique","e-piano","elpiano"], outEn:"EP", outSv:"ELPNO", group:"type", priority:100 },
+      { terms:["campana","campanas","cloche","cloches","glocke","klokke","klocka"], outEn:"BELL", outSv:"KLOCK", group:"type", priority:90 },
+      { terms:["coro","choeur","chœur","chor","kor","kör"], outEn:"CHOIR", outSv:"KÖR", group:"type", priority:85 },
+      { terms:["archi","cuerdas","cordes","streicher","strykere","strenge","stråkar"], outEn:"STR", outSv:"STRÅK", group:"type", priority:100 },
+      { terms:["ottanta","ochenta","quatre-vingt","achtziger","firserne","åttiotal","80-tal"], outEn:"80S", outSv:"80T", group:"source", priority:82 },
+      { terms:["pad","pads","matta","ljudmatta","svep","svepande","ambient","atmosphere","atmosfär","textur","texture"], outEn:"PAD", outSv:"PAD", group:"type", priority:100 },
+      { terms:["bass","bas","sub","subbas","bassline","basgång","basgang"], outEn:"BASS", outSv:"BAS", group:"type", priority:100 },
+      { terms:["lead","solo","melodi","melody","hook","slinga"], outEn:"LEAD", outSv:"LEAD", group:"type", priority:100 },
+      { terms:["pluck","plucked","plock","plockat","knäpp","knapp","pizzicato","short pluck"], outEn:"PLUCK", outSv:"PLOCK", group:"type", priority:100 },
+      { terms:["brass","mässing","massing","horn","synthbrass","synth brass","blås","blas"], outEn:"BRASS", outSv:"MÄSS", group:"type", priority:100 },
+      { terms:["strings","string","stråkar","strakar","stråk","strak","ensemble","orchestral"], outEn:"STR", outSv:"STRÅK", group:"type", priority:100 },
+      { terms:["electric piano","el piano","elpiano","e piano","epiano","rhodes","wurli","wurlitzer"], outEn:"EP", outSv:"ELPNO", group:"type", priority:100 },
+      { terms:["piano","flygel","grand","grand piano","upright"], outEn:"PNO", outSv:"PNO", group:"type", priority:90 },
+      { terms:["bell","bells","klocka","klockor","mallet","glocken","celeste"], outEn:"BELL", outSv:"KLOCK", group:"type", priority:90 },
+      { terms:["choir","kör","kor","voice","voices","röst","rost","röster","roster","vocal"], outEn:"CHOIR", outSv:"KÖR", group:"type", priority:85 },
+      { terms:["organ","orgel","hammond","tonewheel"], outEn:"ORG", outSv:"ORG", group:"type", priority:85 },
+      { terms:["arp","arpeggio","arpeggiated","arpeggierad","sekvens","sequence","sequenced"], outEn:"ARP", outSv:"ARP", group:"motion", priority:82 },
+      { terms:["drone","bordun","sustain","hållton","hallton"], outEn:"DRONE", outSv:"DRON", group:"type", priority:80 },
+      { terms:["fx","effect","effekt","noise","brus","sfx","riser","fall","sweep"], outEn:"FX", outSv:"FX", group:"type", priority:78 },
+
+      { terms:["warm","varm","mjukt varm","mellow","rund","round"], outEn:"WARM", outSv:"VARM", group:"character", priority:80 },
+      { terms:["dark","mörk","mork","dov","murrig","moody"], outEn:"DARK", outSv:"MÖRK", group:"character", priority:78 },
+      { terms:["bright","ljus","klar","briljant","clear","shiny","crisp"], outEn:"BR", outSv:"LJUS", group:"character", priority:78 },
+      { terms:["soft","mjuk","softad","gentle","len"], outEn:"SOFT", outSv:"MJUK", group:"character", priority:76 },
+      { terms:["hard","hård","hard","aggressive","aggressiv","raw","rå","ra"], outEn:"HARD", outSv:"HÅRD", group:"character", priority:76 },
+      { terms:["deep","djup","djupbas","low","låg","lag"], outEn:"DEEP", outSv:"DJUP", group:"character", priority:76 },
+      { terms:["fat","thick","fet","fett","tjock","fyllig","big","stor","huge","massive"], outEn:"FAT", outSv:"FET", group:"character", priority:74 },
+      { terms:["dreamy","drömsk","dromsk","luftig","air","airy","ethereal","svävande","svavande"], outEn:"DREAM", outSv:"DRÖM", group:"character", priority:72 },
+      { terms:["glass","glas","glassy","glasig","crystal","kristall"], outEn:"GLASS", outSv:"GLAS", group:"character", priority:72 },
+      { terms:["punch","punchy","snärt","snart","attack","snappy"], outEn:"PUNCH", outSv:"SNÄRT", group:"character", priority:70 },
+      { terms:["smooth","slen","silky","silkeslen"], outEn:"SMTH", outSv:"LEN", group:"character", priority:68 },
+      { terms:["thin","tunn","narrow","smal"], outEn:"THIN", outSv:"TUNN", group:"character", priority:62 },
+      { terms:["detuned","detune","ostämd","ostamd","wobbly","svajig"], outEn:"DET", outSv:"OST", group:"character", priority:62 },
+
+      { terms:["dx7","fm piano","fm elpiano"], outEn:"DX7", outSv:"DX7", group:"source", priority:88 },
+      { terms:["fm","frequency modulation","frekvensmodulation"], outEn:"FM", outSv:"FM", group:"source", priority:70 },
+      { terms:["jupiter","jupiter 8","jp8","jp-8"], outEn:"JP8", outSv:"JP8", group:"source", priority:86 },
+      { terms:["juno","juno 60","juno-60","juno 106","juno-106"], outEn:"JUNO", outSv:"JUNO", group:"source", priority:84 },
+      { terms:["moog","minimoog","mini moog"], outEn:"MOOG", outSv:"MOOG", group:"source", priority:86 },
+      { terms:["oberheim","ob","obx","ob-x","obxa","ob-xa"], outEn:"OB", outSv:"OB", group:"source", priority:86 },
+      { terms:["prophet","prophet 5","prophet-5","pro 5"], outEn:"PROPH", outSv:"PROPH", group:"source", priority:84 },
+      { terms:["cs80","cs-80","yamaha cs80","yamaha cs-80"], outEn:"CS80", outSv:"CS80", group:"source", priority:84 },
+      { terms:["analog","analogue","analogt","analog synth","vintage"], outEn:"ANA", outSv:"ANA", group:"source", priority:65 },
+      { terms:["digital","digitalt","pcm"], outEn:"DIG", outSv:"DIG", group:"source", priority:62 },
+      { terms:["80s","80-tal","åttiotal","attiotal","eighties"], outEn:"80S", outSv:"80T", group:"source", priority:82 },
+      { terms:["70s","70-tal","seventies"], outEn:"70S", outSv:"70T", group:"source", priority:78 },
+      { terms:["90s","90-tal","nineties"], outEn:"90S", outSv:"90T", group:"source", priority:76 },
+
+      { terms:["wide","bred","brett","stor stereo","panorama"], outEn:"WIDE", outSv:"BRED", group:"effect", priority:68 },
+      { terms:["stereo","stereo sound"], outEn:"ST", outSv:"ST", group:"effect", priority:68 },
+      { terms:["chorus","kör effekt","kor effekt","ensemble chorus"], outEn:"CHOR", outSv:"CHOR", group:"effect", priority:66 },
+      { terms:["delay","eko","echo","ping pong"], outEn:"DLY", outSv:"EKO", group:"effect", priority:62 },
+      { terms:["reverb","hall","rum","space","rymd","room","plate"], outEn:"REV", outSv:"REV", group:"effect", priority:60 },
+      { terms:["distortion","dist","overdrive","drive","distad","saturerad","saturation"], outEn:"DRV", outSv:"DRV", group:"effect", priority:60 },
+      { terms:["filter","filtered","filtrerad","sweeping filter"], outEn:"FILT", outSv:"FILT", group:"effect", priority:58 },
+      { terms:["pwm","pulse width","pulsbredd"], outEn:"PWM", outSv:"PWM", group:"motion", priority:64 },
+      { terms:["sync","osc sync","synk"], outEn:"SYNC", outSv:"SYNC", group:"motion", priority:64 },
+      { terms:["slow","långsam","langsam"], outEn:"SLOW", outSv:"LÅNG", group:"motion", priority:58 },
+      { terms:["fast","snabb"], outEn:"FAST", outSv:"SNABB", group:"motion", priority:58 },
+      { terms:["mono","monophonic","monofon"], outEn:"MONO", outSv:"MONO", group:"play", priority:54 },
+      { terms:["poly","polyphonic","polyfon"], outEn:"POLY", outSv:"POLY", group:"play", priority:54 },
+      { terms:["stack","layer","lager","lagrad","layered"], outEn:"STACK", outSv:"LAGER", group:"effect", priority:56 }
+    ];
+
+    let customDictionary = loadCustomDictionary();
+    let dictionary = mergeDictionary();
+    let uiLanguage = "sv";
+    let renderSequence = 0;
+
+    const fillerWords = new Set(["the","a","an","and","or","with","of","for","in","on","to","from","och","eller","med","av","för","for","pa","på","i","en","ett","den","det","som","utan","plus","con","avec","mit","und","oder","y","e","de","del","la","el","le","les","des","et","og","eller"]);
+    const groupOrder = { type:1, character:2, source:3, motion:4, effect:5, play:6, unknown:9 };
+    const compactMap = { WARM:"WRM", VARM:"VRM", DARK:"DRK", MÖRK:"MRK", DREAM:"DRM", DRÖM:"DRM", BRASS:"BRS", PUNCH:"PNCH", SNÄRT:"SNRT", CHOIR:"CHR", KÖR:"KOR", STACK:"STK", LAGER:"LGR", PLUCK:"PLK", PLOCK:"PLK", DRONE:"DRN", GLASS:"GLS", GLAS:"GLS", MATTA:"MAT" };
+
+    const el = {
+      sourceName: document.getElementById("sourceName"), mode: document.getElementById("mode"), maxLen: document.getElementById("maxLen"), languageMode: document.getElementById("languageMode"), translationPolicy: document.getElementById("translationPolicy"), translatorProvider: document.getElementById("translatorProvider"), variant: document.getElementById("variant"), prefix: document.getElementById("prefix"), externalEndpoint: document.getElementById("externalEndpoint"),
+      resultName: document.getElementById("resultName"), counter: document.getElementById("counter"), meterFill: document.getElementById("meterFill"), detectedChips: document.getElementById("detectedChips"), alternatives: document.getElementById("alternatives"),
+      dictionary: document.getElementById("dictionary"), themeToggle: document.getElementById("themeToggle"), copyBtn: document.getElementById("copyBtn"), clearBtn: document.getElementById("clearBtn"), examplesBtn: document.getElementById("examplesBtn"),
+      bulkInput: document.getElementById("bulkInput"), bulkTable: document.getElementById("bulkTable"), bulkConvertBtn: document.getElementById("bulkConvertBtn"), copyBulkBtn: document.getElementById("copyBulkBtn"), copyBulkNamesBtn: document.getElementById("copyBulkNamesBtn"),
+      customTerms: document.getElementById("customTerms"), customOut: document.getElementById("customOut"), customGroup: document.getElementById("customGroup"), addCustomBtn: document.getElementById("addCustomBtn"), resetCustomBtn: document.getElementById("resetCustomBtn"), exportDictBtn: document.getElementById("exportDictBtn"), importDictBtn: document.getElementById("importDictBtn"), dictJson: document.getElementById("dictJson"),
+      uiLangSv: document.getElementById("uiLangSv"), uiLangEn: document.getElementById("uiLangEn")
+    };
+
+    function loadCustomDictionary() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); } catch { return []; } }
+    function saveCustomDictionary() { localStorage.setItem(STORAGE_KEY, JSON.stringify(customDictionary, null, 2)); }
+    function mergeDictionary() {
+      return [
+        ...customDictionary.map(x => ({ ...x, custom:true, outEn:x.outEn || x.out, outSv:x.outSv || x.out, out:x.out || x.outSv || x.outEn })),
+        ...baseDictionary.map(x => ({ ...x, out:x.outEn }))
+      ];
+    }
+
+    function normalizeText(text) { return String(text || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9åäö\s\-]/gi, " ").replace(/\s+/g, " ").trim(); }
+    function cleanOutput(text) { return String(text || "").toUpperCase().replace(/[^A-Z0-9ÅÄÖÜÉÈÁÀÓÒÍÌÚÙÑÆØŒÇ \-]/g, "").replace(/\s+/g, " ").trim(); }
+    function escapeRegExp(str) { return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
+
+    function getEntryOutput(entry, languageMode) {
+      if (languageMode === "sv") return entry.outSv || entry.out || entry.outEn;
+      if (languageMode === "en") return entry.outEn || entry.out || entry.outSv;
+      return entry.out || entry.outSv || entry.outEn;
+    }
+
+    function detectTokens(input, languageMode = "preserve") {
+      const normalized = normalizeText(input);
+      const hits = [];
+      const usedOutputs = new Set();
+      const sortedDictionary = [...dictionary].sort((a,b) => Math.max(...b.terms.map(t=>t.length)) - Math.max(...a.terms.map(t=>t.length)));
+
+      for (const entry of sortedDictionary) {
+        for (const term of entry.terms) {
+          const normalizedTerm = normalizeText(term);
+          const pattern = new RegExp(`(^|\\s)${escapeRegExp(normalizedTerm)}($|\\s)`, "i");
+          if (pattern.test(normalized)) {
+            const out = cleanOutput(getEntryOutput(entry, languageMode));
+            if (!usedOutputs.has(out)) {
+              hits.push({ ...entry, out, matched: term });
+              usedOutputs.add(out);
+            }
+            break;
+          }
+        }
+      }
+
+      const words = normalized.split(" ").filter(w => w && !fillerWords.has(w));
+      for (const word of words) {
+        const alreadyKnown = hits.some(hit => hit.terms.map(normalizeText).includes(word));
+        if (!alreadyKnown && /^[a-z0-9åäö]{2,10}$/i.test(word)) {
+          const out = cleanOutput(word);
+          if (!usedOutputs.has(out)) {
+            hits.push({ terms:[word], out, group:"unknown", priority:20, matched:word });
+            usedOutputs.add(out);
+          }
+        }
+      }
+      return hits;
+    }
+
+    function orderTokens(tokens, mode) {
+      const copy = [...tokens];
+      if (mode === "sourceFirst") return copy.sort((a,b) => (a.group === "source" ? 0 : groupOrder[a.group] || 9) - (b.group === "source" ? 0 : groupOrder[b.group] || 9) || b.priority - a.priority);
+      if (mode === "typeFirst") return copy.sort((a,b) => (groupOrder[a.group] || 9) - (groupOrder[b.group] || 9) || b.priority - a.priority);
+      if (mode === "compact") return copy.sort((a,b) => b.priority - a.priority).map(t => ({ ...t, out: compactMap[t.out] || t.out }));
+      return copy.sort((a,b) => b.priority - a.priority || (groupOrder[a.group] || 9) - (groupOrder[b.group] || 9));
+    }
+
+    function fitParts(parts, maxLen) {
+      const resultParts = [];
+      for (const part of parts.filter(Boolean)) {
+        const candidate = [...resultParts, part].join(" ");
+        if (candidate.length <= maxLen) resultParts.push(part);
+      }
+      return resultParts.join(" ").slice(0, maxLen).trim();
+    }
+
+    function buildName(input, options = {}) {
+      const maxLen = Number(options.maxLen || MAX_YAMAHA_NAME_LENGTH);
+      const mode = options.mode || "auto";
+      const languageMode = options.languageMode || "preserve";
+      const prefix = cleanOutput(options.prefix || "");
+      const variant = cleanOutput(options.variant || "");
+      const sourceForDetection = options.translatedText || input;
+      const tokens = orderTokens(detectTokens(sourceForDetection, languageMode), mode);
+      const hasRealDictionaryHit = tokens.some(t => t.group !== "unknown");
+      let parts = tokens.map(t => cleanOutput(t.out)).filter(Boolean);
+
+      if (!hasRealDictionaryHit && options.useFallbackGuess) {
+        const guessed = localFallbackGuess(input);
+        if (guessed) parts = [guessed, ...parts];
+      }
+
+      if (prefix) parts.unshift(prefix);
+      if (variant) parts.push(variant);
+      parts = [...new Set(parts)];
+      let result = fitParts(parts, maxLen);
+      if (!result) result = cleanOutput(input).slice(0, maxLen).trim();
+      return { name: result, tokens, parts, hasRealDictionaryHit };
+    }
+
+    function localFallbackGuess(input) {
+      const cleaned = cleanOutput(input);
+      if (!cleaned) return "";
+      const words = cleaned.split(" ").filter(w => !fillerWords.has(w.toLowerCase()));
+      return words.slice(0, 3).join(" ");
+    }
+
+    function getTranslateTargetLanguage() {
+      return el.languageMode.value === "sv" ? "sv" : "en";
+    }
+
+    function getTranslateEndpoint() {
+      const custom = el.externalEndpoint.value.trim();
+      if (custom) return custom;
+      return DEFAULT_LIBRETRANSLATE_ENDPOINT;
+    }
+
+    async function externalTranslate(input) {
+      const provider = el.translatorProvider.value;
+      const endpoint = getTranslateEndpoint();
+      const target = getTranslateTargetLanguage();
+
+      const body = provider === "custom"
+        ? { text: input, q: input, source: "auto", target, maxLength: Number(el.maxLen.value || 20) }
+        : { q: input, source: "auto", target, format: "text" };
+
+      const response = await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      if (!response.ok) throw new Error("Översättningsfel");
+      const data = await response.json();
+
+      if (data.suggestion) return { directName: cleanOutput(data.suggestion), translatedText: data.translatedText || "", provider: provider === "custom" ? "Custom API" : "LibreTranslate" };
+      return { directName: "", translatedText: String(data.translatedText || data.translation || "").trim(), provider: provider === "custom" ? "Custom API" : "LibreTranslate" };
+    }
+
+    async function buildNameWithOptionalTranslation(input, includeVariant = true) {
+      const maxLen = Number(el.maxLen.value || 20);
+      const options = { maxLen, mode:el.mode.value, languageMode:el.languageMode.value, prefix:el.prefix.value, variant: includeVariant ? el.variant.value : "" };
+      let result = buildName(input, options);
+      let note = "";
+      const shouldTranslate = el.translationPolicy.value === "always" || (el.translationPolicy.value === "noHits" && !result.hasRealDictionaryHit);
+
+      if (shouldTranslate && input.trim()) {
+        try {
+          const external = await externalTranslate(input);
+          if (external.directName) {
+            result.name = fitParts([external.directName], maxLen);
+            note = `${external.provider}: direktförslag`;
+          } else if (external.translatedText) {
+            result = buildName(input, { ...options, translatedText: external.translatedText, useFallbackGuess:true });
+            note = `${external.provider}: ${external.translatedText}`;
+          }
+        } catch {
+          result = buildName(input, { ...options, useFallbackGuess:true });
+          note = uiLanguage === "en" ? "⚠️ external translation unavailable → using local fallback" : "⚠️ extern översättning ej tillgänglig → använder lokal fallback";
+        }
+      }
+      return { ...result, note };
+    }
+
+    function generateAlternatives(input) {
+      const maxLen = Number(el.maxLen.value || 20);
+      const prefix = el.prefix.value;
+      const variant = el.variant.value;
+      const languageMode = el.languageMode.value;
+      const modes = [{id:"auto",label:"Auto"},{id:"typeFirst",label:"Typ först"},{id:"compact",label:"Compact"},{id:"sourceFirst",label:"Källa först"}];
+      const seen = new Set();
+      return modes.map(m => ({ label:m.label, ...buildName(input,{maxLen,mode:m.id,prefix,variant,languageMode}) })).filter(item => !seen.has(item.name) && seen.add(item.name));
+    }
+
+    async function renderSingle() {
+      const sequence = ++renderSequence;
+      const maxLen = Number(el.maxLen.value || 20);
+      const result = await buildNameWithOptionalTranslation(el.sourceName.value, true);
+      if (sequence !== renderSequence) return;
+      el.resultName.textContent = result.name || "—";
+      const len = result.name.length;
+      const percent = Math.min(100, Math.round((len / maxLen) * 100));
+      const status = len <= maxLen ? (len >= maxLen - 2 ? "warn" : "good") : "bad";
+      const icon = status === "good" ? "✅" : status === "warn" ? "⚠️" : "❌";
+      el.counter.className = `counter ${status}`;
+      el.counter.textContent = `${len}/${maxLen} tecken ${icon}${result.note ? " · " + result.note : ""}`;
+      el.meterFill.className = status;
+      el.meterFill.style.width = `${percent}%`;
+      el.detectedChips.innerHTML = "";
+      result.tokens.filter(t => t.group !== "unknown").forEach(t => {
+        const chip = document.createElement("span"); chip.className = "chip"; chip.textContent = `${t.matched} → ${t.out}`; el.detectedChips.appendChild(chip);
+      });
+      el.alternatives.innerHTML = "";
+      for (const alt of generateAlternatives(el.sourceName.value)) {
+        const row = document.createElement("div"); row.className = "alt";
+        row.innerHTML = `<div><div class="alt-name">${escapeHtml(alt.name || "—")}</div><div class="hint">${escapeHtml(alt.label)}</div></div><div class="alt-meta">${alt.name.length}/${maxLen}</div>`;
+        row.addEventListener("click", () => { navigator.clipboard?.writeText(alt.name); el.resultName.textContent = alt.name; });
+        el.alternatives.appendChild(row);
+      }
+      saveSettings();
+    }
+
+    async function getBulkResults() {
+      const lines = el.bulkInput.value.split(/\r?\n/).map(x => x.trim()).filter(Boolean);
+      const rows = [];
+      for (let i = 0; i < lines.length; i++) {
+        const r = await buildNameWithOptionalTranslation(lines[i], false);
+        rows.push({ index:i+1, original:lines[i], name:r.name, len:r.name.length, matches:r.tokens.filter(t=>t.group!=="unknown").map(t=>`${t.matched}->${t.out}`).join("; "), note:r.note });
+      }
+      return rows;
+    }
+
+    async function renderBulk() {
+      const maxLen = Number(el.maxLen.value || 20);
+      el.bulkTable.innerHTML = `<tr><td colspan="5">Konverterar...</td></tr>`;
+      const rows = await getBulkResults();
+      el.bulkTable.innerHTML = "";
+      for (const row of rows) {
+        const tr = document.createElement("tr");
+        const statusClass = row.len <= maxLen ? "ok" : "warntext";
+        const details = [row.matches, row.note].filter(Boolean).join(" | ");
+        tr.innerHTML = `<td>${row.index}</td><td>${escapeHtml(row.original)}</td><td><code>${escapeHtml(row.name)}</code></td><td class="${statusClass}">${row.len}/${maxLen}</td><td>${escapeHtml(details)}</td>`;
+        el.bulkTable.appendChild(tr);
+      }
+    }
+
+    function escapeHtml(str) { return String(str).replace(/[&<>'"]/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[ch])); }
+    function csvEscape(str) { return `"${String(str).replace(/"/g, '""')}"`; }
+
+    function renderDictionary() {
+      dictionary = mergeDictionary();
+      const visible = dictionary.sort((a,b) => (groupOrder[a.group] || 9) - (groupOrder[b.group] || 9) || getEntryOutput(a, el.languageMode.value).localeCompare(getEntryOutput(b, el.languageMode.value)));
+      el.dictionary.innerHTML = "";
+      for (const entry of visible) {
+        const row = document.createElement("div"); row.className = "dict-row";
+        row.innerHTML = `<span>${escapeHtml(entry.terms.slice(0, 10).join(", "))}</span><code>${escapeHtml(getEntryOutput(entry, el.languageMode.value))}</code><small>${entry.custom ? "egen" : entry.group}</small>`;
+        el.dictionary.appendChild(row);
+      }
+    }
+
+    function saveSettings() {
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify({
+        languageMode: el.languageMode.value,
+        translationPolicy: el.translationPolicy.value,
+        translatorProvider: el.translatorProvider.value,
+        externalEndpoint: el.externalEndpoint.value,
+        uiLanguage
+      }));
+    }
+
+    function loadSettings() {
+      try {
+        const s = JSON.parse(localStorage.getItem(SETTINGS_KEY) || "{}");
+        el.languageMode.value = s.languageMode || "sv";
+        el.translationPolicy.value = s.translationPolicy || "off";
+        el.translatorProvider.value = s.translatorProvider || "libretranslate";
+        el.externalEndpoint.value = s.externalEndpoint || "";
+        uiLanguage = s.uiLanguage || "sv";
+      } catch {
+        el.languageMode.value = "sv";
+        el.translationPolicy.value = "off";
+        uiLanguage = "sv";
+      }
+    }
+
+    document.querySelectorAll(".tab").forEach(tab => tab.addEventListener("click", async () => {
+      document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+      tab.classList.add("active");
+      document.getElementById(tab.dataset.tab + "Panel").classList.add("active");
+      if (tab.dataset.tab === "bulk") await renderBulk();
+      if (tab.dataset.tab === "dictionary") renderDictionary();
+    }));
+
+    [el.sourceName, el.mode, el.maxLen, el.languageMode, el.translationPolicy, el.translatorProvider, el.variant, el.prefix, el.externalEndpoint].forEach(node => {
+      node.addEventListener("input", renderSingle);
+      node.addEventListener("change", () => { renderSingle(); renderDictionary(); });
+    });
+
+    el.bulkConvertBtn.addEventListener("click", renderBulk);
+    el.copyBulkBtn.addEventListener("click", async () => {
+      const rows = await getBulkResults();
+      const csv = ["Original,YamahaName,Length,Matches,Note", ...rows.map(r => [r.original,r.name,r.len,r.matches,r.note].map(csvEscape).join(","))].join("\n");
+      await navigator.clipboard?.writeText(csv);
+    });
+    el.copyBulkNamesBtn.addEventListener("click", async () => {
+      const rows = await getBulkResults();
+      await navigator.clipboard?.writeText(rows.map(r => r.name).join("\n"));
+    });
+
+    const uiText = {
+      sv: {
+        title: "Smart Performance Name Compressor",
+        subtitle: "Fristående prototyp för Yamaha MODX M / Montage M. Du kan arbeta helt på svenska, helt på engelska eller behålla originalspråk. Extern översättning är valfri fallback, aldrig tvingande.",
+        tabs: ["Enstaka namn", "Bulk-läge", "Ordlista"],
+        themeDark: "Mörkt tema",
+        themeLight: "Ljust tema",
+        originalName: "Originalnamn",
+        strategy: "Namnstrategi",
+        maxLength: "Maxlängd",
+        languageMode: "Språkläge för Yamaha-namn",
+        externalTranslation: "Extern översättning",
+        translator: "Extern översättare",
+        endpoint: "Endpoint",
+        variant: "Variant",
+        prefix: "Valfritt prefix",
+        safeName: "Yamaha-säkert namn",
+        copy: "Kopiera namn",
+        copied: "Kopierat!",
+        clear: "Rensa",
+        example: "Testa exempel",
+        hint: "Svenskt läge översätter inte till engelska om extern översättning är Av. Etablerade synthtermer behålls, så resultatet kan bli t.ex. PAD VARM BRED istället för PAD WARM WIDE.",
+        bulkLabel: "Bulk-input, ett patchnamn per rad",
+        convertBulk: "Konvertera bulk",
+        copyCsv: "Kopiera resultat som CSV",
+        copyNames: "Kopiera bara Yamaha-namn",
+        addRule: "Lägg till egen översättning/synonym",
+        customTerms: "Synonymer, separera med komma",
+        shortName: "Kortnamn",
+        group: "Grupp",
+        saveRule: "Spara egen regel",
+        exportRules: "Exportera egna regler",
+        importJson: "Importera JSON",
+        resetRules: "Radera egna regler",
+        activeDictionary: "Aktiv svensk/engelsk ordlista",
+        selectOptions: {
+          mode: ["Auto – bäst musikalisk betydelse", "Typ först – PAD/BASS/LEAD först", "Compact – hårdare förkortning", "Källa först – DX7/JP8/MOOG först"],
+          languageMode: ["Svenska namn", "Engelska namn", "Behåll originalspråk / ordlistans kortnamn"],
+          translationPolicy: ["Av – använd bara lokal ordlista", "Endast om inga lokala träffar hittas", "Alltid översätt först"],
+          translatorProvider: ["LibreTranslate default", "Custom endpoint"],
+          variant: ["Ingen", "A", "B", "C", "01", "02"],
+          customGroup: ["Karaktär", "Typ", "Källa/stil", "Effekt", "Rörelse", "Spelsätt"]
+        }
+      },
+      en: {
+        title: "Smart Performance Name Compressor",
+        subtitle: "Standalone prototype for Yamaha MODX M / Montage M. You can work in Swedish, English, or preserve the source language. External translation is optional fallback, never forced.",
+        tabs: ["Single name", "Bulk mode", "Dictionary"],
+        themeDark: "Dark theme",
+        themeLight: "Light theme",
+        originalName: "Original name",
+        strategy: "Naming strategy",
+        maxLength: "Max length",
+        languageMode: "Language mode for Yamaha name",
+        externalTranslation: "External translation",
+        translator: "External translator",
+        endpoint: "Endpoint",
+        variant: "Variant",
+        prefix: "Optional prefix",
+        safeName: "Yamaha-safe name",
+        copy: "Copy name",
+        copied: "Copied!",
+        clear: "Clear",
+        example: "Try example",
+        hint: "Swedish mode does not translate to English when external translation is Off. Established synth terms are preserved, so the result may be PAD VARM BRED instead of PAD WARM WIDE.",
+        bulkLabel: "Bulk input, one patch name per line",
+        convertBulk: "Convert bulk",
+        copyCsv: "Copy result as CSV",
+        copyNames: "Copy Yamaha names only",
+        addRule: "Add custom translation/synonym",
+        customTerms: "Synonyms, comma-separated",
+        shortName: "Short name",
+        group: "Group",
+        saveRule: "Save custom rule",
+        exportRules: "Export custom rules",
+        importJson: "Import JSON",
+        resetRules: "Delete custom rules",
+        activeDictionary: "Active Swedish/English dictionary",
+        selectOptions: {
+          mode: ["Auto – best musical meaning", "Type first – PAD/BASS/LEAD first", "Compact – stronger abbreviation", "Source first – DX7/JP8/MOOG first"],
+          languageMode: ["Swedish names", "English names", "Preserve source language / dictionary short names"],
+          translationPolicy: ["Off – local dictionary only", "Only when no local matches are found", "Always translate first"],
+          translatorProvider: ["LibreTranslate default", "Custom endpoint"],
+          variant: ["None", "A", "B", "C", "01", "02"],
+          customGroup: ["Character", "Type", "Source/style", "Effect", "Motion", "Play mode"]
+        }
+      }
+    };
+
+    function setText(selector, text) {
+      const node = document.querySelector(selector);
+      if (node) node.textContent = text;
+    }
+
+    function applyUiLanguage() {
+      const t = uiText[uiLanguage] || uiText.sv;
+      setText("h1", t.title);
+      setText(".subtitle", t.subtitle);
+      document.querySelectorAll(".tab").forEach((tab, i) => tab.textContent = t.tabs[i] || tab.textContent);
+      el.themeToggle.textContent = document.body.dataset.theme === "dark" ? t.themeLight : t.themeDark;
+      el.uiLangSv.classList.toggle("active", uiLanguage === "sv");
+      el.uiLangEn.classList.toggle("active", uiLanguage === "en");
+
+      const labels = document.querySelectorAll("label");
+      const labelTexts = [t.originalName, t.strategy, t.maxLength, t.languageMode, t.externalTranslation, t.translator, t.endpoint, t.variant, t.prefix, t.safeName, t.bulkLabel, t.addRule, t.customTerms, t.shortName, t.group, t.activeDictionary];
+      labels.forEach((label, i) => { if (labelTexts[i]) label.textContent = labelTexts[i]; });
+      el.copyBtn.textContent = t.copy;
+      el.clearBtn.textContent = t.clear;
+      el.examplesBtn.textContent = t.example;
+      el.bulkConvertBtn.textContent = t.convertBulk;
+      el.copyBulkBtn.textContent = t.copyCsv;
+      el.copyBulkNamesBtn.textContent = t.copyNames;
+      el.addCustomBtn.textContent = t.saveRule;
+      el.exportDictBtn.textContent = t.exportRules;
+      el.importDictBtn.textContent = t.importJson;
+      el.resetCustomBtn.textContent = t.resetRules;
+      updateSelectOptions(t.selectOptions);
+      const hint = document.querySelector(".hint");
+      if (hint) hint.textContent = t.hint;
+    }
+
+    function updateSelectOptions(options) {
+      const map = [
+        [el.mode, options.mode],
+        [el.languageMode, options.languageMode],
+        [el.translationPolicy, options.translationPolicy],
+        [el.translatorProvider, options.translatorProvider],
+        [el.variant, options.variant],
+        [el.customGroup, options.customGroup]
+      ];
+      for (const [select, texts] of map) {
+        if (!select || !texts) continue;
+        Array.from(select.options).forEach((option, index) => {
+          if (texts[index]) option.textContent = texts[index];
+        });
+      }
+    }
+
+    el.uiLangSv.addEventListener("click", () => { uiLanguage = "sv"; applyUiLanguage(); saveSettings(); });
+    el.uiLangEn.addEventListener("click", () => { uiLanguage = "en"; applyUiLanguage(); saveSettings(); });
+
+    el.themeToggle.addEventListener("click", () => { const next = document.body.dataset.theme === "dark" ? "light" : "dark"; document.body.dataset.theme = next; applyUiLanguage(); });
+    el.copyBtn.addEventListener("click", async () => { const text = el.resultName.textContent; const t = uiText[uiLanguage] || uiText.sv; try { await navigator.clipboard.writeText(text); el.copyBtn.textContent = t.copied; setTimeout(() => el.copyBtn.textContent = t.copy, 1000); } catch { alert(text); } });
+    el.clearBtn.addEventListener("click", () => { el.sourceName.value = ""; renderSingle(); });
+
+    const examples = ["Varm analog pad bred stereo","Warm analog pad wide stereo","DX7 electric piano bright chorus","Ljus FM elpiano med chorus","Stor 80-tal synth brass stack","Mörk djup moog bas mono","Dreamy glass bell pluck with delay","Drömsk glasig klocka plock med eko","Jupiter 8 warm strings wide","Oberheim brass mjuk stereo"];
+    let exampleIndex = 0;
+    el.examplesBtn.addEventListener("click", () => { el.sourceName.value = examples[exampleIndex % examples.length]; exampleIndex++; renderSingle(); });
+
+    el.addCustomBtn.addEventListener("click", () => {
+      const terms = el.customTerms.value.split(",").map(x => x.trim()).filter(Boolean);
+      const out = cleanOutput(el.customOut.value);
+      const group = el.customGroup.value;
+      if (!terms.length || !out) { alert("Fyll i minst en synonym och ett kortnamn."); return; }
+      customDictionary.unshift({ terms, out, outSv:out, outEn:out, group, priority:95 });
+      saveCustomDictionary(); renderDictionary(); renderSingle(); renderBulk();
+      el.customTerms.value = ""; el.customOut.value = "";
+    });
+    el.resetCustomBtn.addEventListener("click", () => { if (confirm("Radera alla egna regler?")) { customDictionary = []; saveCustomDictionary(); renderDictionary(); renderSingle(); renderBulk(); } });
+    el.exportDictBtn.addEventListener("click", () => { el.dictJson.value = JSON.stringify(customDictionary, null, 2); });
+    el.importDictBtn.addEventListener("click", () => {
+      try {
+        const imported = JSON.parse(el.dictJson.value || "[]");
+        if (!Array.isArray(imported)) throw new Error("Inte en array");
+        customDictionary = imported.filter(x => Array.isArray(x.terms) && (x.out || x.outSv || x.outEn) && x.group);
+        saveCustomDictionary(); renderDictionary(); renderSingle(); renderBulk();
+      } catch { alert("Kunde inte importera JSON. Kontrollera formatet."); }
+    });
+
+    loadSettings();
+    applyUiLanguage();
+    renderDictionary(); renderSingle(); renderBulk();
+  </script>
+</body>
+</html>
