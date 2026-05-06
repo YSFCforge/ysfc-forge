@@ -1,29 +1,5 @@
 # YSFC Forge — Full Context v10.0
-*Uppdaterad: 2026-05-03 | Steg 1–62 + Container-analys | KARTLÄGGNING KOMPLETT*
-
----
-
-## Startprompt för ny chatt
-
-```
-Vi fortsätter ett YSFC Forge-projekt — reverse-engineering av Yamaha MODX/Montage Y2L-format
-och byggande av patch editor.
-
-Deliverables (alla i outputs/):
-  ysfc_serializer.py v5.5   — 422/462 fält kartlagda (91%)
-  ysfc_forge_v1.10.html     — HTML/JS merge-verktyg (verifierat MODX M8x)
-  ysfc_fx_type_index.py     — 57 InsertionFX TypeIndex-värden
-  YSFC_PARAMETERBETYG_v5.txt
-  YSFC_FORGE_FULL_CONTEXT_v10.md — denna fil
-
-STATUS: Kartläggningsfasen avslutad + container-struktur fullt dokumenterad (v10).
-Nästa fokus: PATCH EDITOR.
-  - FM-X: OP 21/21 ★★★★★, Part PEG 16/16, 1st LFO 11/11, 2nd LFO 7/7
-  - AWM2: Element ~87%, Part 100%
-  - AN-X: ~85% (PulseWidth korrigerat, EG komplett)
-  - CA: 100% engine-oberoende, FX-tabell komplett (57 typer)
-  - Container: EPFM/DPFM/ESYS/DSYS/EFVT/DFVT fullt dokumenterade ★★★★★
-```
+*Uppdaterad: 2026-05-03 | Steg 1–71 + Container-analys | KARTLÄGGNING KOMPLETT*
 
 ---
 
@@ -31,12 +7,12 @@ Nästa fokus: PATCH EDITOR.
 
 **Mål:** Reverse-engineera Y2L-format, bygga merge-verktyg + patch editor.
 
-**Forge-app:** Fullt fungerande merge-verktyg, verifierat på MODX M8x.
+**Forge-app:** Fullt fungerande merge-verktyg, verifierat på MODX M8.
 **Serializer:** v5.5, 422 av 462 dokumenterade fält kartlagda (91%).
 
 ---
 
-## Kartläggningsstatus (Steg 1–62)
+## Kartläggningsstatus (Steg 1–71)
 
 | Engine/Sektion | Fält | ★★★★★ | ★★★★☆ | Täckning |
 |----------------|------|--------|--------|----------|
@@ -61,7 +37,7 @@ Nästa fokus: PATCH EDITOR.
 *(Binärverifierat 2026-05-03 mot AWM2/FM-X/AN-X init-filer + 1/2/4-perf filer)*
 
 **Timestamp-bytes** (ignoreras i diffs): PERF+23, +24, +6724, +6725  
-**CA+17** är MODX-internt (ej synlig parameter, ignoreras)  
+**CA+17** är MODX M internt (ej synlig parameter, ignoreras)  
 **OP Mute/Solo** sparas INTE i YSFC (real-time state)
 
 ---
@@ -465,35 +441,6 @@ Y2L-format, AWM2, AN-X grundläggande, FM-X OP-bas
 
 ---
 
-## AWM2 Element Waveform Numbers — Expansion Pack Detection (Steg 70, 2026-05-03)
-
-### Waveformtalets innebörd (binärverifierat mot Soundmondo.Y2L, 98 performances)
-
-| Waveformtal | Typ | Tillgänglighet |
-|---|---|---|
-| 0 | Element inaktiverat | Alltid |
-| 1–256 | Inbyggt ROM-ljud (preset) | Alltid tillgängligt |
-| 257+ | Expansionspaket-sample | Kräver Y2E/X8L installerat |
-
-**Offset:** `blob[12520 + elem * 313]` (u16le), elementindex 0-baserat (max 8 element)  
-**Stride:** 313 bytes per AWM2-element (oförändrat från tidigare)  
-**Regel:** `waveformNumber > 256` → performances kräver expansionspaket
-
-### Felkoppling
-
-`Storage read/write error` på MODX/ESP Plugin = expansionspaketet saknas.  
-Detta är **inte** ett filformatfel. Containern och DPFM-strukturen kan vara helt korrekta.  
-Enda lösningen: installera rätt expansionspaket (Y2E-fil) på MODX/ESP.
-
-### Bekräftat från Soundmondo.Y2L
-
-- 98 performances totalt
-- 85 kräver expansion (wf > 256 i minst ett element)
-- 13 fungerar med enbart inbyggda ljud (wf 1-256 i alla element):
-  C7 Grand +, CFX Concert +, S700 for Montage +, CFX Stage +, C7 +,
-  Mellow Hamburg Gra +, Concert GrandPiano +, Natural Grand S6 +,
-  CFX Single Grand 1 +, Korg M1 Piano 16, CFX PopStudioGrand +,
-  U1 Upright Bright +, Traditional Upright+
 
 ### waveformBank (blob[12522])
 
@@ -502,13 +449,6 @@ för att skilja expansion från inbyggd. Använd waveformNumber-tröskeln 256 is
 
 ---
 
-## Blob-format: Skillnad mellan Soundmondo.Y2L och fabriksfiler (2026-05-04)
-
-### Bekräftad rotorsak till "Storage read/write error" för Soundmondo-performances
-
-Problemet är **EXKLUSIVT** kopplat till `Soundmondo.Y2L`. Fabriksfiler (ESP_8_performances.Y2L,
-Init-filer, Performance-filer) fungerar korrekt — Forge exporterar dem byte-identiska med originalet
-(bortsett från kända timestamp-bytes blob[6722:6726]).
 
 ### Blob-header layout (blob[0:25])
 
@@ -524,20 +464,6 @@ blob[24]    = första parameterbyte (real performance-data)
 blob[25:]   = resterande performance-parametrar
 ```
 
-### Soundmondo-specifika fel i blob-headern
-
-Soundmondo.Y2L har ICKE-NOLLA värden i padding- och flash-adressfälten:
-
-| Performance | null@blob | Soundmondo blob[null:24] | ESP (korrekt) blob[null:24] |
-|---|---|---|---|
-| CFX + FM EP + | 17 | `030001000000` | `000000000000` |
-| Waterloo SM | 15 | `6431030001000000` | `00000015bcc9fe` (flash addr!) |
-| Take on me SM | 17 | `0000810000` | `000015bccea1` (flash addr!) |
-| Korg M1 Piano 16 | 20 | `0000` (i parameterarea) | `0000` |
-
-ESP Plugin korrigerar dessa när det exporterar — skriver korrekt flash-adress för
-waveforms som pekar på ROM-samplar. MODX validerar blob[20:24] vid inläsning →
-fel värde = "Storage read/write error".
 
 ### Forge-fix: sanitizePerfBlob()
 
@@ -546,24 +472,11 @@ fel värde = "Storage read/write error".
 2. Skriver korrekt blob[20:24] från `BLOB_NAME_CORRECTIONS`-tabell (baserad på ESP-referensfiler)
 3. För performances INTE i tabellen: blob[20:24] nollställs (konservativ fallback)
 
-`BLOB_NAME_CORRECTIONS`-tabell (verifierad mot ESP_8_performances.Y2L):
-- `CFX + FM EP +` → blob[17:24] = `00000000000000`
-- `Waterloo SM` → blob[15:24] = `000000000015bcc9fe`
-- `Take on me SM` → blob[17:24] = `00000015bccea1`
-- `Korg M1 Piano 16` → blob[20:24] = `00000000`
-
-### Varför fabriksfiler fungerar
-
-ESP_8_performances.Y2L exporterades DIREKT av ESP Plugin → blobs har redan korrekta värden.
-Forge kopierar dessa verbatim → output är identisk med ESP-export → fungerar perfekt.
-
-Soundmondo.Y2L är exporterat av ett annat system (Soundmondo-webbsite) med legacy-format
-där blob[null+1:24] innehåller annan metadata istället för korrekt MODX-format.
 
 ### Timestamp-bytes (ej validerade)
 
-blob[6722:6726] = timestamp/ID skrivet av MODX vid sparning. Varierar per export.
-Dessa valideras INTE av MODX. Forge behöver inte matcha dem.
+blob[6722:6726] = timestamp/ID skrivet av MODX M vid sparning. Varierar per export.
+Dessa valideras INTE av MODX M. Forge behöver inte matcha dem.
 
 ---
 
