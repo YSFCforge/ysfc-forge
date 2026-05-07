@@ -63,9 +63,9 @@ YSFC Forge was created to:
 
 | Tool | File | What it does |
 |---------|-----|-------------|
-| **DIVA Patch Translator** | `translators/ysfc_diva_h2p_converter_v2_15.html` | Analyze DIVA patches and convert DIVA patches to Y2L/Y2U files and load them into Yamaha MODX M / ESP Plugin / Montage M |
-| **Vital Patch Translator** | `translators/ysfc_vital_converter_v4_12.html` | Analyze Vital patches and convert Vital patches to Y2L/Y2U files and load them into Yamaha MODX M / ESP Plugin / Montage M |
-| **Synth1 Patch Translator** | `translators/ysfc_synth1_converter_v5_12.html` | Analyze Synth1 patches and convert Synth1 patches to Y2L/Y2U files and load them into Yamaha MODX M / ESP Plugin / Montage M |
+| **DIVA Patch Translator** | `translators/ysfc_diva_h2p_converter_v2_15.html` | Analyze and convert DIVA patches to Y2L/Y2U files and load them into Yamaha MODX M / ESP Plugin / Montage M |
+| **Vital Patch Translator** | `translators/ysfc_vital_converter_v4_12.html` | Analyze and convert Vital patches to Y2L/Y2U files and load them into Yamaha MODX M / ESP Plugin / Montage M |
+| **Synth1 Patch Translator** | `translators/ysfc_synth1_converter_v5_12.html` | Analyze and convert Synth1 patches to Y2L/Y2U files and load them into Yamaha MODX M / ESP Plugin / Montage M |
 
 🧰 Utilities
 
@@ -89,7 +89,7 @@ YSFC Forge was created to:
 *ESP Librarian — performance list with engine detection and dependency summary*
 ![ESP Librarian](screenshots/image_ysfc_esp_librarian_v7.png)
 
-*DIVA Patch Translator — analyze DIVA patches and convert DIVA patches to Y2L/Y2U files + other file formats (also see Vital Patch Translator and Synth1 Patch Translator)*
+*DIVA Patch Translator — analyze and convert DIVA patches to Y2L/Y2U files + other file formats (also see Vital Patch Translator and Synth1 Patch Translator)*
 ![DIVA Patch Translator](screenshots/ysfc_diva_h2p_converter_v2_16.png)
 
 ---
