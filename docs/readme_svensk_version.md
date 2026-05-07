@@ -62,9 +62,9 @@ YSFC Forge skapades för att:
 
 | Verktyg | Fil | Vad det gör |
 |---------|-----|-------------|
-| **DIVA Patch Translator** | `tools/ysfc_diva_h2p_converter_v2_15.html` | Analysera DIVA-patchar och konvertera DIVA-patchar till Y2L/Y2U och läs in dem i Yamaha MODX M / ESP Plugin / Montage M |
-| **Vital Patch Translator** | `tools/ysfc_vital_converter_v4_12.html` | Analysera Vital-patchar och konvertera Vital-patchar till Y2L/Y2U och läs in dem i Yamaha MODX M / ESP Plugin / Montage M |
-| **Synth1 Patch Translator** | `tools/ysfc_synth1_converter_v5_12.html` | Analysera Synth1-patchar och konvertera Synth1-patchar till Y2L/Y2U och läs in dem i Yamaha MODX M / ESP Plugin / Montage M |
+| **DIVA Patch Translator** | `tools/ysfc_diva_h2p_converter_v2_15.html` | Analysera och konvertera DIVA-patchar till Y2L/Y2U och läs in dem i Yamaha MODX M / ESP Plugin / Montage M |
+| **Vital Patch Translator** | `tools/ysfc_vital_converter_v4_12.html` | Analysera och konvertera Vital-patchar till Y2L/Y2U och läs in dem i Yamaha MODX M / ESP Plugin / Montage M |
+| **Synth1 Patch Translator** | `tools/ysfc_synth1_converter_v5_12.html` | Analysera och konvertera Synth1-patchar till Y2L/Y2U och läs in dem i Yamaha MODX M / ESP Plugin / Montage M |
 
 🧰 Utilities
 
@@ -84,13 +84,13 @@ YSFC Forge skapades för att:
 *Forge Librarian — dra och släpp Y2L-filer, välj performances, exportera*
 ![Forge Librarian](../screenshots/image_ysfc_forge_v1_19.png)
 
-*Performance Editor — FM-X operatorredigerare med algoritmdiagram*
+*Performance Editor — redigera FM-X, AWM2 och AN-X-parametrar direkt i webbläsaren*
 ![Performance Editor](../screenshots/image_ysfc_performance_editor_v4.png)
 
 *ESP Librarian — performancelista med engine-detektering och beroendesammanfattning*
 ![ESP Librarian](../screenshots/image_ysfc_esp_librarian_v7.png)
 
-*DIVA Patch Translator — Konvertera DIVA patches to Y2L + andra filformat (se också Vital Patch Translator and Synth1 Patch Translator)*
+*DIVA Patch Translator — analysera och konvertera DIVA patches to Y2L + andra filformat (se också Vital Patch Translator and Synth1 Patch Translator)*
 ![DIVA Patch Translator](../screenshots/ysfc_diva_h2p_converter_v2_16.png)
 
 ---
