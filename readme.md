@@ -1,33 +1,83 @@
 # YSFC Forge
 
-**Browser-based tools for Yamaha MODX M / ESP Plugin / Montage M performance files — no installation required.**
+**Open-source browser-based tools for Yamaha MODX M / ESP Plugin / Montage M performance files**
 
 Reverse-engineered tools for Yamaha MODX M / ESP Plugin / Montage M performance files.
 
 **Built from scratch through binary analysis of Yamaha's undocumented file format.**
 
-Open the HTML files in any modern browser. Drag, drop, merge, edit and export `.Y2L` / `.Y2U` files directly on your machine. Nothing is uploaded anywhere.
+Open the HTML files in any modern browser. Drag, drop, merge, edit and export `.Y2L` / `.Y2U` files directly in your browser.
+
+No installation.
+No cloud upload.
+Everything runs locally on your computer.
 
 ---
 
-## Tools
+## What is YSFC Forge?
+
+YSFC Forge is an open-source ecosystem for exploring, editing and translating Yamaha MODX M / ESP Plugin / Montage M performance files.
+
+The project combines:
+
+- Librarian workflows
+- Performance editing
+- Binary reverse engineering
+- Cross-synth translation
+- Parameter mapping
+- Browser-based tooling
+- Offline-first workflows
+- Technical documentation and preservation
+
+YSFC Forge was built from scratch through binary analysis of Yamaha’s undocumented file formats.
+
+---
+
+## Why this project exists
+
+Yamaha MODX M / ESP Plugin / Montage M file formats are largely undocumented.
+
+YSFC Forge was created to:
+
+- Understand the internal binary structures
+- Build modern browser-based tooling
+- Simplify performance management
+- Explore cross-synth translation workflows
+- Create tools Yamaha never released
+- Make advanced editing accessible offline
+
+---
+
+## 🎛 Tools
+
+> **No installation.** Download an HTML file, open it in Chrome, Firefox or Safari, and start working.
+
+🎛 Core Tools
 
 | Tool | File | What it does |
 |------|------|-------------|
 | **Forge Librarian** | `tools/ysfc_forge_v1.19.html` | Merge performances from multiple Y2L/Y2U files into one export |
 | **Performance Editor** | `tools/ysfc_performance_editor_v3.html` | Edit FM-X, AWM2 and AN-X parameters directly in the browser |
+
+🔄 Translators
+
+| Tool | File | What it does |
+|---------|-----|-------------|
+| **DIVA Patch Translator** | `translators/ysfc_diva_h2p_converter_v2_15.html` | Analyze DIVA patches and convert DIVA patches to Y2L/Y2U files and load them into Yamaha MODX M / ESP Plugin / Montage M |
+| **Vital Patch Translator** | `translators/ysfc_vital_converter_v4_12.html` | Analyze Vital patches and convert Vital patches to Y2L/Y2U files and load them into Yamaha MODX M / ESP Plugin / Montage M |
+| **Synth1 Patch Translator** | `translators/ysfc_synth1_converter_v5_12.html` | Analyze Synth1 patches and convert Synth1 patches to Y2L/Y2U files and load them into Yamaha MODX M / ESP Plugin / Montage M |
+
+🧰 Utilities
+
+| Tool | File | What it does |
+|---------|-----|-------------|
 | **ESP Librarian** | `utilities/ysfc_esp_librarian_v7.html` | Standalone prototype librarian to merge performances |
 | **Smart Performance Name Compressor** | `utilities/ysfc_smart_name_compressor.html` | Standalone prototype for easy standardized naming conventions of Yamaha MODX M performances |
 | **Synth Converter** | `utilities/ysfc_synth_converter.html` | Convert DIVA, Vital and Synth1 patches between different formats (8+) |
-| **DIVA Patch Translator** | `translators/ysfc_diva_h2p_converter_v2_15.html` | Learn about DIVA patches and convert DIVA patches to Y2L/Y2U files and load them into Yamaha MODX M / ESP Plugin / Montage M |
-| **Vital Patch Translator** | `translators/ysfc_vital_converter_v4_12.html` | Learn about Vital patches and convert Vital patches to Y2L/Y2U files and load them into Yamaha MODX M / ESP Plugin / Montage M |
-| **Synth1 Patch Translator** | `translators/ysfc_synth1_converter_v5_12.html` | Learn about Synth1 patches and convert Synth1 patches to Y2L/Y2U files and load them into Yamaha MODX M / ESP Plugin / Montage M |
-
-> **No installation.** Download an HTML file, open it in Chrome, Firefox or Safari, and start working.
 
 ---
 
-## Screenshots
+## 📸 Screenshots
 
 <!-- Add your screenshots here -->
 *Forge Librarian — drag and drop Y2L files, select performances, export*
@@ -44,7 +94,7 @@ Open the HTML files in any modern browser. Drag, drop, merge, edit and export `.
 
 ---
 
-## Quick Start
+## 🚀 Quick Start
 
 ### Merge performances from multiple files
 1. Download `tools/ysfc_forge_v1.19.html`
@@ -64,7 +114,27 @@ Open the HTML files in any modern browser. Drag, drop, merge, edit and export `.
 
 ---
 
-## Supported hardware and formats
+# 🔬 Reverse Engineering Status
+
+| Area | Coverage |
+|---|---|
+| FM-X Operators | ~100% |
+| FM-X PEG | 100% |
+| FM-X LFO | 100% |
+| AWM2 | ~95% |
+| AN-X | ~99% |
+| Motion Sequencer | 100% |
+| Arp Common | 100% |
+| FX Types | 57 verified |
+| Total mapped parameters | ~665 |
+
+Detailed parameter tables and binary documentation are available in:
+
+`docs/YSFC_FORGE_FULL_CONTEXT_v10.md`
+
+---
+
+# ⚙ Supported Hardware and Formats
 
 | | Support |
 |-|---------|
@@ -82,6 +152,31 @@ Open the HTML files in any modern browser. Drag, drop, merge, edit and export `.
 | AWM2 | ✅ | ✅ Elements, filter, AEG, waveform number |
 | AN-X | ✅ | ✅ OSC, Filter 1/2, WaveFolder, ModEG |
 | DRUM | Detected | — |
+
+---
+
+# 🧠 Technical Highlights
+
+- ~665 mapped parameters
+- Binary-verified offsets
+- Full Y2L/Y2U container documentation
+- Browser-based serialization workflows
+- Reverse-engineered FX index tables
+- Multi-engine parameter parsing
+- Offline-first architecture
+
+---
+
+# 🔒 Philosophy
+
+YSFC Forge is designed around:
+
+- Offline-first workflows
+- No telemetry
+- Browser-native tooling
+- Open reverse engineering
+- Human-readable tooling
+- Local-only processing
 
 ---
 
@@ -160,12 +255,14 @@ ysfc-forge/
 ├── tools/
 │   ├── ysfc_forge_v1.19.html               # Librarian / merge tool
 │   ├── ysfc_performance_editor_v3.html     # Patch editor (FM-X, AWM2, AN-X)
-│   └── ysfc_esp_librarian_v7.html          # Prototype librarian
-│   ├── ysfc_smart_name_compressor.html     # Easy standardized naming conventions
-│   ├── ysfc_synth_converter.html           # Convert patches
+├── translators/
 │   └── ysfc_diva_h2p_converter_v2_15.html  # Convert DIVA patches
 │   └── ysfc_vital_converter_v4_12.html     # Convert Vital patches
 │   └── ysfc_synth1_converter_v5_12.html    # Convert Synth1 patches
+├── utilities/
+│   └── ysfc_esp_librarian_v7.html          # Prototype librarian
+│   ├── ysfc_smart_name_compressor.html     # Easy standardized naming conventions
+│   ├── ysfc_synth_converter.html           # Convert patches
 ├── serializer/
 │   ├── ysfc_serializer_v6.py               # Python parameter constants (v6)
 │   └── ysfc_fx_type_index.py               # Insertion FX type index
@@ -178,13 +275,6 @@ ysfc-forge/
 └── README.md
 
 ```
-| **Performance Editor** | `tools/ysfc_performance_editor_v3.html` | Edit FM-X, AWM2 and AN-X parameters directly in the browser |
-| **ESP Librarian** | `tools/ysfc_esp_librarian_v7.html` | Standalone prototype librarian to merge performances |
-| **Smart Performance Name Compressor** | `tools/ysfc_smart_name_compressor.html` | Standalone prototype for easy standardized naming conventions of Yamaha MODX M performances |
-| **Synth Converter** | `tools/ysfc_synth_converter.html` | Convert DIVA, Vital and Synth1 patches between different formats (8+) |
-| **DIVA Patch Translator** | `tools/ysfc_diva_h2p_converter_v2_15.html` | Learn about DIVA patches and convert DIVA patches to Y2L/Y2U files and load them into Yamaha MODX M / ESP Plugin / Montage M |
-| **Vital Patch Translator** | `tools/ysfc_vital_converter_v4_12.html` | Learn about Vital patches and convert Vital patches to Y2L/Y2U files and load them into Yamaha MODX M / ESP Plugin / Montage M |
-| **Synth1 Patch Translator** | `tools/ysfc_synth1_converter_v5_12.html` | Learn about Synth1 patches and convert Synth1 patches to Y2L/Y2U files and load them into Yamaha MODX M / ESP Plugin / Montage M |
 
 ---
 
@@ -213,7 +303,7 @@ The Python serializer (`serializer/ysfc_serializer_v6.py`) contains all verified
 
 ---
 
-## Known limitations
+# ⚠ Known Limitations
 
 - **Samples and waveforms** — The tools merge performances. Standalone user waveform expansions are not handled automatically (though the ESP Librarian tracks EWFM/DWFM dependencies).
 - **X7L / X8L as container** — These formats cannot be used as export containers. Load them into your synth and export as Y2L first.
@@ -225,9 +315,13 @@ The Python serializer (`serializer/ysfc_serializer_v6.py`) contains all verified
 
 ---
 
-## Contributing
+# 🤝 Contributing
 
 This repository contains several experimental tools. Active development and bug tracking is focused on Forge Librarian (ysfc_forge_v1.19.html). Issues and PRs for that tool are welcome. The other tools are provided as-is without active support.
+
+The main active development focus is currently:
+- Forge Librarian
+- Reverse engineering documentation
 
 Remaining unknowns (as of Serializer v6):
 - `AN-X PART+5934` — unknown field (MIDI formula was incorrect)
@@ -242,7 +336,7 @@ Remaining unknowns (as of Serializer v6):
 
 ## Disclaimer
 
-This project is not affiliated with, endorsed by, or sponsored by Yamaha Corporation. MODX M, ESP plugin, Montage M and related product names are trademarks of Yamaha Corporation. The YSFC file format was reverse-engineered for interoperability purposes. Use at your own risk and always keep backups of your original files.
+This project is not affiliated with, endorsed by, or sponsored by Yamaha Corporation. MODX M, ESP plugin, Montage M and related product names are trademarks of Yamaha Corporation. The file format was reverse-engineered for interoperability purposes. Use at your own risk and always keep backups of your original files.
 
 ---
 
