@@ -83,13 +83,13 @@ YSFC Forge was created to:
 *Forge Librarian — drag and drop Y2L files, select performances, export*
 ![Forge Librarian](screenshots/image_ysfc_forge_v1_19.png)
 
-*Performance Editor — FM-X operator editor with algorithm diagram*
+*Performance Editor — edit FM-X, AWM2 and AN-X parameters directly in the browser*
 ![Performance Editor](screenshots/image_ysfc_performance_editor_v4.png)
 
 *ESP Librarian — performance list with engine detection and dependency summary*
 ![ESP Librarian](screenshots/image_ysfc_esp_librarian_v7.png)
 
-*DIVA Patch Translator — Convert DIVA patches to Y2L/Y2U files + other file formats (also see Vital Patch Translator and Synth1 Patch Translator)*
+*DIVA Patch Translator — analyze DIVA patches and convert DIVA patches to Y2L/Y2U files + other file formats (also see Vital Patch Translator and Synth1 Patch Translator)*
 ![DIVA Patch Translator](screenshots/ysfc_diva_h2p_converter_v2_16.png)
 
 ---
