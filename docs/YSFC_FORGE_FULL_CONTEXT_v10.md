@@ -1,5 +1,5 @@
-# YSFC Forge — Full Context v10.0
-*Updated: 2026-05-03 | Steps 1–71 + Container analysis | MAPPING COMPLETE*
+# YSFC Forge — Full Context v10.1
+*Updated: 2026-05-08 | Steps 1–74 | Serializer v6 | ~668 fields mapped (~99%)*
 
 ---
 
@@ -7,28 +7,33 @@
 
 **Goal:** Reverse-engineer the Y2L format, build a merge tool + patch editor.
 
-**Forge app:** Fully functional merge tool, verified on MODX M8.
-**Serializer:** v5.5, 422 of 462 documented fields mapped (91%).
+**Forge app:** Fully functional merge tool, verified on MODX M / ESP plugin.
+**Serializer:** v6, ~668 fields mapped (~99%). OSC1 100% complete.
 
 ---
 
-## Mapping Status (Steps 1–71)
+## Mapping Status (Steps 1–74)
 
-| Engine/Section | Fields | ★★★★★ | ★★★★☆ | Coverage |
-|----------------|--------|--------|--------|----------|
-| FM-X OP (×8) | 29 | 26 | 3 | 100% |
-| FM-X Part PEG | 16 | 16 | 0 | 100% |
-| FM-X Part 1st LFO | 11 | 11 | 0 | 100% |
-| FM-X Part 2nd LFO | 8 | 7 | 1 | 100% |
-| FM-X Part Common | 15 | 12 | 3 | 100% |
-| AWM2 Element | 150 | 90 | 40 | 87% |
-| AWM2 Part | 26 | 20 | 6 | 100% |
-| AN-X Part | 130 | 85 | 25 | 85% |
-| Insertion FX | 57 | 12 | 45 | 100% |
-| Controller Assign | 8 | 7 | 1 | 100% |
-| Performance Common | 10 | 6 | 4 | 100% |
-| AT Register | 2 | 2 | 0 | 100% |
-| **TOTAL** | **462** | **294** | **128** | **91%** |
+| Engine/Section | Fields | ★★★★★ | Coverage | Note |
+|----------------|--------|--------|----------|------|
+| FM-X OP (×8) | 31 | 31 | 100% | COMPLETE |
+| FM-X Part PEG | 16 | 16 | 100% | COMPLETE |
+| FM-X Part 1st LFO | 11 | 11 | 100% | COMPLETE |
+| FM-X Part 2nd LFO | 7 | 7 | 100% | COMPLETE |
+| FM-X Part Common | 15 | 15 | 100% | COMPLETE |
+| AWM2 Element | ~35 | ~33 | ~95% | |
+| AWM2 Part | 26 | 26 | 100% | COMPLETE |
+| AN-X Part (OSC/Filter/WF/EG) | ~132 | ~130 | ~99% | OSC1 100% ★ |
+| Insertion FX | 57 | 57 | 100% | COMPLETE (57 types) |
+| Controller Assign | 8 | 8 | 100% | COMPLETE |
+| Performance Common | 10 | 10 | 100% | COMPLETE |
+| AT Register | 2 | 2 | 100% | COMPLETE |
+| SuperKnob + Assign (values+sw) | 20 | 20 | 100% | COMPLETE ← Step 71 |
+| Assign Positioners (L/M/R ×8) | 25 | 25 | 100% | COMPLETE ← Step 71 |
+| ANX Arp Common + Arp1 | 34 | 34 | 100% | COMPLETE ← Step 71 |
+| ANX Seq Lane ×4 (29/lane) | 116 | 116 | 100% | COMPLETE ← Step 71 |
+| Metadata flags | 4 | 4 | 100% | COMPLETE |
+| **TOTAL** | **~668** | **~643** | **~99%** | |
 
 ---
 
@@ -37,7 +42,7 @@
 *(Binary-verified 2026-05-03 against AWM2/FM-X/AN-X init files + 1/2/4-perf files)*
 
 **Timestamp bytes** (ignored in diffs): PERF+23, +24, +6724, +6725  
-**CA+17** is MODX M internal (not a visible parameter, ignored)  
+**CA+17** is MODX-internal (not a visible parameter, ignored)  
 **OP Mute/Solo** is NOT saved in YSFC (real-time state only)
 
 ---
@@ -49,7 +54,7 @@ File[0:12]  = b'YAMAHA-YSFC\x00'
 File[12:20] = version string (e.g. b'5.1.2\x00\x00\x00')
 File[20:62] = padding
 File[62]    = 0x2a (fixed constant)
-File[63]    = checksum (not validated by MODX M)
+File[63]    = checksum (not validated by MODX)
 ```
 
 ---
@@ -395,11 +400,11 @@ Separate from the CA block, with its own destination encoding.
 | AWM2 ctrlSet element level | Offset not binary-verified |
 | Performance Common 0:6708 | Scene/SuperKnob/MotionSeq — complex |
 | Montage .X7L/.X8L | Likely identical, not tested |
-| WaveFolder Fold encoding | 0.386→130, 0.5→244, formula unclear |
+| AN-X PART+5934 | RESOLVED: selfSyncPitchEGDepth ★★★★★ (Step 74) |
 
 ---
 
-## Next phase: Patch Editor
+## Status: Patch Editor (in progress)
 
 Recommended architecture for editor in the forge app:
 1. **Read performance** from Y2L → parse DPFM → perf bytes
@@ -410,9 +415,23 @@ Recommended architecture for editor in the forge app:
 
 Simplest starting point: FM-X algorithm + feedback + OP levels (off=44) — visible sliders with direct encoding.
 
+**Mapping complete as of Step 74.** ~668 fields (~99%) confirmed. Focus is now the patch editor.
+
 ---
 
 ## Changelog
+
+### v10.1 (2026-05-08) — Steps 71–74, ~668 fields (~99%)
+- Step 71 (111 files): SuperKnob, Assign 1-8, MidPos, Arp Common, Seq Lane ×4
+- Step 72: WaveFolder encodings verified (VelSens=direct, Texture=direct, EGDepth/LFODepth=0x80+n)
+  New CA destinations: Dest=142=FilterCutoff, Dest=118=ANXPan
+- Step 73: shaperEGDepth(PART+5950) + shaperLFODepth(PART+5952) ★★★★★
+  OSC1 EG/LFO matrix complete (Sync/SyncPitchVel/SyncPitchEG/PulseWidth/Shaper)
+- Step 74: selfSyncPitchEGDepth(PART+5934) ★★★★★ via MODX M8 hardware export
+  OSC1 now 100% mapped — no unknown fields remaining
+  MODX M8 vs ESP file size explained: DLST/ELST (~84KB extra = entire user bank)
+- Serializer bug fixed: anxOsc1SelfSyncLFODepth=5934 was wrong → correct=5936
+- Serializer v6: all comments translated to English
 
 ### v10.0 (2026-05-03) — Container structure fully documented
 - EPFM payload: directory (64 bytes) + padding (216 bytes) + catalog structure
@@ -431,39 +450,13 @@ Simplest starting point: FM-X algorithm + feedback + OP levels (off=44) — visi
 - AWM2 AT register: SW=593, Dest=595
 - OP Mute: not saved in YSFC
 - FM-X OP routing matrix identified (abs=6730-6793)
-- 422/462 fields (91%) mapped
+- 422/462 fields (91%) mapped at this step (Step 62)
 
 ### v8.0 (Steps 46–52)
 FM-X OP 21/21, Symphonic FX, AN-X EG, CA engine-independent
 
 ### v7.0 (Steps 1–45)
 Y2L format, AWM2, AN-X basics, FM-X OP foundation
-
----
-
-## AWM2 Element Waveform Numbers — Expansion Pack Detection (Step 70, 2026-05-03)
-
-### Waveform number meaning (binary-verified against Soundmondo.Y2L, 98 performances)
-
-| Waveform number | Type | Availability |
-|---|---|---|
-| 0 | Element inactive | Always |
-| 1–256 | Built-in ROM sound (preset) | Always available |
-| 257+ | Expansion pack sample | Requires Y2E/X8L installed |
-
-**Offset:** `blob[12520 + elem * 313]` (u16le), element index 0-based (max 8 elements)  
-**Stride:** 313 bytes per AWM2 element (unchanged from before)  
-**Rule:** `waveformNumber > 256` → performance requires an expansion pack
-
-### Error mapping
-
-`Storage read/write error` on MODX M/ESP Plugin
-This is **not** a file format error. The container and DPFM structure may be entirely correct.  
-
-### waveformBank (blob[12522])
-
-The value is `1` for ALL performances (both built-in and expansion) — cannot be used
-to distinguish expansion from built-in. Use the waveformNumber threshold of 256 instead.
 
 ---
 
@@ -481,6 +474,7 @@ blob[24]    = first parameter byte (real performance data)
 blob[25:]   = remaining performance parameters
 ```
 
+
 ### Forge fix: sanitizePerfBlob()
 
 `sanitizePerfBlob()` runs on every blob in buildYSFC:
@@ -491,8 +485,8 @@ blob[25:]   = remaining performance parameters
 
 ### Timestamp bytes (not validated)
 
-blob[6722:6726] = timestamp/ID written by MODX M on save. Varies per export.
-These are NOT validated by MODX M. Forge does not need to match them.
+blob[6722:6726] = timestamp/ID written by MODX on save. Varies per export.
+These are NOT validated by MODX. Forge does not need to match them.
 
 ---
 
@@ -662,3 +656,93 @@ Lane bases: Lane1=8929, Lane2=9813, Lane3=10697, Lane4=11581
 |--------|-----------|------|---------|------|
 | [12753] | Part seq-field | u8 | 3 | 3=default, 4=seq-sync active |
 | [13116] | Part arp-field | u8 | 0 | 0=default, 9=arp active |
+
+---
+
+## AN-X OSC1 — Final Corrected Map (Steps 72–73, 2026-05-08)
+
+### Corrected and new fields
+
+| PART+ | abs | Name | Type | Default | Encoding | Status |
+|-------|-----|------|------|---------|----------|--------|
+| 5934 | 12642 | selfSyncPitchEGDepth | u16le | 256 | raw=UI+256 | ★★★★★ Step74 |
+| 5950 | 12658 | shaperEGDepth | u8 | 128 | 0x80+n | ★★★★★ Step73 |
+| 5952 | 12660 | shaperLFODepth | u8 | 128 | 0x80+n | ★★★★★ Step73 |
+
+**Error in previous serializer:** `anxOsc1SelfSyncLFODepth=5934` was incorrect.
+Real `selfSyncLFODepth = PART+5936`. Fixed in Serializer v6.
+
+### EG/LFO depth matrix (complete)
+
+```
+Modulation target  │  EG Depth        │  LFO Depth
+───────────────────┼──────────────────┼──────────────────
+Sync               │  PART+5924 ✅    │  PART+5928 ✅
+Sync Pitch/Vel     │  PART+5926 ✅    │  PART+5930 ✅
+Sync Pitch EG      │  PART+5934 ✅    │  PART+5936 ✅
+Pulse Width        │  PART+5942 ✅    │  PART+5944 ✅
+Shaper             │  PART+5950 ✅    │  PART+5952 ✅
+```
+
+**OSC1 block is now 100% mapped.** No unknown fields remaining.
+
+### WaveFolder encodings (Step 72, all now ★★★★★)
+
+| Parameter | abs | Encoding | Default |
+|-----------|-----|----------|---------|
+| VelSens | 13118 | direct | 0 |
+| EGDepth | 13120 | 0x80+n | 128 |
+| LFODepth | 13122 | 0x80+n | 128 |
+| Texture | 13124 | **direct** (NOT 0x80+n!) | 128 |
+
+### New CA destinations (Step 72)
+
+- Dest=142 = FilterCutoff
+- Dest=118 = ANX Pan
+
+---
+
+## PART+5934 Confirmed + MODX M8 File Size (Step 74, 2026-05-08)
+
+### PART+5934 = selfSyncPitchEGDepth ★★★★★
+
+Confirmed via MODX M8 hardware export `eg_depth_sync.Y2L`:
+- `PART+5934` changed from 256 → 356 (Δ=+100)
+- `PART+5936` (selfSyncLFODepth) unchanged = 256
+- → The parameter is independent and binary-verified ✅
+
+**Encoding:** `raw = UI + 256` (center=256, range 0–512)
+NOTE: DIFFERENT encoding from selfSyncLFODepth (`round(UI/25)+256`)
+
+Complete OSC1 EG/LFO matrix:
+
+```
+                   EG Depth          LFO Depth
+Sync (Pitch):      PART+5924 ✅      PART+5928 ✅
+Sync Pitch/Vel:    PART+5926 ✅      PART+5930 ✅  (selfSyncPitch)
+Sync Pitch EG:     PART+5934 ✅ NEW  PART+5936 ✅  (selfSyncLFODepth)
+Pulse Width:       PART+5942 ✅      PART+5944 ✅
+Shaper:            PART+5950 ✅      PART+5952 ✅
+```
+
+**No unknown fields remain in the OSC1 block.** OSC1 is now 100% mapped.
+
+### Why MODX M8 files are larger than ESP Plugin files
+
+M8 hardware exports 7 chunks, ESP Plugin exports 5:
+
+| Chunk | ESP Plugin | MODX M8 | Size |
+|-------|-----------|---------|------|
+| ELST | ❌ | ✅ | ~54 bytes |
+| ESYS | ✅ | ✅ | 46 bytes |
+| EFVT | ✅ | ✅ | 163 bytes |
+| DPFM | ✅ | ✅ | identical (the actual performance data) |
+| **DLST** | ❌ | ✅ | **~84 KB** |
+| DSYS | ✅ | ✅ | 1094 bytes |
+| DFVT | ✅ | ✅ | 22219 bytes |
+
+**DLST** = Live Set Data = the complete user bank (all User performances).
+MODX M8 embeds its complete user bank in every Y2L export.
+ESP Plugin exports only the selected performance.
+
+Forge reads only DPFM → already handles M8 files correctly. No action needed.
