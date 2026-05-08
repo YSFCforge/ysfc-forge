@@ -18,10 +18,10 @@ Changelog v6.0 (2026-05-03 — Container-struktur fix, korrekt build_library):
   CONTAINER-STRUKTUR FULLT DOKUMENTERAD:
     EPFM directory: [72:136] = 8 slots × 8 bytes (tag + absolut fil-offset)
     EPFM katalog: [280]=0x00, [281:285]=b'EPFM', [285:289]=catalog_size,
-                  [289:353]=stream[0:64], sedan overflow till ESYS
+                  [289:353]=stream[0:64], sedan overflow to ESYS
     DPFM: dp[0:4]=count, dp[4:8]='Data', dp[8:12]=blob0_size, dp[12:]=blob0
     Entr-record: [0:4]=blob_size, [4:8]=blob_dp_off, [11]=entry_index, [26:]=namn
-    ESYS/DSYS/EFVT/DFVT: konstanta storlekar, identiska för alla engines.
+    ESYS/DSYS/EFVT/DFVT: konstanta storlekar, identiska för all engines.
 
 Changelog v5.3 (2026-04-26 — Steg 60: AN-X EG fix, komplett FX-tabell, CA destinations):
 
@@ -42,13 +42,13 @@ Changelog v5.3 (2026-04-26 — Steg 60: AN-X EG fix, komplett FX-tabell, CA dest
     Dessutom: anxOsc1EGDepth=5942, anxOsc1LFODepth=5944 (ny!)
               anxOsc2EGDepth=6067, anxOsc2LFODepth=6069 (ny!)
 
-  KOMPLETT FX_TYPE_INDEX TABELL (Steg 60, 56 InsA-typer):
-    Inkluderar alla 51 från Effect Type List + 4 MODX M-specifika
+  COMPLETE FX_TYPE_INDEX TABELL (Step 60, 56 InsA-typer):
+    Inkluderar all 51 från Effect Type List + 4 MODX M-specifika
     (WAH=1280, LO-FI=1424, TECH=1616, MISC=1672).
     Gäller för BÅDE InsertionA och InsertionB — samma tabell!
     CrossDelay korrigerat: 130 → 256.
 
-  CA DESTINATIONS UTÖKAD (Steg 60, 17 kända värden):
+  CA DESTINATIONS UTÖKAD (Step 60, 17 kända värden):
     InsA Param-serie: raw = param_nr (1-24, linjärt)
     InsB: raw=25 (fast), param_nr lagras i CA+11
     Rev Send=50, Var Send=51, Element Level=60, Element Pan=61,
@@ -67,15 +67,15 @@ Changelog v5.2 (2026-04-26 — CA engine-oberoende bekräftat, Steg 57-59):
     0 = PitchBend
     1 = ModWheel (default)
     8 = Knob1, 9 = Knob2, 10 = Knob3
-    (2-7: AfterTouch, FC, FS etc. — ej verifierade)
+    (2-7: AfterTouch, FC, FS etc. — not verifierade)
 
   CA DESTINATION ENCODING ★★★★★:
     1  = Volume (default)
     85 = Filter Cutoff
 
-  FM-X LFO TEMPONOTE komplett (Steg 57):
+  FM-X LFO TEMPONOTE komplett (Step 57):
     abs=7205 (PART+497), raw=list_idx+5, default=11=1/4
-    Komplett tabell: raw 5-24 = 1/16 till 1/4×64
+    Komplett tabell: raw 5-24 = 1/16 to 1/4×64
 
   AN-X OSC EG KOLLISION dokumenterad (v5.1):
     OSC2/3 EG-fält delar adresser med PulseWidth-block → ★★☆☆☆
@@ -86,9 +86,9 @@ Changelog v5.1 (2026-04-26 — AN-X OSC EG kollisionsfix, CA-struktur):
     OSC2 EG-fält (5936-5942) kolliderar med OSC1 PulseWidth (5936-5944).
     OSC3 EG-fält (6061-6067) kolliderar med OSC2 PulseWidth (6061-6069).
     Dessa fält är markerade ★★☆☆☆ tills binärverifiering avgör rätt sub-tabell.
-    OSC1 EG (5811-5817) och alla OSC EG Release-tider (5976/6101/6226) är opåverkade ★★★★★.
+    OSC1 EG (5811-5817) och all OSC EG Release-tider (5976/6101/6226) är opåverkade ★★★★★.
 
-  CONTROLLER ASSIGN — komplett struktur (Steg 57-58):
+  CONTROLLER ASSIGN — komplett struktur (Step 57-58):
     22-byte CA-entry, stride=22, identisk layout på PART och PERF Common-nivå.
     PART CA: 16 entries, abs=8220+(ca_idx×22), ca_idx=0-15
     PERF CA: N entries, abs=2451+(ca_idx×22), ca_idx=0-7 (Knob1-8)
@@ -96,7 +96,7 @@ Changelog v5.1 (2026-04-26 — AN-X OSC EG kollisionsfix, CA-struktur):
                       Param1(+11), Param2(+13), Polarity(+15), Depth(+17)
     Source enum bekräftad: PB=0, MW=1, Knob1=8, Knob2=9, Knob3=10
 
-  FM-X LFO TEMPONOTE komplett (Steg 57, 1 fil + 1 bild):
+  FM-X LFO TEMPONOTE komplett (Step 57, 1 fil + 1 bild):
     fmxPartLfoTempoNote = abs 7205 (PART+497)
     Tabell: raw=5→1/16, ..., raw=11→1/4(default), ..., raw=14→1/2, ..., raw=24→1/4×64
     Formel: raw = list_index + 5
@@ -105,11 +105,11 @@ Changelog v5.1 (2026-04-26 — AN-X OSC EG kollisionsfix, CA-struktur):
 
 Changelog v5.0 (2026-04-26 — FM-X Part PEG + LFO komplett, Steg 53-56):
 
-  FM-X OP NAMNKORRIGERING (Steg 53):
+  FM-X OP NAMNKORRIGERING (Step 53):
     off=22: aegDelayTime → pegDecayTime  (PEG Decay Time, vänster panel)
     Bekräftad med PitchEGDecayTime_50.Y2L och TimeDecay_50.Y2L
 
-  FM-X PART PEG-BLOCK (Steg 54, abs 12477-12507) — 16 NYA FÄLT ★★★★★:
+  FM-X PART PEG-BLOCK (Step 54, abs 12477-12507) — 16 NYA FÄLT ★★★★★:
     fmxPegPitchVelSens  = abs 12477 (PART+5769) center=64, default=64
     fmxPegRandomPitch   = abs 12479 (PART+5771) direct u8, default=0
     fmxPegPitchKeyFollow= abs 12481 (PART+5773) keyfollow% round(pct*64/200)+64
@@ -127,10 +127,10 @@ Changelog v5.0 (2026-04-26 — FM-X Part PEG + LFO komplett, Steg 53-56):
     fmxPegDepth         = abs 12505 (PART+5797) enum [8,2,1,0.5]oct per raw 0-3
     fmxPegTimeKeySens   = abs 12507 (PART+5799) direct u8, default=0
 
-  FM-X PART 1st LFO (Steg 54-56) — 11 NYA FÄLT ★★★★★:
+  FM-X PART 1st LFO (Step 54-56) — 11 NYA FÄLT ★★★★★:
     fmxPartLfoTempoSync = abs 6770  (PART+62)  bool 0=Off,1=On
     fmxPartLfoLoop      = abs 6771  (PART+63)  bool INVERTERAT 0=On,1=Off
-    fmxPartLfoWave      = abs 7201  (PART+493) enum 0-12 (Triangle..User) KOMPLETT
+    fmxPartLfoWave      = abs 7201  (PART+493) enum 0-12 (Triangle..User) COMPLETE
     fmxPartLfoSpeed     = abs 7203  (PART+495) direct u8, default=32
     fmxPartLfoDelay     = abs 7207  (PART+499) direct u8, default=0
     fmxPartLfoFadeIn    = abs 7209  (PART+501) direct u8, default=0
@@ -140,34 +140,34 @@ Changelog v5.0 (2026-04-26 — FM-X Part PEG + LFO komplett, Steg 53-56):
     fmxPartLfoRandomSpeed=abs 7265  (PART+557) direct u8, default=0
     (abs 7205 / PART+497: okänd, default=11, troligen TempoNote)
 
-  FM-X PART 2nd LFO (Steg 54-56) — 5 FÄLT ★★★★★:
+  FM-X PART 2nd LFO (Step 54-56) — 5 FÄLT ★★★★★:
     fmxPart2ndLfoWave         = abs 12509 (PART+5801) enum 0-12
     fmxPart2ndLfoSpeedNormal  = abs 12511 (PART+5803) direct u8, default=30 (Extended=OFF)
     fmxPart2ndLfoKeyOnReset   = abs 12517 (PART+5809) bool, default=0=Off
     fmxPart2ndLfoExtended     = abs 12529 (PART+5821) bool, default=1=ON
     fmxPart2ndLfoSpeedExtended= abs 12531 (PART+5823) direct u8, default=60 (Extended=ON)
 
-  PEG DEPTH KORRIGERING (Steg 55-56):
-    8oct är default (raw=0), ej 0oct som tidigare antogs!
+  PEG DEPTH KORRIGERING (Step 55-56):
+    8oct är default (raw=0), not 0oct som tidigare antogs!
     Enum: raw=0→8oct, raw=1→2oct, raw=2→1oct, raw=3→0.5oct
 
-  LFO WAVE ENUM KOMPLETT (Steg 55-56, 13 värden):
+  LFO WAVE ENUM COMPLETE (Step 55-56, 13 värden):
     0=Triangle(default), 1=Triangle+, 2=SawUp, 3=SawDown,
     4=Squ1/4, 5=Squ1/3, 6=Square, 7=Squ2/3, 8=Squ3/4,
     9=Trapezoid, 10=S&H1, 11=S&H2, 12=User
 
-  LFO FadeOut center=64 bekräftad av Johan (Steg 56)
+  LFO FadeOut center=64 bekräftad av Johan (Step 56)
 
   FMX_PART_BASE KORRIGERINGAR:
     abs 12525-12543 omidentifierade: det är FM-X PART PEG+LFO blocket,
     INTE FM Color-relaterade fält som tidigare antagits.
     fmcLfoAmplWave/Speed/Depth (12521-12529) kvar oförändrade.
-    abs 12529 (PART+5821): fmxPart2ndLfoExtended (ej fmcLfoAmplDepth!)
-    abs 12531 (PART+5823): fmxPart2ndLfoSpeedExtended (ej okänd)
+    abs 12529 (PART+5821): fmxPart2ndLfoExtended (not fmcLfoAmplDepth!)
+    abs 12531 (PART+5823): fmxPart2ndLfoSpeedExtended (not okänd)
     abs 12533-12543: FM Color depth-fält med center=128 (oförändrade)
 
-Changelog v4.0 (2026-04-26 — FM-X OP layout KOMPLETT, Symphonic FX kartlagd):
-  FM-X OP LAYOUT — 21/21 fält kartlagda (Steg 46-52):
+Changelog v4.0 (2026-04-26 — FM-X OP layout COMPLETE, Symphonic FX kartlagd):
+  FM-X OP LAYOUT — 21/21 fält kartlagda (Step 46-52):
     KRITISK KORRIGERING: aegAttackTime(off=20) var fel — det är pegAttackTime!
       off=20 = pegAttackTime  (PEG Attack Time, vänster panel i ESP) ★★★★★
       off=32 = aegAttackTime  (AEG Attack Time, höger panel i ESP)   ★★★★★
@@ -184,12 +184,12 @@ Changelog v4.0 (2026-04-26 — FM-X OP layout KOMPLETT, Symphonic FX kartlagd):
       lvlKeyHi      = off=50  (u8 direct)                       ★★★★★
       curveLo       = off=52  (enum: -Linear=0,-Exp=1,+Exp=2,+Linear=3) ★★★★★
       curveHi       = off=54  (enum)                            ★★★★★
-  SYMPHONIC InsertionFX — 12/12 parametrar kartlagda (Steg 46-49):
-    Delar EQ-layout med Classic Flanger (fxA+14 till fxA+28)
+  SYMPHONIC InsertionFX — 12/12 parametrar kartlagda (Step 46-49):
+    Delar EQ-layout med Classic Flanger (fxA+14 to fxA+28)
     fxA+8 = Delay Offset (INTE LFO Wave som tidigare antogs!)
     LFO Speed encoding: raw = round(Hz * 23.7045) — LINJÄR ★★★★★
     Dry/Wet: raw=64=50/50, raw=127=100%Wet (center=64 direkt) ★★★★★
-  AN-X OSC EG Release — OSC1/2/3 kartlagda med stride=125 (Steg 46-47):
+  AN-X OSC EG Release — OSC1/2/3 kartlagda med stride=125 (Step 46-47):
     anxOsc1EGReleaseTime = rel=5976 ★★★★★
     anxOsc2EGReleaseTime = rel=6101 ★★★★★
     anxOsc3EGReleaseTime = rel=6226 ★★★★★
@@ -250,7 +250,7 @@ Changelog v2.9 (AN-X PEG Depth encoding solved):
 Changelog v2.8 (FM-X OP Decay2 confirmed):
   aegDecay2Time: off=36 ✅ (Decay2_50→abs 12712=OP1+36)
   Layout now: attackTime(20), decay1Time(34)✅, decay2Time(36)✅, releaseTime(38)✅
-  off=32 still unknown (default=0, possibly hold or extra decay stage)
+  off=32 sto unknown (default=0, possibly hold or extra decay stage)
   7 out of 8 FM-X OP time/level fields now binary verified ★★★★★
 
 Changelog v2.7 (Steg40: FM-X OP layout complete, AN-X OSC PEG verified):
@@ -303,7 +303,7 @@ Changelog v2.4 (AN-X baseline restored, synthesis AEG found):
 
 Changelog v2.3 (AN-X Part filter offsets + AN-X baseline lost/recovered):
   NOTE: AN-X_00_Init_Part1_Base.Y2L was overwritten with FM-X file in prev session
-    → Used cross-diff between 3 AN-X files to isolate parameters (still valid)
+    → Used cross-diff between 3 AN-X files to isolate parameters (sto valid)
   NEW AN-X Part Common fields — all binary verified ★★★★★:
     anxFEGDepthOffset(rel+157=abs 6865): center=64, ui=+50→114 ✅
     anxFilterCutoffOffset(rel+159=abs 6867): center=64, ui=+20→84 ✅
@@ -561,10 +561,10 @@ from typing import Any, Union
 # ── FIELD_REGISTRY ────────────────────────────────────────────────────────
 
 NOISE = {3, 35, 36, 63, 399, 710, 711, 6735, 6736, 6737, 7411, 7412}
-# Timestamp/checksum bytes uppdaterade av MODX vid varje Store — ignoreras i diffs:
-MODX_TIMESTAMP_BYTES = {23, 24, 6724, 6725}  # bekräftade Steg 50
-# CA+17 (abs = CA_PART_BASE + idx*22 + 17) är också MODX-internt —
-# ignoreras vid patch-editing (bekräftat Steg 60-61, ej synlig i ESP)
+# Timestamp/checksum bytes updated by MODX on every Store — ignored in diffs:
+MODX_TIMESTAMP_BYTES = {23, 24, 6724, 6725}  # confirmede Steg 50
+# CA+17 (abs = CA_PART_BASE + idx*22 + 17) is also MODX-internal —
+# ignored during patch-editing (confirmed Step 60-61, not visible in ESP)
 
 FMX_PART_STRIDE  = 6913
 FMX_OP_STRIDE    = 123
@@ -598,70 +598,70 @@ PART_COMMON = dict(
 PART_DETUNE_BASE = 6929
 PART_NOTESHIFT   = 6931
 
-# FM-X Part-level LFO fields (abs-adresser, verifierade Steg 54-56)
+# FM-X Part-level LFO fields (abs addresses, verified Steps 54-56)
 # 1st LFO: TempoSync/Loop i PART_COMMON (abs 6770-6771), övriga i LFO-subtabell
 FMX_PART_LFO = dict(
-    fmxPartLfoTempoSync=6770,    # abs, u8 bool 0=Off,1=On, default=0  ★★★★★ (Steg 56)
-    fmxPartLfoLoop=6771,         # abs, u8 bool INVERTERAT 0=On,1=Off, default=0=On  ★★★★★ (Steg 56)
-    fmxPartLfoWave=7201,         # abs, u8 enum 0-12, default=0=Triangle  ★★★★★ (Steg 55-56)
+    fmxPartLfoTempoSync=6770,    # abs, u8 bool 0=Off,1=On, default=0  ★★★★★ (Step 56)
+    fmxPartLfoLoop=6771,         # abs, u8 bool INVERTED 0=On,1=Off, default=0=On  ★★★★★ (Step 56)
+    fmxPartLfoWave=7201,         # abs, u8 enum 0-12, default=0=Triangle  ★★★★★ (Step 55-56)
     #   0=Triangle, 1=Triangle+, 2=SawUp, 3=SawDown, 4=Squ1/4, 5=Squ1/3,
     #   6=Square, 7=Squ2/3, 8=Squ3/4, 9=Trapezoid, 10=S&H1, 11=S&H2, 12=User
-    fmxPartLfoSpeed=7203,        # abs, u8 direct, default=32  ★★★★★ (Steg 54-55)
-    fmxPartLfoTempoNote=7205,    # abs, u8 tabellindex raw=list_idx+5, default=11=1/4  ★★★★★ (Steg 57)
-    #   Se FMX_LFO_TEMPONOTE dict för komplett tabell (raw 5-24 = 1/16 till 1/4×64)
-    fmxPartLfoDelay=7207,        # abs, u8 direct, default=0  ★★★★★ (Steg 56)
-    fmxPartLfoFadeIn=7209,       # abs, u8 direct, default=0  ★★★★★ (Steg 56)
-    fmxPartLfoHold=7211,         # abs, u8 direct, default=127  ★★★★★ (Steg 56)
-    fmxPartLfoFadeOut=7213,      # abs, u8 direct center/default=64  ★★★★★ (Steg 56, bekräftad av Johan)
-    fmxPartLfoKeyOnReset=7215,   # abs, u8 enum 0=Off,1=Each,2=1st, default=2  ★★★★★ (Steg 56)
-    fmxPartLfoRandomSpeed=7265,  # abs, u8 direct, default=0  ★★★★★ (Steg 56)
+    fmxPartLfoSpeed=7203,        # abs, u8 direct, default=32  ★★★★★ (Step 54-55)
+    fmxPartLfoTempoNote=7205,    # abs, u8 table-index raw=list_idx+5, default=11=1/4  ★★★★★ (Step 57)
+    #   See FMX_LFO_TEMPONOTE dict for complete table (raw 5-24 = 1/16 to 1/4×64)
+    fmxPartLfoDelay=7207,        # abs, u8 direct, default=0  ★★★★★ (Step 56)
+    fmxPartLfoFadeIn=7209,       # abs, u8 direct, default=0  ★★★★★ (Step 56)
+    fmxPartLfoHold=7211,         # abs, u8 direct, default=127  ★★★★★ (Step 56)
+    fmxPartLfoFadeOut=7213,      # abs, u8 direct center=default=64  ★★★★★ (Step 56, bekräftad av Johan)
+    fmxPartLfoKeyOnReset=7215,   # abs, u8 enum 0=Off,1=Each,2=1st, default=2  ★★★★★ (Step 56)
+    fmxPartLfoRandomSpeed=7265,  # abs, u8 direct, default=0  ★★★★★ (Step 56)
 )
-# 2nd LFO (abs-adresser, verifierade Steg 54-56)
+# 2nd LFO (abs addresses, verified Steps 54-56)
 FMX_PART_2ND_LFO = dict(
-    # 2nd LFO KOMPLETT 7/7 fält ★★★★★ (Steg 54-62)
+    # 2nd LFO COMPLETE 7/7 fields ★★★★★ (Steps 54-62)
     fmxPart2ndLfoWave=12509,          # abs, u8 enum 0-12 (samma som 1st LFO), default=0  ★★★★★
     fmxPart2ndLfoSpeedNormal=12511,   # abs, u8 direct, default=30 (aktiv när Extended=OFF)  ★★★★★
-    fmxPart2ndLfoPhase=12513,         # abs, u8 enum 0=0°,1=90°,2=180°,3=270°,4=360°, default=0  ★★★★★ (Steg 62)
-    fmxPart2ndLfoDelay=12515,         # abs, u8 direct, default=0  ★★★★★ (Steg 62)
+    fmxPart2ndLfoPhase=12513,         # abs, u8 enum 0=0°,1=90°,2=180°,3=270°,4=360°, default=0  ★★★★★ (Step 62)
+    fmxPart2ndLfoDelay=12515,         # abs, u8 direct, default=0  ★★★★★ (Step 62)
     fmxPart2ndLfoKeyOnReset=12517,    # abs, u8 bool 0=Off,1=On, default=0  ★★★★★
     fmxPart2ndLfoExtended=12529,      # abs, u8 bool 0=Off,1=On, default=1=ON  ★★★★★
     fmxPart2ndLfoSpeedExtended=12531, # abs, u8 direct, default=60 (aktiv när Extended=ON)  ★★★★★
-    # Destination/Depth-matris (17 fält, abs=12547+): ej kartlagd
-    # Pitch Mod ×8 OPs + Amp Mod ×8 OPs + Filter Mod ×1 = default=0 alla
+    # Destination/Depth matrix (17 fields, abs=12547+): not mapped
+    # Pitch Mod ×8 OPs + Amp Mod ×8 OPs + Filter Mod ×1 = default=0 all
 )
-# FM-X Part PEG block (abs-adresser, verifierade Steg 54-55)
-# Encoding PEG Levels: center=50 (raw = ui + 50, spann -50 till +50)
+# FM-X Part PEG block (abs addresses, verified Steps 54-55)
+# Encoding PEG Levels: center=50 (raw = ui + 50, range -50 to +50)
 # Encoding PEG Depth: enum [8,2,1,0.5]oct per raw 0-3 (8oct=default!)
 # Encoding PitchKeyFollow: raw = round(pct*64/200) + 64 (AWM2-identisk)
 # Encoding CenterKey: Yamaha note (C-2=0), C3=60=default
 FMX_PART_PEG = dict(
-    fmxPegPitchVelSens=12477,    # abs, u8 center=64, default=64  ★★★★★ (Steg 54)
-    fmxPegRandomPitch=12479,     # abs, u8 direct, default=0  ★★★★★ (Steg 54)
-    fmxPegPitchKeyFollow=12481,  # abs, u8 raw=round(pct*64/200)+64, default=96=100%  ★★★★★ (Steg 54-55)
-    fmxPegCenterKey=12483,       # abs, u8 Yamaha note (C-2=0), default=60=C3  ★★★★★ (Steg 54)
-    fmxPegInitialLevel=12485,    # abs, u8 center=50, default=50  ★★★★★ (Steg 54)
-    fmxPegAttackLevel=12487,     # abs, u8 center=50, default=50  ★★★★★ (Steg 54)
-    fmxPegDecay1Level=12489,     # abs, u8 center=50, default=50  ★★★★★ (Steg 54)
-    fmxPegDecay2Level=12491,     # abs, u8 center=50, default=50  ★★★★★ (Steg 54)
-    fmxPegReleaseLevel=12493,    # abs, u8 center=50, default=50  ★★★★★ (Steg 54)
-    fmxPegAttackTime=12495,      # abs, u8 direct, default=0  ★★★★★ (Steg 54)
-    fmxPegDecay1Time=12497,      # abs, u8 direct, default=0  ★★★★★ (Steg 54)
-    fmxPegDecay2Time=12499,      # abs, u8 direct, default=0  ★★★★★ (Steg 54)
-    fmxPegReleaseTime=12501,     # abs, u8 direct, default=0  ★★★★★ (Steg 54)
-    fmxPegDepthVelSens=12503,    # abs, u8 direct, default=0  ★★★★★ (Steg 54)
-    fmxPegDepth=12505,           # abs, u8 enum raw 0-3: [8oct,2oct,1oct,0.5oct], default=0=8oct  ★★★★★ (Steg 55-56)
-    fmxPegTimeKeySens=12507,     # abs, u8 direct, default=0  ★★★★★ (Steg 54)
+    fmxPegPitchVelSens=12477,    # abs, u8 center=64, default=64  ★★★★★ (Step 54)
+    fmxPegRandomPitch=12479,     # abs, u8 direct, default=0  ★★★★★ (Step 54)
+    fmxPegPitchKeyFollow=12481,  # abs, u8 raw=round(pct*64/200)+64, default=96=100%  ★★★★★ (Step 54-55)
+    fmxPegCenterKey=12483,       # abs, u8 Yamaha note (C-2=0), default=60=C3  ★★★★★ (Step 54)
+    fmxPegInitialLevel=12485,    # abs, u8 center=50, default=50  ★★★★★ (Step 54)
+    fmxPegAttackLevel=12487,     # abs, u8 center=50, default=50  ★★★★★ (Step 54)
+    fmxPegDecay1Level=12489,     # abs, u8 center=50, default=50  ★★★★★ (Step 54)
+    fmxPegDecay2Level=12491,     # abs, u8 center=50, default=50  ★★★★★ (Step 54)
+    fmxPegReleaseLevel=12493,    # abs, u8 center=50, default=50  ★★★★★ (Step 54)
+    fmxPegAttackTime=12495,      # abs, u8 direct, default=0  ★★★★★ (Step 54)
+    fmxPegDecay1Time=12497,      # abs, u8 direct, default=0  ★★★★★ (Step 54)
+    fmxPegDecay2Time=12499,      # abs, u8 direct, default=0  ★★★★★ (Step 54)
+    fmxPegReleaseTime=12501,     # abs, u8 direct, default=0  ★★★★★ (Step 54)
+    fmxPegDepthVelSens=12503,    # abs, u8 direct, default=0  ★★★★★ (Step 54)
+    fmxPegDepth=12505,           # abs, u8 enum raw 0-3: [8oct,2oct,1oct,0.5oct], default=0=8oct  ★★★★★ (Step 55-56)
+    fmxPegTimeKeySens=12507,     # abs, u8 direct, default=0  ★★★★★ (Step 54)
 )
 # Part-level LFO fields (PART_BLOCK_START=6708 + rel) — AWM2/generic
 # Verified: PART_BLOCK offsets 74,75,505,507,509,519
 PART_LFO = dict(
-    partLfoTempoSync=74,    # u8 bool default=0  (AWM2, rel från PART_BASE)
+    partLfoTempoSync=74,    # u8 bool default=0  (AWM2, rel from PART_BASE)
     partLfoLoop=75,         # u8 bool default=0  (AWM2)
     partLfoWave=505,        # u8 enum default=0  (AWM2) — FM-X använder FMX_PART_LFO!
     partLfoSpeed=507,       # u8 direct default=32  (AWM2)
     partLfoTempoNote=509,   # u8 enum default=11  (AWM2)
     partLfoKeyOnReset=519,  # u8 direct default=2=On  (AWM2)
-    # OBS: FM-X Part LFO använder ANDRA absoluta adresser — se FMX_PART_LFO dict
+    # NOTE: FM-X Part LFO använder ANDRA absoluta adresser — se FMX_PART_LFO dict
     # FM-X: Wave=7201, Speed=7203, Delay=7207, FadeIn=7209, Hold=7211,
     #        FadeOut=7213(center=64), KeyOnReset=7215, RandomSpeed=7265
 )
@@ -735,14 +735,18 @@ ANX_OSC = dict(
     anxOsc2SelfSyncPitch=6055,     anxOsc3SelfSyncPitch=6180,
     anxOsc1SelfSyncVelSens=5932,   # u16 LE center=256  ★★★☆☆
     anxOsc2SelfSyncVelSens=6057,   anxOsc3SelfSyncVelSens=6182,
-    anxOsc1SelfSyncLFODepth=5934,  # u16 LE center=256  ★★★☆☆
-    anxOsc2SelfSyncLFODepth=6059,  anxOsc3SelfSyncLFODepth=6184,
-    # Pulse Width — KORRIGERADE OFFSETS (Steg 61, binärverifierade)
-    # anxOsc1PulseWidth = PART+5938 (EJ 5936 som MIDI-formel antydde!)
+    # PART+5934 = selfSyncPitchEGDepth — EG modulation depth for Self Sync Pitch
+    # Confirmed Step74 via MODX M8: changes independently of selfSyncLFODepth(5936) ✅
+    # Encoding: raw = UI + 256  (center=256, range 0–512, default=256=UI 0)
+    # NOTE: DIFFERENT encoding from selfSyncLFODepth (which uses round(UI/25)+256)
+    anxOsc1SelfSyncPitchEGDepth=5934,  # u16le  raw=UI+256  center=256  ★★★★★ (Steg74)
+    anxOsc2SelfSyncPitchEGDepth=6059,  anxOsc3SelfSyncPitchEGDepth=6184,
+    # Pulse Width — KORRIGERADE OFFSETS (Step 61, binärverifierade)
+    # anxOsc1PulseWidth = PART+5938 (NOT 5936 as MIDI formula suggested!)
     # Encoding: raw = round(pct * 256 / 100), 50%=128(default), 60%=154
     anxOsc1PulseWidthVelSens=5936, # u16 LE center=256  ★★★☆☆ (MIDI-formel)
     anxOsc2PulseWidthVelSens=6061, anxOsc3PulseWidthVelSens=6186,
-    anxOsc1PulseWidth=5938,        # u8 raw=round(pct*256/100), 50%→128, 60%→154  ★★★★★ (Steg 61)
+    anxOsc1PulseWidth=5938,        # u8 raw=round(pct*256/100), 50%→128, 60%→154  ★★★★★ (Step 61)
     anxOsc2PulseWidth=6063,        anxOsc3PulseWidth=6188,  # stride=125
     anxOsc1PulseWidthEGDepth=5940, # u16 LE center=256  ★★★☆☆
     anxOsc2PulseWidthEGDepth=6065, anxOsc3PulseWidthEGDepth=6190,
@@ -751,33 +755,39 @@ ANX_OSC = dict(
     # Wave Shaper (u16 LE)
     anxOsc1WaveShaper=5946,        # u16 LE direct default=0  ★★★☆☆
     anxOsc2WaveShaper=6071,        anxOsc3WaveShaper=6196,
-    anxOsc1WaveShaperVelSens=5948, # u16 LE center=256  ★★★☆☆
+    anxOsc1WaveShaperVelSens=5948, # u8 direct default=0  ★★★★★ (Steg72)
     anxOsc2WaveShaperVelSens=6073, anxOsc3WaveShaperVelSens=6198,
+    # Osc EG Depth → Shaper / Osc LFO Depth → Shaper (Step72, ★★★★★)
+    # Encoding: 0x80+n (center=128), default=128 (=UI 0)
+    anxOsc1ShaperEGDepth=5950,     # u8  0x80+n  center=128  ★★★★★
+    anxOsc2ShaperEGDepth=6075,     anxOsc3ShaperEGDepth=6200,
+    anxOsc1ShaperLFODepth=5952,    # u8  0x80+n  center=128  ★★★★★
+    anxOsc2ShaperLFODepth=6077,    anxOsc3ShaperLFODepth=6202,
     # Ring Mod (MIDI OSC addr 0x28=40, same stride=125)
     anxOsc1RingModDepth=5958,      # u16 LE direct default=0  ✅ (0→50)
     anxOsc2RingModDepth=6083,      anxOsc3RingModDepth=6208,
-    # OSC EG sub-table — KORRIGERADE OFFSETS (Steg 60, binärverifierade med 16 filer)
-    # Gamla MIDI-formel-baserade offsets (5813-5817) var FEL.
-    # Korrekt sub-tabell base = PART+5970 (ej 5779+34=5813 som MIDI antydde)
+    # OSC EG sub-table — KORRIGERADE OFFSETS (Step 60, binärverifierade med 16 filer)
+    # Old MIDI-formula-based offsets (5813-5817) were WRONG.
+    # Correct sub-tabell base = PART+5970 (not 5779+34=5813 som MIDI antydde)
     # OSC1 EG: abs 12678-12684 (PART rel 5970-5976)
-    anxOsc1EGAttackTime=5970,      # u16 LE direct default=0  ★★★★★ (Steg 60, korrigerat från 5813)
-    anxOsc1EGDecayTime=5972,       # u16 LE default=160  ★★★★★ (korrigerat från 5815)
-    anxOsc1EGSustainLevel=5974,    # u16 LE direct default=0  ★★★★★ (korrigerat från 5817)
+    anxOsc1EGAttackTime=5970,      # u16 LE direct default=0  ★★★★★ (Step 60, corrected from 5813)
+    anxOsc1EGDecayTime=5972,       # u16 LE default=160  ★★★★★ (corrected from 5815)
+    anxOsc1EGSustainLevel=5974,    # u16 LE direct default=0  ★★★★★ (corrected from 5817)
     anxOsc1EGReleaseTime=5976,     # u16 LE direct default=160  ★★★★★ (var korrekt, Steg 46)
-    # OSC EG Depth/LFODepth (ej kollision med EG — separata adresser):
-    anxOsc1EGDepth=5942,           # u16 LE ★★★★★ (Steg 60, NY)
-    anxOsc1LFODepth=5944,          # u16 LE ★★★★★ (Steg 60, NY)
-    # OSC2 EG: stride=125 från OSC1 ✅
-    anxOsc2EGAttackTime=6095,      # ★★★★★ (korrigerat från 5938)
-    anxOsc2EGDecayTime=6097,       # ★★★★★ (korrigerat från 5940)
-    anxOsc2EGSustainLevel=6099,    # ★★★★★ (korrigerat från 5942)
+    # OSC EG Depth/LFODepth (not kollision med EG — separata adresser):
+    anxOsc1EGDepth=5942,           # u16 LE ★★★★★ (Step 60, NY)
+    anxOsc1LFODepth=5944,          # u16 LE ★★★★★ (Step 60, NY)
+    # OSC2 EG: stride=125 from OSC1 ✅
+    anxOsc2EGAttackTime=6095,      # ★★★★★ (corrected from 5938)
+    anxOsc2EGDecayTime=6097,       # ★★★★★ (corrected from 5940)
+    anxOsc2EGSustainLevel=6099,    # ★★★★★ (corrected from 5942)
     anxOsc2EGReleaseTime=6101,     # ★★★★★ (var korrekt)
-    anxOsc2EGDepth=6067,           # ★★★★★ (Steg 60, stride=125 från OSC1EGDepth)
-    anxOsc2LFODepth=6069,          # ★★★★★ (Steg 60)
-    # OSC3 EG: stride=125 från OSC2 ✅
-    anxOsc3EGAttackTime=6220,      # ★★★★★ (korrigerat från 6063)
-    anxOsc3EGDecayTime=6222,       # ★★★★★ (korrigerat från 6065)
-    anxOsc3EGSustainLevel=6224,    # ★★★★★ (korrigerat från 6067)
+    anxOsc2EGDepth=6067,           # ★★★★★ (Step 60, stride=125 from OSC1EGDepth)
+    anxOsc2LFODepth=6069,          # ★★★★★ (Step 60)
+    # OSC3 EG: stride=125 from OSC2 ✅
+    anxOsc3EGAttackTime=6220,      # ★★★★★ (corrected from 6063)
+    anxOsc3EGDecayTime=6222,       # ★★★★★ (corrected from 6065)
+    anxOsc3EGSustainLevel=6224,    # ★★★★★ (corrected from 6067)
     anxOsc3EGReleaseTime=6226,     # ★★★★★ (var korrekt)
 )
 # AN-X Filter sub-tables: DPFM_rel = MIDI_hex_addr + filter_base
@@ -810,18 +820,18 @@ ANX_MODIFIER = dict(
     anxWaveFolderLFODepth=6414,    # u16 LE center=256  ★★★☆☆ (MIDI 0x06+6408)
     anxWaveFolderTexture=6416,     # u16 LE direct default=256  ★★★☆☆ (MIDI 0x08+6408)
     anxWaveFolderType=6418,        # u16 LE enum default=1=Hard  ★★★☆☆ (MIDI 0x0A+6408)
-    anxModEGAttackTime=6420,       # u16 LE direct default=0  ★★★★★ BINÄRVERIFIERAD (Steg 46)
+    anxModEGAttackTime=6420,       # u16 LE direct default=0  ★★★★★ BINÄRVERIFIERAD (Step 46)
     anxModEGDecayTime=6422,        # u16 LE default=160  ★★★☆☆ (MIDI 0x0E+6408)
     anxModEGSustainLevel=6424,     # u16 LE direct default=0  ★★★☆☆ (MIDI 0x10+6408)
     anxModEGReleaseTime=6426,      # u16 LE default=160  ★★★☆☆ (MIDI 0x12+6408)
 )
-# Insertion FX — Classic Flanger (16/16) och Symphonic (12/12) KOMPLETT ✅
+# Insertion FX — Classic Flanger (16/16) och Symphonic (12/12) COMPLETE ✅
 # ── INSERTION FX TYPE INDEX (ENGINE-OBEROENDE) ────────────────────────────
 # Gäller för BÅDE InsertionA (PART+275) och InsertionB (PART+332)
 # Encoding: lo = type_index & 0x7F,  hi = (type_index >> 7) & 0x7F
 # Källa: Effect Type List.xlsx + binärverifiering Steg 46-60
 # ★★★★★ = binärverifierat  |  ★★★★☆ = från Effect Type List
-# OBS: SPX HALL (130) och CROSS DELAY (256) är OLIKA — SPXHall lo=2,hi=1 (130)
+# NOTE: SPX HALL (130) och CROSS DELAY (256) är OLIKA — SPXHall lo=2,hi=1 (130)
 #      CrossDelay lo=0,hi=2 (256). Vår Steg 60-mätning av CrossDelay-filen var fel.
 FX_TYPE_INDEX = {
     # ── THRU ──────────────────────────────────────────────────────────────
@@ -885,7 +895,7 @@ FX_TYPE_INDEX = {
     'UNI COMP DOWN':        1072,   # ★★★★☆
     'UNI COMP UP':          1080,   # ★★★★☆
     'PARALLEL COMP':        1088,   # ★★★★☆
-    # ── WAH (MODX M, ej i Effect Type List xlsx) ──────────────────────────
+    # ── WAH (MODX M, not i Effect Type List xlsx) ──────────────────────────
     'VCM AUTO WAH':         1280,   # ★★★★★ lo=0,hi=10
     # ── LO-FI (MODX M) ────────────────────────────────────────────────────
     'NOISY':                1424,   # ★★★★★ lo=16,hi=11
@@ -893,7 +903,7 @@ FX_TYPE_INDEX = {
     'SLICE':                1616,   # ★★★★★ lo=80,hi=12
     # ── MISC (MODX M) ─────────────────────────────────────────────────────
     'PRESENCE':             1672,   # ★★★★★ lo=8,hi=13
-    'WAVE FOLDER':          1704,   # ★★★★★ lo=40,hi=13 — FX-TABELL KOMPLETT! (Steg 61)
+    'WAVE FOLDER':          1704,   # ★★★★★ lo=40,hi=13 — FX-TABELL COMPLETE! (Step 61)
 }
 
 # Omvänd lookup: TypeIndex → namn
@@ -930,7 +940,7 @@ FXB_BASE = 332   # InsertionB: PART+332
 # fxA+32: FB High Damp (raw=value*10, default=9=0.9)           ✅
 # fxA+34: Analog Feel  (direct, default=0)                     ✅
 #
-# SYMPHONIC — specifika params (Steg 46-49, 12/12 ★★★★★):
+# SYMPHONIC — specifika params (Step 46-49, 12/12 ★★★★★):
 # fxA+4:  LFO Speed   (raw=round(Hz*23.7), default=11≈0.46Hz)  ✅ SAMMA formel som CF!
 # fxA+6:  LFO Depth   (direct, default=25)                     ✅
 # fxA+8:  Delay Offset (tabellindex, default=1≈0ms, 1ms→10)   ✅ (INTE LFO Wave!)
@@ -953,14 +963,14 @@ COMMON_FIELDS = dict(
     revSend=124, varSend=130,
 )
 
-# FM-X OP Routing Matrix abs=6730-6793 (Steg 62)
-# 64 bytes, alla default=1 = alla OP-kopplingarna aktiva
+# FM-X OP Routing Matrix abs=6730-6793 (Step 62)
+# 64 bytes, all default=1 = all OP-kopplingarna aktiva
 # 8 OPs × 8 kopplingsbytes = 64 bytes
 # Ändras ALDRIG via ESP UI — interna algoritm-defaults
 # Ska INTE skrivas vid patch-editing
-FMX_OP_ROUTING_MATRIX_ABS = (6730, 6793)  # (start, end), default=1 alla
+FMX_OP_ROUTING_MATRIX_ABS = (6730, 6793)  # (start, end), default=1 all
 
-# AWM2 After Touch Assign register (Steg 61) ★★★★★
+# AWM2 After Touch Assign register (Step 61) ★★★★★
 # Separat från CA-blocket (abs=8220+) — eget litet AT-register
 # Har sin EGEN destination-encoding (kortare lista än CA)
 AWM2_AT_ASSIGN = dict(
@@ -973,8 +983,8 @@ AT_DESTINATION = {
     9: 'FilterCutoff',  # ★★★★★
 }
 
-# OBS: OP Mute/Solo sparas INTE i YSFC (Steg 61, binärbekräftat)
-# Mute/Solo är real-time performance state — ändras ej i binärfilen vid Save.
+# NOTE: OP Mute/Solo sparas INTE i YSFC (Step 61, binärbekräftat)
+# Mute/Solo är real-time performance state — ändras not i binärfilen vid Save.
 
 FMX_PART_BASE = dict(
     # FM Color + algorithm sub-table (all at ODD abs offsets, u8 each)
@@ -1009,7 +1019,7 @@ FMX_PART_BASE = dict(
     fmxResonanceOffset=6869,    # u8 center=64 default=0  ✅ (rel+161)
 )
 # FM-X Part LFO TempoNote tabell (raw = list_index + 5)
-# Bekräftad med 1 fil + ESP-bild (Steg 57) ★★★★★
+# Bekräftad med 1 fil + ESP-bild (Step 57) ★★★★★
 FMX_LFO_TEMPONOTE = {
     5: "1/16",  6: "1/8 Tri.", 7: "1/16 Dot.", 8: "1/8",
     9: "1/4 Tri.", 10: "1/8 Dot.", 11: "1/4",   # 11=default
@@ -1019,7 +1029,7 @@ FMX_LFO_TEMPONOTE = {
     21: "1/4 x8", 22: "1/4 x16", 23: "1/4 x32", 24: "1/4 x64",
 }
 
-# Controller Assign structure (Steg 57-58) ★★★★★
+# Controller Assign structure (Step 57-58) ★★★★★
 # Identisk 22-byte layout på PART-nivå (16 entries) och PERF-nivå (8 entries)
 # PART CA: abs = CA_PART_BASE + ca_idx * CA_STRIDE  (ca_idx 0-15)
 # PERF CA: abs = CA_PERF_BASE + ca_idx * CA_STRIDE  (ca_idx 0-7, Knob1-8)
@@ -1037,27 +1047,27 @@ CA_ENTRY = dict(
     param1=11,       # u8 direct default=5  ★★★★★
     param2=13,       # u8 direct default=0  ★★★★★
     polarity=15,     # u8 bool 0=UNI,1=BI  ★★★★★
-    depth=17,        # u8 default=192=0xC0 — MODX-INTERNT, ej synlig parameter
+    depth=17,        # u8 default=192=0xC0 — MODX-INTERNT, not synlig parameter
                      # Uppdateras automatiskt av MODX vid varje Store (som timestamp-bytes)
-                     # Ska IGNORERAS vid patch-editing, ej skrivas ★★★★★
+                     # Ska IGNORERAS vid patch-editing, not skrivas ★★★★★
 )
 
-# CA Source enum (verifierad Steg 57-59, alla engines)
+# CA Source enum (verifierad Steg 57-59, all engines)
 CA_SOURCE = {
     0:  "PitchBend",   # ★★★★★
     1:  "ModWheel",    # ★★★★★ default
-    # 2: AfterTouch   # ej verifierad
-    # 3: FootCtrl     # ej verifierad
-    # 4: FootSw       # ej verifierad
-    # 5: Breath       # ej verifierad
-    # 6-7: CC         # ej verifierade
+    # 2: AfterTouch   # not verifierad
+    # 3: FootCtrl     # not verifierad
+    # 4: FootSw       # not verifierad
+    # 5: Breath       # not verifierad
+    # 6-7: CC         # not verifierade
     8:  "Knob1",      # ★★★★★
     9:  "Knob2",      # ★★★★★
     10: "Knob3",      # ★★★★★
-    # 11-15: Knob4-8  # ej verifierade
+    # 11-15: Knob4-8  # not verifierade
 }
 
-# CA Destination enum (verifierad Steg 57-60, alla engines)
+# CA Destination enum (verifierad Steg 57-60, all engines)
 # InsA Param-serie: raw = param_nr (1-24, linjärt). InsB: raw=25 alltid, param# i CA+11
 CA_DESTINATION = {
     1:   'Volume',          # ★★★★★ default
@@ -1077,11 +1087,11 @@ CA_DESTINATION = {
     100: 'Part Pan',        # ★★★★★ (0x64)
     105: 'Arp Gate Time',   # ★★★★★ (0x69)
     118: 'MS Length',       # ★★★★★ (0x76)
-    # Fler ej verifierade
+    # Fler not verifierade
 }
 
-# AWM2 ctrlSet — sitter i AWM2 element-data (ej i CA-blocket)
-# Adress ännu ej binärverifierad — väntar på element-nivå testfiler
+# AWM2 ctrlSet — sitter i AWM2 element-data (not i CA-blocket)
+# Adress ännu not binärverifierad — väntar på element-nivå testfiler
 # Different from Part-level AEG offsets (rel+141-147)
 ANX_SYNTH_AEG = dict(
     anxSynthAegAttack=12553,   # u8 direct default=0  ✅ (Attack_50→50)
@@ -1099,7 +1109,7 @@ PART_SUBTABLE = dict(
     portaTime=213,            # u8 direct default=64  ✅ (MIDI 0x08)
     portaMode=215,            # u8 bool default=1=FullTime  ✅ (MIDI 0x0A)
     # Part 3-band EQ (same offset=205, all engines)
-    partEqLowFreq=231,        # u8 freq-index default=54(=100Hz), 84Hz→64  ★★★★★ offset verif. (Steg 46)
+    partEqLowFreq=231,        # u8 freq-index default=54(=100Hz), 84Hz→64  ★★★★★ offset verif. (Step 46)
     partEqLowGain=233,        # u8 center=64 (dB*2.667+64) default=0dB  ✅ (MIDI 0x1C)
     partEqMidFreq=235,        # u8 freq-index default=141  ★★★☆☆ (MIDI 0x1E)
     partEqMidGain=237,        # u8 center=64 default=0dB  ✅ (MIDI 0x20)
@@ -1108,9 +1118,9 @@ PART_SUBTABLE = dict(
     partEqHighGain=243,       # u8 center=64 default=0dB  ✅ (MIDI 0x26)
 )
 FMX_OP_LAYOUT = dict(
-    # OP1_BASE=12676, stride=123 — KOMPLETT 21/21 fält ★★★★★ (v4.0)
+    # OP1_BASE=12676, stride=123 — COMPLETE 21/21 fält ★★★★★ (v4.0)
     # PRE-OP block (relativt OP1_BASE, negativa offsets)
-    keyOnReset=-4,           # u8 bool default=1=On  ★★★★★ (Steg 50)
+    keyOnReset=-4,           # u8 bool default=1=On  ★★★★★ (Step 50)
     freqMode=-2,             # u8 enum 0=Ratio,1=Fixed  ★★★★☆
     # Freq/Spectral block (off=0-14)
     coarse=0,                # u8 direct default=1  ✅
@@ -1118,9 +1128,9 @@ FMX_OP_LAYOUT = dict(
     detune=4,                # u8 center=15 default=0  ✅
     pitchKey=6,              # u8 direct default=0  ★★★★☆
     pitchVel=8,              # u8 center=7 default=0  ★★★★☆
-    spectralForm=10,         # u8 enum 0-6: 0=Sine,1=All1,2=All2,3=Odd1,4=Odd2,5=Res1,6=Res2  ★★★★★ (Steg 49-50)
-    spectralSkirt=12,        # u8 direct default=0  ★★★★★ (Steg 49)
-    spectralResonance=14,    # u8 direct default=0 (aktiv för Res1/Res2)  ★★★★★ (Steg 50)
+    spectralForm=10,         # u8 enum 0-6: 0=Sine,1=All1,2=All2,3=Odd1,4=Odd2,5=Res1,6=Res2  ★★★★★ (Step 49-50)
+    spectralSkirt=12,        # u8 direct default=0  ★★★★★ (Step 49)
+    spectralResonance=14,    # u8 direct default=0 (aktiv för Res1/Res2)  ★★★★★ (Step 50)
     # PEG block (off=16-20)
     pegInitialLevel=16,      # u8 direct default=50  ★★★★☆ (raw=50=UI+50)
     pegAttackLevel=18,       # u8 direct default=50  ✅ (Level_Attack_50→100)
@@ -1137,13 +1147,13 @@ FMX_OP_LAYOUT = dict(
     aegReleaseTime=38,       # u8 direct default=40  ✅
     aegHoldTime=40,          # u8 direct default=0   ✅
     # Key/Level scaling block (off=42-56)
-    aegTimeKeyFollow=42,     # u8 direct default=0 ("Time/Key" i ESP)  ★★★★★ (Steg 46)
+    aegTimeKeyFollow=42,     # u8 direct default=0 ("Time/Key" i ESP)  ★★★★★ (Step 46)
     level=44,                # u8 direct default=0   ✅
-    aegBreakPoint=46,        # u8 raw=MIDI_note-9, default=39=C3  ★★★★★ (Steg 51)
-    lvlKeyLo=48,             # u8 direct default=0 (Lvl/Key Lo)  ★★★★★ (Steg 50)
-    lvlKeyHi=50,             # u8 direct default=0 (Lvl/Key Hi)  ★★★★★ (Steg 50)
-    curveLo=52,              # u8 enum 0=-Linear,1=-Exp,2=+Exp,3=+Linear, default=0  ★★★★★ (Steg 50)
-    curveHi=54,              # u8 enum (same as curveLo), default=0  ★★★★★ (Steg 50)
+    aegBreakPoint=46,        # u8 raw=MIDI_note-9, default=39=C3  ★★★★★ (Step 51)
+    lvlKeyLo=48,             # u8 direct default=0 (Lvl/Key Lo)  ★★★★★ (Step 50)
+    lvlKeyHi=50,             # u8 direct default=0 (Lvl/Key Hi)  ★★★★★ (Step 50)
+    curveLo=52,              # u8 enum 0=-Linear,1=-Exp,2=+Exp,3=+Linear, default=0  ★★★★★ (Step 50)
+    curveHi=54,              # u8 enum (same as curveLo), default=0  ★★★★★ (Step 50)
     levelVel=56,             # u8 center=7 default=0  ★★★★☆
 )
 AWM2_ELEM_LAYOUT = dict(
@@ -1580,9 +1590,9 @@ def has_expansion_waveforms(blob: bytes) -> bool:
 
 
 BLOB_NAME_CORRECTIONS: dict[str, str] = {
-    # Korrekt blob[null+1:24] för Soundmondo-performances.
-    # Verifierat mot ESP_8_performances.Y2L (2026-05-04).
-    # Nyckel = performance-namn, värde = hex-bytes att skriva vid blob[24-len:24].
+    # Correct blob[null+1:24] for Soundmondo performances.
+    # Verified against ESP_8_performances.Y2L (2026-05-04).
+    # Key = performance name, value = hex bytes to write at blob[24-len:24].
     'CFX + FM EP +':    '00000000000000',    # blob[17:24]
     'Waterloo SM':      '000000000015bcc9fe',# blob[15:24]
     'Take on me SM':    '00000015bccea1',    # blob[17:24]
@@ -1591,20 +1601,20 @@ BLOB_NAME_CORRECTIONS: dict[str, str] = {
 
 
 def sanitize_perf_blob(blob: bytes) -> bytes:
-    """Korrigera blob[null+1:24] (name-padding + flash-adress).
+    """Correct blob[null+1:24] (name-padding + flash address).
 
-    Soundmondo.Y2L har felaktiga placeholder-värden i namnfältets
-    padding-area (blob[null+1:20]) och flash-adressfältet (blob[20:24]).
-    MODX validerar blob[20:24] vid inläsning → fel värde = Storage error.
+    Soundmondo.Y2L has incorrect placeholder values in the name field
+    padding area (blob[null+1:20]) and flash address field (blob[20:24]).
+    MODX validates blob[20:24] on load → wrong value = Storage error.
 
-    blob[4:20]  = namn (16 bytes, null-terminerat, zero-paddad)
-    blob[20:24] = flash-adress (0x15bcXXXX) eller 0x00000000
-    blob[24:]   = performance-parametrar
+    blob[4:20]  = name (16 bytes, null-terminated, zero-padded)
+    blob[20:24] = flash address (0x15bcXXXX) or 0x00000000
+    blob[24:]   = performance parameters
 
-    Verifierat mot ESP_8_performances.Y2L (2026-05-04).
+    Verified against ESP_8_performances.Y2L (2026-05-04).
     """
     b = bytearray(blob)
-    # Hitta null i namnfältet blob[4:24]
+    # Find null terminator in name field blob[4:24]
     null_pos = -1
     for i in range(4, 24):
         if b[i] == 0:
@@ -1613,10 +1623,10 @@ def sanitize_perf_blob(blob: bytes) -> bytes:
     if null_pos < 0 or null_pos >= 20:
         return bytes(b)  # 20-teckens namn, ingen padding att fixa
     name = b[4:null_pos].decode('ascii', errors='replace')
-    # Nollställ padding blob[null_pos+1:24]
+    # Zero out padding blob[null_pos+1:24]
     for i in range(null_pos + 1, 24):
         b[i] = 0
-    # Applicera känd korrekt flash-adress från tabell
+    # Apply known-correct flash address from table
     corr_hex = BLOB_NAME_CORRECTIONS.get(name)
     if corr_hex:
         corr = bytes.fromhex(corr_hex)
@@ -2659,7 +2669,7 @@ if __name__ == '__main__':
         ("waveformNumber",  14, (14,0),   None),    # C7 f St
         ("waveformNumber", 186, (186,0),  None),    # Hamburg Grand v01 St
         ("waveformNumber", 300, (44,1),   None),    # hi-byte test: 300=0x12C → (0x2C,0x01)
-        # New fields verified 2025-04-23 (Steg 33)
+        # New fields verified 2025-04-23 (Step 33)
         ("levelVelCurve",      0,    0,  None),    # direct: 3→0
         ("aegTimeVelSegment",  2,    2,  None),    # enum: direct
         ("aegTimeVel",        20,   84,  None),    # center=64: +20→84
