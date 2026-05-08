@@ -62,9 +62,9 @@ YSFC Forge skapades för att:
 
 | Verktyg | Fil | Vad det gör |
 |---------|-----|-------------|
-| **DIVA Patch Translator** | `tools/ysfc_diva_h2p_converter_v2_15.html` | Analysera och konvertera DIVA-patchar till Y2L/Y2U och läs in dem i Yamaha MODX M / ESP Plugin / Montage M |
-| **Vital Patch Translator** | `tools/ysfc_vital_converter_v4_12.html` | Analysera och konvertera Vital-patchar till Y2L/Y2U och läs in dem i Yamaha MODX M / ESP Plugin / Montage M |
-| **Synth1 Patch Translator** | `tools/ysfc_synth1_converter_v5_12.html` | Analysera och konvertera Synth1-patchar till Y2L/Y2U och läs in dem i Yamaha MODX M / ESP Plugin / Montage M |
+| **DIVA Patch Translator** | `tools/ysfc_diva_h2p_converter_v2_15.html` | Analysera DIVA-patchar och konvertera DIVA-patchar till Y2L/Y2U och läs in dem i Yamaha MODX M / ESP Plugin / Montage M |
+| **Vital Patch Translator** | `tools/ysfc_vital_converter_v4_12.html` | Analysera Vital-patchar och konvertera Vital-patchar till Y2L/Y2U och läs in dem i Yamaha MODX M / ESP Plugin / Montage M |
+| **Synth1 Patch Translator** | `tools/ysfc_synth1_converter_v5_12.html` | Analysera Synth1-patchar och konvertera Synth1-patchar till Y2L/Y2U och läs in dem i Yamaha MODX M / ESP Plugin / Montage M |
 
 🧰 Utilities
 
@@ -84,13 +84,13 @@ YSFC Forge skapades för att:
 *Forge Librarian — dra och släpp Y2L-filer, välj performances, exportera*
 ![Forge Librarian](../screenshots/image_ysfc_forge_v1_19.png)
 
-*Performance Editor — redigera FM-X, AWM2 och AN-X-parametrar direkt i webbläsaren*
+*Performance Editor — FM-X operatorredigerare med algoritmdiagram*
 ![Performance Editor](../screenshots/image_ysfc_performance_editor_v4.png)
 
 *ESP Librarian — performancelista med engine-detektering och beroendesammanfattning*
 ![ESP Librarian](../screenshots/image_ysfc_esp_librarian_v7.png)
 
-*DIVA Patch Translator — analysera och konvertera DIVA patches to Y2L + andra filformat (se också Vital Patch Translator and Synth1 Patch Translator)*
+*DIVA Patch Translator — Konvertera DIVA patches to Y2L + andra filformat (se också Vital Patch Translator and Synth1 Patch Translator)*
 ![DIVA Patch Translator](../screenshots/ysfc_diva_h2p_converter_v2_16.png)
 
 ---
@@ -127,7 +127,7 @@ YSFC Forge skapades för att:
 | Motion Sequencer | 100% |
 | Arp Common | 100% |
 | FX Types | 57 verifierade |
-| Totalt kartlagda parametrar | ~665 |
+| Totalt kartlagda parametrar | ~668 |
 
 Detaljerade parametertabeller och binär dokumentation finns i:
 
@@ -157,7 +157,7 @@ Detaljerade parametertabeller och binär dokumentation finns i:
 
 # 🧠 Tekniska höjdpunkter
 
-- ~665 kartlagda parametrar
+- ~668 kartlagda parametrar
 - Binärverifierade offsets
 - Full dokumentation av Y2L/Y2U-containerformat
 - Webbläsarbaserade serializer-workflows
@@ -186,7 +186,7 @@ YSFC-binärformatet (`.Y2L`, `.Y2U`) är **inte officiellt dokumenterat av Yamah
 1. Exportera en testfil från MODX M-hårdvaran eller ESP plugin med en känd parameter ändrad
 2. Jämför den byte för byte mot en basfil
 3. Anteckna offset, kodning och intervall
-4. Upprepa — 71+ testrundor, 665 dokumenterade parameterfält
+4. Upprepa — 74+ testrundor, ~668 dokumenterade parameterfält
 
 Resultatet är **Serializer v6** — en verifierad parameterkarta som täcker ungefär 99 % av alla redigerbara parametrar i FM-X, AWM2 och AN-X.
 
@@ -222,7 +222,7 @@ AWM2 Element-fält räknas som totalen för alla 8 element.
 | FM-X — Part Common | 15 | Algoritm, Feedback, Filter, FM Color, Volume… | 100% |
 | AWM2 — Element (8 element totalt) | 150 | Waveform, AEG, Filter, Pan, Vel-gränser per element | ~95% |
 | AWM2 — Part | 26 | Filter-EG, AEG Offset, Volume, AT-register… | 100% |
-| AN-X — Part | 130 | OSC 1–3, Filter 1–2, WaveFolder, ModEG, EG:ar… | ~99% |
+| AN-X — Part | ~132 | OSC 1–3, Filter 1–2, WaveFolder, ModEG, EG:ar… OSC1 100% ★ | ~99% |
 | Insertion FX | 57 | 57 verifierade FX-typer (THRU → Wave Folder) | 100% |
 | Controller Assign | 8 | Source, Destination, Curve, Polarity (Part + Perf) | 100% |
 | Performance Common | 10 | Namn, Volume, Pan, Portamento… | 100% |
@@ -233,7 +233,7 @@ AWM2 Element-fält räknas som totalen för alla 8 element.
 | Arp Common | 34 | Loop, Hold, Unit, NoteLimit, VelLimit, Swing, Oktav… | 100% |
 | Motion Sequencer (4 banor) | 116 | LaneSwitch, Speed, Sync, Delay, FadeIn, Pulse A/B… | 100% |
 | Metadataflaggor | 4 | ArpMaster, MSMaster, Part seq/arp-statusfält | 100% |
-| **Totalt** | **~665** | | **~99%** |
+| **Totalt** | **~668** | | **~99%** |
 
 > **Not om räkning:** "Fält" avser distinkta binärparametrar i DPFM-chunken.
 > Ett fält som FM-X OP Level förekommer 8 gånger (en per operator) men räknas som 1 i per-OP-kolumnen.
@@ -243,7 +243,7 @@ AWM2 Element-fält räknas som totalen för alla 8 element.
 - Scenparameter-snapshots (vilka parametervärden varje scen lagrar)
 - Smart Morph
 - FM-X 2nd LFO depth-matris (`abs=12547+`)
-- Två okända AN-X-fält (`PART+5934`, `PART+5952`)
+- AN-X OSC1 nu 100% kartlagd — alla fält lösta (Steg 74)
 
 ---
 
@@ -322,9 +322,9 @@ Huvudfokus för aktiv utveckling är:
 - Reverse engineering-dokumentation
 
 Återstående okända (från och med Serializer v6):
-- `AN-X PART+5934` — okänt fält (MIDI-formeln var felaktig)
-- `AN-X PART+5952` — okänt fält
-- WaveFolder-modulationsparametrar (VelSens, EGDepth, LFODepth) — offsets härledda från MIDI-spec, inte binärverifierade
+- AN-X PART+5934 LÖST → selfSyncPitchEGDepth ★★★★★ (Steg 74)
+- AN-X PART+5952 LÖST → shaperLFODepth ★★★★★ (Steg 73)
+- WaveFolder-modulationsparametrar ALLA LÖSTA ★★★★★ (Steg 72)
 - FM-X 2nd LFO depth-matris (`abs=12547+`)
 - Scenparameter-snapshots — vi vet hur många scener som finns, men inte vilka parametervärden varje scen lagrar
 - Smart Morph — inte kartlagd
