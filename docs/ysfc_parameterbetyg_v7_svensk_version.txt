@@ -1,5 +1,5 @@
-YSFC_PARAMETERBETYG v7.0
-Uppdaterad: 2026-05-04 | Steg 1–71 | Serializer v6
+YSFC_PARAMETERBETYG v7.1
+Uppdaterad: 2026-05-08 | Steg 1–74 | Serializer v6
 
 Stjärnbetyg:
   ★★★★★ = Binärverifierat med testfil(er) — 100% säker
@@ -40,9 +40,9 @@ PERFORMANCE COMMON  (abs 0–6707)
 
   Performance CA (Knob Assign, abs 2451+, stride=22, 8 entries):
   CA+1  SW         u8 bool                                           ★★★★★
-  CA+3  Source     u8 enum (PB=0,MW=1,Knob1=8,Knob2=9,Knob3=10)      ★★★★★
-  CA+5  Dest       u8 enum (Vol=1,Cut=85,HPF=87,PartPan=100...)      ★★★★★
-  CA+9  CurveType  u8 enum (Std=0,Sig=1,Thr=2,Har=18,Steps=19)       ★★★★★
+  CA+3  Source     u8 enum (PB=0,MW=1,Knob1=8,Knob2=9,Knob3=10)    ★★★★★
+  CA+5  Dest       u8 enum (Vol=1,Cut=85,HPF=87,PartPan=100...)     ★★★★★
+  CA+9  CurveType  u8 enum (Std=0,Sig=1,Thr=2,Har=18,Steps=19)     ★★★★★
   CA+11 Param1     u8 direct                                         ★★★★★
   CA+13 Param2     u8 direct                                         ★★★★★
   CA+15 Polarity   u8 bool (0=UNI)                                   ★★★★★
@@ -52,14 +52,14 @@ PERFORMANCE COMMON  (abs 0–6707)
 SCENE METADATA  (engine-oberoende)
 ═══════════════════════════════════════════════════════════════════════
 
-  abs=6695   sceneCount      u8 direct, default=1, range 1–8         ★★★★★
+  abs=6695   sceneCount      u8 direct, default=1, range 1–8        ★★★★★
   abs=104    lastActiveScene  u8 0-baserat, default=0                ★★★★★
 
 ═══════════════════════════════════════════════════════════════════════
 AWM2 PART  (PART_BASE=6708, rel = abs - 6708)
 ═══════════════════════════════════════════════════════════════════════
 
-  PART+4    FilterType  u8 enum (0=Thru, se AWM2_FILTER_TYPES)       ★★★★★
+  PART+4    FilterType  u8 enum (0=Thru, se AWM2_FILTER_TYPES)      ★★★★★
   PART+5857 FilterCutoff  u16 LE Hz                                  ★★★★★
   PART+74   LFO TempoSync  u8 bool                                   ★★★★★
   PART+75   LFO Loop  u8 bool                                        ★★★★★
@@ -123,7 +123,8 @@ AWM2 ELEMENT  (ELEM1_BASE=12532, rel = abs - 12532)
   Kvarstående element-luckor:
   ELEM+8   okänd (default=127)                                       ★★★☆☆
   ELEM+60  AEG TimeVel dubblering — kontrollera vs ELEM+44           ★★★☆☆
-  ELEM+174: filterFEGDepth u8 c64, default=+40 (raw=104)           ★★★★★
+  ELEM+174: filterFEGDepth u8 c64, default=+40 (raw=104)           ★★★★★ Steg 69
+  OscDetune SAKNAS på element-nivå (bekräftat Steg 69)               ✅ STÄNGT
 
 ═══════════════════════════════════════════════════════════════════════
 FM-X PART  (PART-12 shift, PART_BASE-12=6696)
@@ -223,16 +224,16 @@ AN-X PART  (PART-12 shift. Täckning: ~98% efter Steg 68)
   PART+5928  PitchLFODepth  u16 LE c247                              ★★★☆☆
   PART+5930  SelfSyncPitch  u16 LE raw=UI/25+256                     ★★★★★
   PART+5932  SyncPitchVelSens  u8 direct                             ★★★★★
-  PART+5934  (okänd — MIDI-formel var fel)                            ❌
+  PART+5934  selfSyncPitchEGDepth  u16le  raw=UI+256  center=256    ★★★★★ (Steg74)
   PART+5936  SelfSyncLFODepth  u16 LE raw=UI/25, center=0            ★★★★★
   PART+5938  PulseWidth  u8 raw=pct*256/100, 50%=128                 ★★★★★
   PART+5940  PulseWidthVelSens  u8 direct                            ★★★★★
   PART+5942  PulseWidthEGDepth  u8 c128                              ★★★★★
-  PART+5944: anxOsc1PulseWidthLFODepth   u8 center=128 (INTE u16!)   ★★★★★
+  PART+5944: anxOsc1PulseWidthLFODepth   u8 center=128 (INTE u16!)             ★★★★★ Steg 69
   PART+5946  WaveShaper  u8 direct, default=0                        ★★★★★
-  PART+5948  WaveShaperVelSens  u8 direct (=SharperVelSens)          ★★★★★
-  PART+5950  Sharper  u8 c128, default=128                           ★★★★★
-  PART+5952  (okänd)                                                   ❌
+  PART+5948  WaveShaperVelSens  u8  direct  default=0               ★★★★★
+  PART+5950  shaperEGDepth  u8  0x80+n  center=128  default=128     ★★★★★ (Steg73)
+  PART+5952  shaperLFODepth  u8  0x80+n  center=128  default=128    ★★★★★ (Steg73)
   PART+5954  FMLevel  u8 direct                                       ★★★★★
   PART+5956  FMLevelVelSens  u8 direct                               ★★★★★
   PART+5958  RingModDepth  u16 LE direct                              ★★★★★
@@ -276,11 +277,11 @@ AN-X PART  (PART-12 shift. Täckning: ~98% efter Steg 68)
 
   MODIFIER / WAVE FOLDER (PART+6408–6426):
   PART+6408  WaveFolderFold  u8 direct                               ★★★★★
-  PART+6410  WaveFolderVelSens  u16 LE c256                          ★★★☆☆
-  PART+6412  WaveFolderEGDepth  u8 direct, default=128               ★★★☆☆
-  PART+6414  WaveFolderLFODepth  u8 direct, default=128              ★★★☆☆
-  PART+6416  WaveFolderTexture  u8 direct, default=128               ★★★☆☆
-  PART+6418  WaveFolderType  u8 enum, default=1=Hard                 ★★★☆☆
+  PART+6410  WaveFolderVelSens  u8  direct  default=0               ★★★★★ (Steg72)
+  PART+6412  WaveFolderEGDepth  u8  0x80+n  default=128             ★★★★★ (Steg72)
+  PART+6414  WaveFolderLFODepth  u8  0x80+n  default=128            ★★★★★ (Steg72)
+  PART+6416  WaveFolderTexture  u8  direct (EJ 0x80+n!)  default=128  ★★★★★ (Steg72)
+  PART+6418  WaveFolderType  u8  0=Soft 1=Hard  default=1           ★★★★★ (Steg72)
   PART+6420  ModEGAttack   u8 direct                                  ★★★★★
   PART+6422  ModEGDecay    u8 direct, default=160                     ★★★★★
   PART+6424  ModEGSustain  u8 direct                                  ★★★★★
@@ -317,7 +318,7 @@ ENCODING-TABELL (komplett)
   direct u8         raw = value
   c50               raw = value + 50  (PEG levels FM-X)
   c64               raw = value + 64  (AEG, FEG, Pan etc)
-  c128              raw = value + 128  (FM Color, AN-X PulseWidthEGDepth, Sharper)
+  c128              raw = value + 128  (FM Color, AN-X PulseWidthEGDepth, shaperEGDepth)
   c256   u16 LE     raw = value + 256
   c247   u16 LE     raw = round(UI_cent * 247/4800) + 247
                      center=247, range ±4800 cent, max_raw=494, slope≈0.0515 raw/cent
@@ -339,7 +340,7 @@ ENCODING-TABELL (komplett)
   InsA/B TypeIndex  lo=idx&0x7F, hi=(idx>>7)&0x7F
 
 ═══════════════════════════════════════════════════════════════════════
-TÄCKNINGSÖVERSIKT  (Steg 1–68)
+TÄCKNINGSÖVERSIKT  (Steg 1–74)
 ═══════════════════════════════════════════════════════════════════════
 
   Engine/Sektion              Fält    ★★★★★   Täckning
@@ -356,13 +357,15 @@ TÄCKNINGSÖVERSIKT  (Steg 1–68)
   Controller Assign             8       8      100%  KOMPLETT
   Performance Common           10      10      100%  KOMPLETT
   Scene Metadata                2       2      100%  KOMPLETT
-  Perf SuperKnob/Assign        20      20      100%  KOMPLETT  
-  Perf Assign Positioner       25      25      100%  KOMPLETT  
-  ANX Arp Common               34      34      100%  KOMPLETT  
-  ANX Seq Lane (×4, 29/lane)  116     116      100%  KOMPLETT  
-  ANX Metadata/Flags            4       4      100%  KOMPLETT  
+  Perf SuperKnob/Assign        20      20      100%  KOMPLETT  ← NY Steg_71
+  Perf Assign Positioner       25      25      100%  KOMPLETT  ← NY Steg_71
+  ANX Arp Common               34      34      100%  KOMPLETT  ← NY Steg_71
+  ANX Seq Lane (×4, 29/lane)  116     116      100%  KOMPLETT  ← NY Steg_71
+  ANX Metadata/Flags            4       4      100%  KOMPLETT  ← NY Steg_71
+  ANX OSC1 shaperEGDepth/LFO    2       2      100%  KOMPLETT  ← Steg 72–73
+  AN-X OSC1 SyncPitch EGDepth   1       1      100%  KOMPLETT  ← NY Steg 74
   ─────────────────────────────────────────────────────
-  TOTALT (uppskattning)      ~665    ~640       ~99%
+  TOTALT (uppskattning)      ~668    ~643       ~99%  OSC1 nu 100% kartlagd
 
 
 ═══════════════════════════════════════════════════════════════════════
@@ -507,18 +510,76 @@ Relativa offset (+ = från respektive lane-bas):
   abs=13116  Part arp-field  u8  0=default, 9=arp aktiv             ★★★★★
 
 ═══════════════════════════════════════════════════════════════════════
+
+═══════════════════════════════════════════════════════════════════════
+KORRIGERINGAR OCH NYA FYND — Steg 72–74 (2026-05-08)
+═══════════════════════════════════════════════════════════════════════
+
+  NY  abs=12658 = PART+5950  Osc EG Depth→Shaper  u8  0x80+n  default=128  ★★★★★
+  NY  abs=12660 = PART+5952  Osc LFO Depth→Shaper u8  0x80+n  default=128  ★★★★★
+
+  EG/LFO DEPTH-MATRIS (komplett efter Steg 73):
+    Modulation target │ EG Depth     │ LFO Depth
+    Sync              │ PART+5924 ✅ │ PART+5928 ✅
+    Sync Pitch/Vel    │ PART+5926 ✅ │ PART+5930 ✅
+    Pulse Width       │ PART+5942 ✅ │ PART+5944 ✅
+    Shaper            │ PART+5950 ✅ │ PART+5952 ✅  ← NY!
+
+  BEKRÄFTAT (Steg74): PART+5934 = selfSyncPitchEGDepth ★★★★★
+    Verifierat via MODX M8-export. Ändras oberoende av PART+5936.
+    Kodning: raw=UI+256 (ANNAN än selfSyncLFODepth som använder round(UI/25)+256)
+
+  WaveFolder-kodningar bekräftade (Steg 72):
+    VelSens  abs=13118  u8  direct  default=0
+    EGDepth  abs=13120  u8  0x80+n  default=128
+    LFODepth abs=13122  u8  0x80+n  default=128
+    Texture  abs=13124  u8  direct  default=128  (EJ 0x80+n!)
+
+  Nya CA-destinationer bekräftade:
+    142 = FilterCutoff
+    118 = ANX Pan
+
+
+═══════════════════════════════════════════════════════════════════════
+KORRIGERINGAR OCH NYA FYND — Steg 72–74 (2026-05-08)
+═══════════════════════════════════════════════════════════════════════
+
+  NY ★★★★★  PART+5934  selfSyncPitchEGDepth
+    u16le  raw=UI+256  center=256  default=256
+    EG-modulationsdjup för Self Sync Pitch. Steg74 MODX M8.
+    Oberoende av PART+5936 (selfSyncLFODepth). Annan kodning.
+
+  NY ★★★★★  PART+5950  shaperEGDepth
+    u8  0x80+n  center=128  default=128. Steg73.
+    Osc EG Depth → Shaper. Var felaktigt namngiven 'sharper'.
+
+  NY ★★★★★  PART+5952  shaperLFODepth
+    u8  0x80+n  center=128  default=128. Steg73.
+    Osc LFO Depth → Shaper.
+
+  OSC1 NU 100% KARTLAGD. EG/LFO-matris komplett:
+    PART+5934 ✅  PART+5936 ✅  PART+5942 ✅  PART+5944 ✅
+    PART+5950 ✅  PART+5952 ✅
+
+  WAVEFOLDER korrigerade (Steg72, alla ★★★★★):
+    PART+6410 wfVelSens: direct (var c256)
+    PART+6412 wfEGDepth: 0x80+n
+    PART+6414 wfLFODepth: 0x80+n
+    PART+6416 wfTexture: direct (var 0x80+n)
+
+  NYA CA-DESTINATIONER (Steg72): Dest=142=FilterCutoff  Dest=118=ANXPan
+
+  MODX M8-FILER STÖRRE ÄN ESP:
+    M8 inkluderar DLST (~84KB = hela användarbanken) + ELST-katalog.
+    ESP exporterar bara DPFM. Forge hanterar M8 korrekt redan.
+
 KVARSTÅENDE LUCKOR (alla lågprioriterade)
 ═══════════════════════════════════════════════════════════════════════
 
-  AN-X PART+5934       okänd (MIDI-formel var fel)
-  AN-X PART+5952       okänd
   AN-X PART+6374       Filter2Type  ★★★☆☆
-  AN-X PART+6410–6418  WaveFolder Vel/EGDepth/LFO/Texture/Type  ★★★☆☆
   AWM2 ELEM+8          okänd (default=127)
   FM-X                 2nd LFO Depth-matris (abs 12547+)
-  FM-X                 OP routing matrix (abs 6730-6793, ej redigerbar)
   Scene                parameter-snapshots per scen (komplex struktur)
-  Montage              .X7L/.X8L (sannolikt identiskt format)
 
 ═══════════════════════════════════════════════════════════════════════
 NOISE BYTES (ignoreras vid diff)
