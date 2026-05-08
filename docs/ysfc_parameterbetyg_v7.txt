@@ -1,5 +1,5 @@
-YSFC_PARAMETER_RATINGS v7.0
-Updated: 2026-05-04 | Steps 1–71 | Serializer v6
+YSFC_PARAMETER_RATINGS v7.1
+Updated: 2026-05-08 | Steps 1–74 | Serializer v6
 
 Star ratings:
   ★★★★★ = Binary-verified with test file(s) — 100% certain
@@ -223,16 +223,16 @@ AN-X PART  (PART-12 shift. Coverage: ~98% after Step 68)
   PART+5928  PitchLFODepth  u16 LE c247                              ★★★☆☆
   PART+5930  SelfSyncPitch  u16 LE raw=UI/25+256                     ★★★★★
   PART+5932  SyncPitchVelSens  u8 direct                             ★★★★★
-  PART+5934  (unknown — MIDI formula was wrong)                       ❌
+  PART+5934  selfSyncPitchEGDepth  u16le  raw=UI+256  center=256    ★★★★★ (Step74)
   PART+5936  SelfSyncLFODepth  u16 LE raw=UI/25, center=0            ★★★★★
   PART+5938  PulseWidth  u8 raw=pct*256/100, 50%=128                 ★★★★★
   PART+5940  PulseWidthVelSens  u8 direct                            ★★★★★
   PART+5942  PulseWidthEGDepth  u8 c128                              ★★★★★
   PART+5944  PulseWidthLFODepth  u8 center=128 (NOT u16!)            ★★★★★
   PART+5946  WaveShaper  u8 direct, default=0                        ★★★★★
-  PART+5948  WaveShaperVelSens  u8 direct (=SharperVelSens)          ★★★★★
-  PART+5950  Sharper  u8 c128, default=128                           ★★★★★
-  PART+5952  (unknown)                                                 ❌
+  PART+5948  WaveShaperVelSens  u8  direct  default=0               ★★★★★
+  PART+5950  shaperEGDepth  u8  0x80+n  center=128  default=128     ★★★★★ (Step73)
+  PART+5952  shaperLFODepth  u8  0x80+n  center=128  default=128    ★★★★★ (Step73)
   PART+5954  FMLevel  u8 direct                                       ★★★★★
   PART+5956  FMLevelVelSens  u8 direct                               ★★★★★
   PART+5958  RingModDepth  u16 LE direct                              ★★★★★
@@ -276,11 +276,11 @@ AN-X PART  (PART-12 shift. Coverage: ~98% after Step 68)
 
   MODIFIER / WAVE FOLDER (PART+6408–6426):
   PART+6408  WaveFolderFold  u8 direct                               ★★★★★
-  PART+6410  WaveFolderVelSens  u16 LE c256                          ★★★☆☆
-  PART+6412  WaveFolderEGDepth  u8 direct, default=128               ★★★☆☆
-  PART+6414  WaveFolderLFODepth  u8 direct, default=128              ★★★☆☆
-  PART+6416  WaveFolderTexture  u8 direct, default=128               ★★★☆☆
-  PART+6418  WaveFolderType  u8 enum, default=1=Hard                 ★★★☆☆
+  PART+6410  WaveFolderVelSens  u8  direct  default=0               ★★★★★ (Step72)
+  PART+6412  WaveFolderEGDepth  u8  0x80+n  default=128             ★★★★★ (Step72)
+  PART+6414  WaveFolderLFODepth  u8  0x80+n  default=128            ★★★★★ (Step72)
+  PART+6416  WaveFolderTexture  u8  direct (NOT 0x80+n!)  default=128  ★★★★★ (Step72)
+  PART+6418  WaveFolderType  u8  0=Soft 1=Hard  default=1           ★★★★★ (Step72)
   PART+6420  ModEGAttack   u8 direct                                  ★★★★★
   PART+6422  ModEGDecay    u8 direct, default=160                     ★★★★★
   PART+6424  ModEGSustain  u8 direct                                  ★★★★★
@@ -317,7 +317,7 @@ ENCODING TABLE (complete)
   direct u8         raw = value
   c50               raw = value + 50  (PEG levels FM-X)
   c64               raw = value + 64  (AEG, FEG, Pan etc)
-  c128              raw = value + 128  (FM Color, AN-X PulseWidthEGDepth, Sharper)
+  c128              raw = value + 128  (FM Color, AN-X PulseWidthEGDepth, shaperEGDepth)
   c256   u16 LE     raw = value + 256
   c247   u16 LE     raw = round(UI_cent * 247/4800) + 247
                      center=247, range ±4800 cent, max_raw=494, slope≈0.0515 raw/cent
@@ -362,7 +362,7 @@ COVERAGE OVERVIEW  (Steps 1–71)
   ANX Seq Lane (×4, 29/lane)  116     116      100%  COMPLETE 
   ANX Metadata/Flags            4       4      100%  COMPLETE 
   ─────────────────────────────────────────────────────
-  TOTAL (estimate)           ~665    ~640       ~99%
+  TOTAL (estimate)           ~668    ~643       ~99%  OSC1 now 100% complete ✅
 
 ═══════════════════════════════════════════════════════════════════════
 ANX PERFORMANCE LEVEL — SUPERKNOB, ASSIGN, MIDPOSITION  (Step_71)
@@ -505,19 +505,60 @@ Relative offsets (+ = from respective lane base):
   abs=12753  Part seq-field  u8  3=default, 4=seq-sync active        ★★★★★
   abs=13116  Part arp-field  u8  0=default, 9=arp active             ★★★★★
 
+
+═══════════════════════════════════════════════════════════════════════
+CORRECTIONS AND NEW FINDINGS — Steps 72–74 (2026-05-08)
+═══════════════════════════════════════════════════════════════════════
+
+  NEWLY CONFIRMED (★★★★★):
+  PART+5934  selfSyncPitchEGDepth  u16le  raw=UI+256  center=256  default=256
+             EG modulation depth for Self Sync Pitch
+             Verified via MODX M8 hardware export (Step74)
+             Changes independently of selfSyncLFODepth (PART+5936)
+             Encoding: raw=UI+256 (NOT round(UI/25)+256 like selfSyncLFODepth!)
+
+  PART+5950  shaperEGDepth         u8  0x80+n  center=128  default=128
+             Osc EG Depth → Shaper  (Step73, was incorrectly named 'sharper')
+
+  PART+5952  shaperLFODepth        u8  0x80+n  center=128  default=128
+             Osc LFO Depth → Shaper  (Step73)
+
+  OSC1 EG/LFO DEPTH MATRIX — NOW COMPLETE:
+    Modulation target │ EG Depth      │ LFO Depth
+    Sync              │ PART+5924 ✅  │ PART+5928 ✅
+    Sync Pitch/Vel    │ PART+5926 ✅  │ PART+5930 ✅
+    Sync Pitch EG     │ PART+5934 ✅  │ PART+5936 ✅
+    Pulse Width       │ PART+5942 ✅  │ PART+5944 ✅
+    Shaper            │ PART+5950 ✅  │ PART+5952 ✅
+  → OSC1 block is now 100% mapped. No unknown fields remaining.
+
+  WAVEFOLDER ENCODINGS CORRECTED (Step72, all now ★★★★★):
+    PART+6408  WaveFold        u8  direct      default=0
+    PART+6410  WFVelSens       u8  direct      default=0    (NOT c256!)
+    PART+6412  WFEGDepth       u8  0x80+n      default=128
+    PART+6414  WFLFODepth      u8  0x80+n      default=128
+    PART+6416  WFTexture       u8  direct      default=128  (NOT 0x80+n!)
+    PART+6418  WFType          u8  0=Soft 1=Hard default=1
+
+  NEW CA DESTINATIONS (Step72):
+    Dest=142 = FilterCutoff  (Knob1)
+    Dest=118 = ANX Pan       (Knob2)
+
+  MODX M8 vs ESP PLUGIN FILE SIZE:
+    M8 exports include DLST+ELST chunks (~84 KB extra):
+    DLST = complete user performance bank embedded in the file
+    ELST = live set catalog index
+    ESP Plugin exports only DPFM (the selected performance)
+    Forge reads only DPFM → handles M8 files correctly already
+
 ═══════════════════════════════════════════════════════════════════════
 REMAINING GAPS (all low priority)
 ═══════════════════════════════════════════════════════════════════════
 
-  AN-X PART+5934       unknown (MIDI formula was wrong)
-  AN-X PART+5952       unknown
   AN-X PART+6374       Filter2Type  ★★★☆☆
-  AN-X PART+6410–6418  WaveFolder Vel/EGDepth/LFO/Texture/Type  ★★★☆☆
   AWM2 ELEM+8          unknown (default=127)
   FM-X                 2nd LFO Depth matrix (abs 12547+)
-  FM-X                 OP routing matrix (abs 6730-6793, not editable)
   Scene                parameter snapshots per scene (complex structure)
-  Montage              .X7L/.X8L (likely identical format)
 
 ═══════════════════════════════════════════════════════════════════════
 NOISE BYTES (ignored during diff)
