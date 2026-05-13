@@ -1,5 +1,7 @@
 # Reverse Engineering Status
 
+> 🇸🇪 **Svenska:** [REVERSE_ENGINEERING_sv.md](REVERSE_ENGINEERING_sv.md)
+
 This document contains the detailed reverse engineering status and methodology for YSFC Forge. For an overview, see the main [README](../README.md).
 
 ## Table of Contents
