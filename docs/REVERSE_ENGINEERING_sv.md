@@ -1,74 +1,61 @@
 # Reverse Engineering Status
 
-> 🇬🇧 **English:** [REVERSE_ENGINEERING.md](REVERSE_ENGINEERING.md)
+Detta dokument innehåller den detaljerade reverse-engineering-statusen och metodiken för YSFC Forge. För en översikt, se huvuddokumentet [README](../README.md).
 
-Detta dokument innehåller detaljerad reverse engineering-status och metodik för YSFC Forge. För en översikt, se huvud-README:n.
+## Innehåll
 
-## Innehållsförteckning
-
-- [Methodology](#methodology)
-- [Test Corpus](#test-corpus)
-- Engine Coverage
-- Coverage by Section
-- Key Findings
-- File Structure
-- Encoding Reference
-- What is Classified as Firmware Constants
-- What is Not Yet Mapped
-- Save Counter / Noise Bytes
-
-- [Methodology](#methodology)
-- [Test Corpus](#test-corpus)
-- [Engine Coverage](#engine-coverage)
-- [Coverage by Section](#coverage-by-section)
-- [Key Findings](#key-findings)
-- [File Structure](#file-structure)
-- [Encoding Reference](#encoding-reference)
-- [What is Classified as Firmware Constants](#what-is-classified-as-firmware-constants)
-- [What is Not Yet Mapped](#what-is-not-yet-mapped)
-- [Save Counter / Noise Bytes](#save-counter--noise-bytes)
+- [Metodik](#metodik)
+- [Testkorpus](#testkorpus)
+- [Engine-täckning](#engine-täckning)
+- [Täckning per sektion](#täckning-per-sektion)
+- [Viktiga fynd](#viktiga-fynd)
+- [Filstruktur](#filstruktur)
+- [Encoding-referens](#encoding-referens)
+- [Vad som klassificeras som firmware-konstanter](#vad-som-klassificeras-som-firmware-konstanter)
+- [Vad som inte är kartlagt ännu](#vad-som-inte-är-kartlagt-ännu)
+- [Save Counter / Noise-bytes](#save-counter--noise-bytes)
 
 ---
 
-## Methodology
+## Metodik
 
 YSFC-binärformatet (`.Y2L`, `.Y2U`) är inte officiellt dokumenterat av Yamaha. Varje parameter-offset i detta projekt har upptäckts genom binär differentialanalys:
 
-1. Exportera en baseline-Performance från MODX M-hårdvara eller ESP plugin (vanligtvis en nedskalad "Init Voice" med en Part)
-2. Ändra exakt en parameter via UI:t
+1. Exportera en baseline-performance från MODX M-hårdvara eller ESP-pluginet (typiskt en avskalad "Init Voice" med en part)
+2. Ändra exakt en parameter via UI
 3. Exportera den modifierade filen
-4. Jämför de två filerna byte-för-byte (efter filtrering av save-counter-noise)
-5. Registrera offset, encoding-typ och värdeintervall
-6. Korsverifiera mellan alla Engine-typer för att skilja user fields från firmware constants
+4. Jämför de två filerna byte-för-byte (efter filtrering av save-counter-brus)
+5. Notera offset, encoding-typ och värdeintervall
+6. Kors-verifiera över alla engine-typer för att skilja user-fält från firmware-konstanter
 
-Denna metod har tillämpats iterativt över **2010+ verifierade testfiler** för att nå nuvarande 100% Engine coverage.
+Denna metod har applicerats iterativt över **2010+ verifierade testfiler** för att nå nuvarande 100% engine-täckning.
 
-## Corpus analysis (advanced method)
+### Korpus-analys (avancerad metod)
 
-För Engines med stora testkorpusar används en kraftfullare metod:
+För engines med stora testkorpor används en kraftfullare metod:
 
-1. **Skanna alla testfiler efter byte-position constancy** — bytes som är 100% konstanta över alla testfiler klassificeras som firmware constants ([INTERN])
-2. **Identifiera varierande bytes** — dessa är UI-fält; matcha varje byte mot den specifika testfil som ändrade den
-3. **Stride pattern recognition** — när flera varierande bytes delar samma stride (t.ex. 123 bytes för FM-X Operators) tillhör de en repeterande struktur
+1. **Skanna alla testfiler efter byte-position-konstans** — bytes som är 100% konstanta över alla testfiler är firmware-konstanter ([INTERN])
+2. **Identifiera varierande bytes** — dessa är UI-fält; matcha varje en mot den specifika testfilen som ändrade den
+3. **Stride-mönsterigenkänning** — när flera varierande bytes delar en stride (t.ex. 123 bytes för FM-X-operatorer) är de del av en repeterande struktur
 
-Denna corpus-metod möjliggjorde den slutliga 100%-mappningen av AN-X och FM-X.
+Denna korpus-metod möjliggjorde den slutliga 100%-kartläggningen av AN-X (50 fält identifierade i två sessioner) och FM-X (44 fält + 5-byte per-OP-gap).
 
-## Verification levels
+### Verifieringsnivåer
 
-Varje dokumenterat field har en stjärnklassning:
+Varje dokumenterat fält har ett stjärnbetyg:
 
-- **★★★★★** — Binärverifierad med en eller flera testfiler
-- **★★★★☆** — Härledd från officiell source-data
-- **★★★☆☆** — Troligen korrekt
-- **★★☆☆☆** — Osäker
-- **[INTERN]** — MODX-intern firmware constant
-- **[STRUKT]** — Strukturellt identifierad
+- **★★★★★** — Binärverifierat med en eller flera testfiler (direkt A/B-diff-bevis)
+- **★★★★☆** — Härlett från officiell källdata, högt förtroende
+- **★★★☆☆** — Sannolikt korrekt, ej binärverifierat
+- **★★☆☆☆** — Osäkert
+- **[INTERN]** — MODX-intern firmware-konstant, ej user-editable
+- **[STRUKT]** — Strukturellt identifierat, ingen UI-mappning ännu
 
 ---
 
-# Test Corpus
+## Testkorpus
 
-Reverse engineering-arbetet baseras på **2010+ binärverifierade testfiler** genererade genom systematiska parameterändringar på riktig MODX M-hårdvara.
+Reverse-engineering-arbetet grundas på **2010+ binärverifierade testfiler** som genererats genom systematiska parameterändringar på riktig MODX M-hårdvara. Varje dokumenterad offset backas upp av minst en A/B-binär-diff.
 
 | Engine | Filer | Andel |
 |---|---:|---:|
@@ -76,79 +63,267 @@ Reverse engineering-arbetet baseras på **2010+ binärverifierade testfiler** ge
 | FM-X | 425 | 21% |
 | AWM2 | 408 | 20% |
 | Drum | 84 | 4% |
-| Other / multi-part | 294 | 15% |
+| Övriga / multi-part | 294 | 15% |
 
 ---
 
-# Engine Coverage
+## Engine-täckning
 
-Alla fyra Engines är nu **100% binary-verified mapped**.
+Alla fyra engines är nu **100% binärverifierat kartlagda**.
 
-| Engine | UI fields | [INTERN] bytes | Status |
+| Engine | UI-fält | [INTERN]-bytes | Status |
 |---|---:|---:|---|
 | AWM2 | 128 | 8 | 100% ✅ |
 | AN-X | 171 | 458 | 100% ✅ |
 | FM-X | 141 | 863 | 100% ✅ |
 | Drum | 54 | 4934 | 100% ✅ |
 
----
+### Anmärkningar per engine
 
-# Key Findings
+**AWM2** — Sample-baserad engine med 8 element per part. Stride 313 bytes per element. Element 1 base = audit 12469. Per-element-fält inkluderar Waveform Number, AEG, PEG, EQ, Pan, Velocity Limits och Level Scaling.
 
-## File format
+**AN-X** — Analog modelling-engine med 3 OSC, 2 Filter, WaveFolder, Mod EG/LFO. 684 engine-pool-bytes, varav 458 är firmware-konstanter ([INTERN]) och 171 är direkta UI-fält (resten är routing-matriser).
 
-- `Y2L` och `Y2U` är byte-för-byte identiska
-- Performance name börjar vid byte `perf[4]`
-- Scene count: `perf[6695]`
-- Engine type byte: `perf[6700]`
-- Common-blob size är 6701 bytes
-- Part Common stride är 5765 bytes
+**FM-X** — FM-syntes-engine med 8 operatorer, stride 123 bytes per OP. OP1 base = audit 12676. Inkluderar PEG, FEG, Filter, Algorithm, Feedback och 2nd LFO modulation-matriser.
 
-## Engine pool layout
-
-- AWM2 engine pool: 3 header bytes + 8 Elements × 313-byte stride
-- AN-X engine pool: 3 OSC × 124-byte stride
-- FM-X engine pool: 8 OP × 123-byte stride
-- Drum engine pool: 73 keys × 68-byte stride
+**Drum** — Drum kit-engine med 73 drum keys (stride 68 bytes per key). Drum använder en annan filoffset-konvention: `filoffset = audit + 669` (vs +687 för AWM2/AN-X/FM-X). Alla 27 DRUM_KEY-fält binärverifierade.
 
 ---
 
-# Encoding Reference
+## Täckning per sektion
+
+### FM-X
+
+| Sektion | Fält | Täckning | Notering |
+|---|---:|---|---|
+| Operatorer (8 × 22 fält) | 176 | 100% | OP1@12676, stride 123 bytes |
+| Pre-OP (PEG, LFO, Algo, Filter) | 23 | 100% | |
+| Part Common | 15 | 100% | Algorithm, Feedback, Filter, FM Color, Volume |
+| Per-OP 2nd LFO-modulation | 16 | 100% | rel +58 (PitchMod), rel +60 (AmpMod) per OP |
+
+### AWM2
+
+| Sektion | Täckning | Notering |
+|---|---|---|
+| Element (8 × 124 fält = 992 positioner) | 100% UI | E1@12469, stride 313 bytes |
+| PEG-block (rel +163..+195) | 100% | |
+| FEG-block (rel +219..+241) | 100% | |
+| EQ-block (rel +271..+281) | 100% | 2-band + P.EQ + Boost-lägen |
+| LFO + LFO Element Matrix | 100% | Phase Offset + 3 Depth Ratios per element |
+| Level Scaling (AMP + Filter) | 100% | 5 BreakPoints + 4 Offsets vardera |
+
+### AN-X
+
+| Sektion | Täckning | Notering |
+|---|---|---|
+| Oscillatorer (3 × 26 fält) | 100% | OSC1@12631, OSC2@12756, OSC3@12881 (stride 125) |
+| Part Settings | 100% | Unison, OSC Reset, Voltage Drift, Ageing |
+| Pitch LFO | 100% | Wave, Speed, Phase (16-step enum), Delay, FadeIn |
+| Filter LFO | 100% | Wave, Speed, Phase, Delay, FadeIn, Depth F1/F2 |
+| Amp + Amp LFO | 100% | Level, Vel, Key, Drive + full LFO |
+| Filter 1 + Filter 2 | 100% | 12+13 fält vardera |
+| WaveFolder + Mod EG + Mod LFO | 100% | Mod LFO har 5 fält |
+| Mod LFO extras | 100% | Tempo Sync, Hold, Fade Out, Random Speed, Loop |
+| AEG Offset-block | 100% | Part Common rel +148/150/152/154 |
+| Filter Offset | 100% | Part Common rel +164/166/168 |
+| Mod LFO Destination Matrix | 100% | Delas med AWM2 |
+| Routing-matriser (5 × 40 bytes) | [INTERN][STRUKT] | Ej UI-editable, preserveras som-de-är |
+
+### Drum
+
+| Sektion | Täckning | Notering |
+|---|---|---|
+| Drum Key (per key × 73 keys) | 100% | 27 fält per key, stride 68 |
+| Drum Part Common | 100% | 27 fält inklusive Filter AEG (audit 6849-6855) |
+| Filter AEG (Part-level) | 100% | drumPartFilterAegAttack/Decay/Sustain/Release |
+
+### Cross-engine-sektioner
+
+| Sektion | Täckning | Notering |
+|---|---|---|
+| Insertion FX | 100% | 57 verifierade FX-typer |
+| Motion Sequencer (4 lanes × 884 bytes) | 100% | 116 fält |
+| Arp Common | 100% | 34 fält |
+| Common Control Assign (32 slots × 22 bytes) | 100% | abs 2452..3155 |
+| Part Control Assign (8 slots × 22 bytes) | 100% | Part rel +1520..+1695 |
+| Part After Touch (4 slots × 16 bytes) | 100% | Part rel +600..+663 |
+| SuperKnob Assign Positions | 100% | 8 knobs × 6 bytes u16le vid abs 674 |
+| Assign Knob Names | 100% | 8 × 21 bytes ASCII vid abs 8049 |
+| Receive Switch per Part | 100% | Identisk över alla 4 engines |
+| Master EQ 5-band | 100% | abs 560-592 |
+| Audio In Routing | 100% | inkl. Envelope Follower |
+| Performance Common | 100% | Volume, Pan, Tempo, etc. |
+| Part Common (Pitch Bend, Portamento, EQ, FX) | ~95% | |
+
+---
+
+## Viktiga fynd
+
+### Filformat
+
+- `Y2L` och `Y2U` är byte-för-byte identiska — bara filändelsen ändrar hur ESP presenterar import-dialogen
+- Performance-namn: börjar vid byte `perf[4]`, null-terminerat, max ~16 tecken printable ASCII
+- Scene count: `perf[6695]`, intervall 1–8
+- Engine-typ-byte: `perf[6700]`, värden 0=AWM2, 1=Drum, 2=FMX, 3=ANX
+- Common-blob-storlek är 6701 bytes
+- Part Common-stride är 5765 bytes
+
+### Engine-pool-layout
+
+- AWM2 engine-pool: 3 header-bytes + 8 element × 313 byte stride (E1@12469)
+- AN-X engine-pool: 3 OSC × 124 byte stride (OSC1@12631, OSC2@12755, OSC3@12880)
+- FM-X engine-pool: 8 OP × 123 byte stride (OP1@12676 ... OP8@13537)
+- Drum engine-pool: 73 keys × 68 byte stride (Key 1 audit @ 12469)
+
+### Adresseringskonventioner
+
+- AWM2/AN-X/FM-X: `filoffset = audit + 687`
+- Drum: `filoffset = audit + 669` (annan konvention)
+
+### Multi-part / Multi/GM
+
+- Pointer-baserad sub-blob-detection: `SUBBLOB_POINTER_REL = (5763, 5764)`
+- Engine magic bytes: AWM2=8, ANX=110, FMX=82, Drum=73
+- Multi/GM-filer (16 parts: 15 AWM2 + 1 Drum på Part 10) använder samma multi-part-arkitektur
+
+### Noterbara encoding-detaljer
+
+- AN-X PitchEGDepth encoding: `raw = round(UI_cent × 247/4800) + 247`, intervall ±4800 cents
+- AN-X Filter FEGDepth: `raw = round(UI/50) + 256`, intervall ±12700 cents
+- FM-X Algorithm: `raw = algo − 1`
+- PEG Center Key för AWM2-element ligger vid rel +159
+- Common Scene-block: 8 scener × 71 bytes vid abs **1710**
+- Per-Part Scene-block: 8 scener × 84 bytes vid Part rel +682
+
+---
+
+## Filstruktur
+
+### Chunk-layout
+
+Alla YSFC-filer innehåller 6 chunks i denna ordning:
+
+```
+EPFM @ offset 64   — Performance-metadata
+ESYS @ offset N    — System-data
+EFVT @ offset N    — Favorite-data
+DPFM @ offset N    — Performance-data (huvudpayload)
+DSYS @ offset N    — System-tabeller
+DFVT @ offset N    — Favorite-tabeller
+```
+
+### DPFM intern struktur
+
+DPFM-chunken innehåller ett enda `Data`-block med performance-payloaden:
+
+```
+Sub-blob 1: Performance Common         (6701 bytes)
+Sub-blob 2: Part 1 Common              (5765 bytes)
+Sub-blob 3: Part 2 Common              (5765 bytes)
+...
+Sub-blob N+1: Part N Common            (5765 bytes)
+Engine pool                            (variabel storlek, beror på engine-mix)
+```
+
+### Multi/GM 16-part-arkitektur
+
+```
+Performance Common              6701 bytes
+16 × Part Common               92240 bytes (5765 × 16)
+Engine pool                    42583 bytes (15 × AWM2_stride + 1 × Drum_stride)
+DPFM total                    141536 bytes
+```
+
+---
+
+## Encoding-referens
 
 | Typ | Formel |
 |---|---|
 | direct u8 | `raw = value` |
 | center=64 | `raw = value + 64` |
 | center=128 | `raw = value + 128` |
+| AN-X PulseWidth | `raw = round(pct × 256/100)` |
+| AN-X SelfSyncPitch | `raw = round(UI/25) + 256` |
+| AN-X Filter FEGDepth | `raw = round(UI/50) + 256`, intervall ±12700 cents |
+| AN-X PitchEGDepth | `raw = round(UI_cent × 247/4800) + 247`, intervall ±4800 cents |
+| AN-X Assign / SuperKnob value | u16 little-endian, default=512 |
+| SuperKnob Assign-positioner | u16 little-endian, Left=0/Mid=512/Right=1023 |
 | FM-X algorithm | `raw = algo − 1` |
 | FM-X OP detune | `raw = value + 15` |
-| Waveform number | u16 little-endian |
-| Note MIDI value | u8 |
+| InsA/B TypeIndex | `lo = idx & 0x7F`, `hi = (idx >> 7) & 0x7F` |
+| Waveform-nummer | u16 little-endian, 1-baserat |
+| Note MIDI-värde | u8, 0=C-2, 60=C3, 127=G8 |
 
 ---
 
-# What is Not Yet Mapped
+## Vad som klassificeras som firmware-konstanter
 
-## Scene parameter snapshots
+Följande regioner är strukturellt kartlagda men verifierat **identiska över alla engine-typer** (AWM2 / AN-X / FM-X), vilket betyder att de är firmware-uppslagstabeller snarare än user-parametrar:
 
-Scene-strukturen är verifierad men endast cirka 10 fields per Scene har UI-bekräftade mappningar.
+| Region | Storlek | Sannolikt syfte |
+|---|---:|---|
+| Common abs 357-394 | 38 bytes | Arp Common firmware-konstanter (inkluderar Sync Quantize @ 360) |
+| Common abs 487-524 | 38 bytes | AN-X Pitch checksum (abs 488 ändras vid alla AN-X Pitch-edits) |
+| Common abs 732-764 | 33 bytes | SmartMorph FM-X-data |
+| Common abs 851-1680 | 830 bytes | 8 × 106-byte firmware-uppslagstabeller (16 c64-noder per block) — sannolikt velocity/aftertouch-kurvor |
 
-## Smart Morph
+Dessa bekräftades som firmware-konstanter genom byte-diff av Init Voice-baseline för alla tre engine-typer — bytena är identiska, så de kan inte vara user-parametrar knutna till en specifik engine.
 
-Interpolation tables och FM-X morphing state är inte mappade.
+### Drum [INTERN]-bytes
 
-## Performance Editor tool (UI gap)
+Inom drum keys (68 bytes × 73 keys = 4964 bytes) är 4934 bytes (99,4%) firmware-konstanter. Specifikt:
 
-Även om binärformatet är 100% mappat exponeras ännu inte alla parametrar i Performance Editor UI:t.
+- Per drum key: 33 nollpaddade byte-positioner (rel +1, +2, +3, +5, +7, +9, +13, +15, +17, +19, +20, +21, +23, +24, +25, +27, +29, +31, +33, +35, +37, +39, +41, +43, +47, +49, +53, +54, +55, +57, +59, +61, +63)
+- Per drum key: rel +18 (värde 90), rel +67 (värde 64) — konstanta icke-noll firmware-värden
 
 ---
 
-# Save Counter / Noise Bytes
+## Vad som inte är kartlagt ännu
 
-Följande bytes ändras vid varje save oavsett parameterändringar:
+### Scene-parameter-snapshots
 
-```text
-abs 22-24, 60-63, 66, 232, 234, 358, 376, 396-399, 488, 654
+Scene-strukturen är verifierad (8 × 71 bytes Common vid abs 1710, 8 × 84 bytes per Part vid rel +682) men endast ~10 fält per scen har UI-bekräftade mappningar. Resterande bytes per scen är del av snapshot-mekanismen men specifik fält-nivå-mappning är ofullständig.
+
+### Smart Morph
+
+Interpolationstabellerna och FM-X morphing-state är ej kartlagda.
+
+### FM-X 2nd LFO depth-matris
+
+Partiell mappning vid `abs=12547+`. Behöver fler testfiler.
+
+### Performance Editor-verktyg (UI-lucka)
+
+Medan binärformatet är 100% kartlagt exponerar Performance Editor-UI inte alla parametrar ännu:
+
+- Multi-part-performances — endast Part 1:s engine visas för närvarande
+- Drum parameter-editor — struktur kartlagd, UI ej byggt ännu
+- Undo/redo-funktionalitet ej implementerad ännu
+
+---
+
+## Save Counter / Noise-bytes
+
+Följande bytes ändras vid varje spar oavsett parameter-edits (timestamps, interna counters):
+
+```
+abs 22-24, 60-63, 66, 232, 234, 358, 376, 396-399, 488, 654,
+abs 6715-6716, 6721, 6724-6725, 7167-7168, 7419
 ```
 
-Dessa bytes filtreras bort från diff-analys för att undvika false positives.
+För Drum-specifik testning, lägg även till:
+
+```
+filoffset 680-720, 7380-7400
+```
+
+Dessa bytes filtreras bort från diff-analys för att undvika falska positiva.
+
+---
+
+## Vidare läsning
+
+- [`YSFC_FORGE_REFERENCE_sv.md`](YSFC_FORGE_REFERENCE_sv.md) — Kompakt referensmanual med alla fält-positioner
+- [`YSFC_FORGE_FULL_CONTEXT_sv.md`](YSFC_FORGE_FULL_CONTEXT_sv.md) — Fullständig teknisk dokumentation med test-bevis
+- [`../serializer/ysfc_serializer.py`](../serializer/ysfc_serializer.py) — Python parameter-konstanter
