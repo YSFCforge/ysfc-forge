@@ -1,3 +1,5 @@
+> 🇸🇪 **Svenska:** [README_sv.md](README_sv.md)
+
 # YSFC Forge — Compact Reference
 
 Patch editor and reverse engineering project for the Yamaha MODX M / Montage M binary format (Y2L/Y2U/X7L/X8L).
