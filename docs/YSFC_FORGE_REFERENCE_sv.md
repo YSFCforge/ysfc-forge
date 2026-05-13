@@ -1,5 +1,7 @@
 # YSFC Forge — Kompakt referens
 
+> 🇬🇧 **English:** [YSFC_FORGE_REFERENCE.md](YSFC_FORGE_REFERENCE.md)
+
 Patch-editor och reverse-engineering-projekt för Yamaha MODX M / Montage M binärformatet (Y2L/Y2U/X7L/X8L).
 
 **Hårdvara:** MODX M8 firmware 3.0, ESP Plugin v3.0
