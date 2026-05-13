@@ -41,7 +41,7 @@ Reverse-engineered from scratch through binary analysis of Yamaha's undocumented
 
 ### Merge performances
 
-1. Download [`tools/ysfc_forge_v1.19.html`](tools/ysfc_forge_v1.19.html)
+1. Download [`tools/ysfc_forge_v1_19.html`](tools/ysfc_forge_v1_19.html)
 2. Open it in your browser
 3. Drag and drop `.Y2L` or `.Y2U` files
 4. Select the performances you want
@@ -50,7 +50,7 @@ Reverse-engineered from scratch through binary analysis of Yamaha's undocumented
 
 ### Edit a performance
 
-1. Download [`tools/ysfc_performance_editor_v3.html`](tools/ysfc_performance_editor_v3.html)
+1. Download [`tools/ysfc_performance_editor_v4_1.html`](tools/ysfc_performance_editor_v4_1.html)
 2. Open it in your browser
 3. Click **Open Y2L** and choose a file
 4. Adjust parameters with sliders
