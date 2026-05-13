@@ -1,30 +1,30 @@
-# YSFC Forge — Compact Reference
+# YSFC Forge — Kompakt referens
 
-Patch editor and reverse engineering project for the Yamaha MODX M / Montage M binary format (Y2L/Y2U/X7L/X8L).
+Patch-editor och reverse-engineering-projekt för Yamaha MODX M / Montage M binärformatet (Y2L/Y2U/X7L/X8L).
 
-**Hardware:** MODX M8 firmware 3.0, ESP Plugin v3.0
-**Source:** Binary-verified single-edit test files compared against Init Voice baselines (AWM2, AN-X, FM-X, Drum)
+**Hårdvara:** MODX M8 firmware 3.0, ESP Plugin v3.0
+**Källa:** Binärverifierade single-edit-testfiler mot Init Voice baselines (AWM2, AN-X, FM-X, Drum)
 
 ---
 
 ## Status
 
-| Engine | Mapped fields | UI coverage |
+| Engine | Mappade fält | UI-täckning |
 |---|---:|---:|
-| AWM2 (per element × 8..128) | 128 fields + 8 [INTERN] | **100%** ✅ |
-| AN-X (engine total) | 171 fields + 458 [INTERN] | **100%** ✅ |
-| FM-X (Pre-OP + 8 × OP) | 141 fields + 863 [INTERN] | **100%** ✅ |
-| Drum (per key × 73) | 27 key fields + 27 Part Common | **100%** ✅ |
-| Part Common | 88 fields (AWM2/FM-X/AN-X) + 6 (Drum) | ~97% |
+| AWM2 (per element × 8..128) | 128 fält + 8 [INTERN] | **100%** ✅ |
+| AN-X (engine totalt) | 171 fält + 458 [INTERN] | **100%** ✅ |
+| FM-X (Pre-OP + 8 × OP) | 141 fält + 863 [INTERN] | **100%** ✅ |
+| Drum (per key × 73) | 27 key-fält + 27 Part Common | **100%** ✅ |
+| Part Common | 88 fält (AWM2/FM-X/AN-X) + 6 (Drum) | ~97% |
 
-**Total field positions in serializer:** ~2057
-**Test corpus:** 2010+ binary-verified files
+**Total fält-positioner i serializer:** ~2057
+**Testkorpus:** 2010+ binärverifierade filer
 
-All four engines are now binary-verified 100% mapped. Multi/GM 16-part files are supported via the existing multi-part architecture (Performance Common + 16 × Part Common stride 5765 + Engine Pool with 15 AWM2 + 1 Drum on Part 10).
+Alla fyra engines är nu binärverifierat 100% kartlagda. Multi/GM 16-part-filer stöds via den befintliga multi-part-arkitekturen (Performance Common + 16 × Part Common stride 5765 + Engine Pool med 15 AWM2 + 1 Drum på Part 10).
 
 ---
 
-## File structure (Y2L container)
+## Filstruktur (Y2L container)
 
 ```
 YAMAHA-YSFC header
@@ -38,35 +38,35 @@ YAMAHA-YSFC header
 └── DFVT  Favorite data
 ```
 
-**Container abs → payload-rel conversion:** `payload = file_abs − 691` (for Part Common region; some baselines deviate depending on chunk layout).
+**Container abs → payload-rel konvertering:** `payload = file_abs − 691` (för Part Common-regionen; vissa baselines avviker beroende på chunk-layout).
 
 ---
 
 ## Part Common (payload rel +0..+469, abs 6701..7170)
 
-### Identifiers & metadata
+### Identifierare & metadata
 - `+0..+21` partName (ASCII × 22)
 - `+31` monoPoly (u8 bool, default 1=Poly)
 - `+32` portamento_sw
 
-### Volume/Pan/Routing
+### Volym/Pan/Routing
 - `+142` volume (u8 direct, default 100)
-- `+105` ex_elem_sw / arpRandomSfx (shared byte; UI exposes these as separate controls)
+- `+105` ex_elem_sw / arpRandomSfx (delar byte; UI exponerar som separata kontroller)
 
 ### Shared Part-level AEG Offset (rel +144..+150)
-Shared block — AWM2, FM-X and AN-X write here via the UI's "Part Settings > AEG Offset". **The Drum engine does NOT use this block** — for Drum, rel +144/+146 are filter fields (see Drum section).
+Delat block — AWM2, FM-X och AN-X skriver hit via UI:s "Part Settings > AEG Offset". **Drum-engine använder INTE detta block** — för Drum är rel +144/+146 filter-fält istället (se Drum-sektionen).
 
-| Rel | Field | Encoding | Default |
+| Rel | Fält | Encoding | Default |
 |---:|---|---|---:|
 | +144 | aeg_offset_attack | c64 | 64 |
 | +146 | aeg_offset_decay | c64 | 64 |
 | +148 | aeg_offset_sustain | c64 | 64 |
 | +150 | aeg_offset_release | c64 | 64 |
 
-### AWM2-specific FEG Offset (rel +152..+158)
-AWM2 only — FM-X and AN-X have FEG structures in the engine pool instead.
+### AWM2-specifik FEG Offset (rel +152..+158)
+Endast AWM2 — FM-X och AN-X har FEG-strukturer i engine-pool istället.
 
-| Rel | Field | Encoding | Default |
+| Rel | Fält | Encoding | Default |
 |---:|---|---|---:|
 | +152 | feg_offset_attack | c64 | 64 |
 | +154 | feg_offset_decay | c64 | 64 |
@@ -74,10 +74,10 @@ AWM2 only — FM-X and AN-X have FEG structures in the engine pool instead.
 | +158 | feg_offset_release | c64 | 64 |
 
 ### Element Count (rel +196)
-u8 enum: 8, 16, 32, 64, 128. Default 8. Mirrored in Engine header byte 0 — the same value is stored in two places. File size grows linearly: extra bytes = (EC − 8) × 313.
+u8 enum: 8, 16, 32, 64, 128. Default 8. Speglad i Engine header byte 0 — samma värde lagras på två platser. Filstorlek växer linjärt: extra bytes = (EC − 8) × 313.
 
-### Other Part Common fields
-- `+126` velocity_depth (AN-X), shared with Drum velDepth
+### Övriga Part Common-fält
+- `+126` velocity_depth (AN-X), delar med Drum velDepth
 - `+128` velocity_offset
 - `+202` pitch_control_group
 - `+212` pb_range_upper, `+214` pb_range_lower
@@ -88,7 +88,7 @@ u8 enum: 8, 16, 32, 64, 128. Default 8. Mirrored in Engine header byte 0 — the
 - `+224` portamento_time_mode (enum Rate1/Time1/Rate2/Time2)
 - `+226` legato_slope (u8 0..7)
 
-### Filter offsets (rel +164..+168, AN-X UI naming)
+### Filter-offsets (rel +164..+168, AN-X UI-namn)
 - `+164` filter_offset_fegdepth
 - `+166` filter_offset_cutoff
 - `+168` filter_offset_resonance
@@ -97,7 +97,7 @@ u8 enum: 8, 16, 32, 64, 128. Default 8. Mirrored in Engine header byte 0 — the
 
 ## Engine Header (5 bytes, abs 12464..12468)
 
-| Abs | Field | Default |
+| Abs | Fält | Default |
 |---:|---|---:|
 | 12464 | element_count | 8 (AWM2) |
 | 12465 | unknown_b1 | 0 |
@@ -109,49 +109,49 @@ u8 enum: 8, 16, 32, 64, 128. Default 8. Mirrored in Engine header byte 0 — the
 
 ## AWM2 Engine (per-element, stride 313 bytes)
 
-**Engine pool start:** payload 12469
+**Engine-pool start:** payload 12469
 **Element N base:** 12469 + (N−1) × 313
-**Support:** 8..128 elements per Part
+**Stöd:** 8..128 element per Part
 
-### Addressing conventions (CRITICAL for byte analysis)
+### Adresseringskonventioner (KRITISKT vid byte-analys)
 
-This reference uses an **"audit abs" convention** where Element 1 base = abs 12469. For binary diff analysis of Y2L files, the conversion is:
+Denna referens använder en **"audit abs"-konvention** där Element 1 base = abs 12469. Vid binär-diff-analys av Y2L-filer är konversionen:
 
 ```
 filoffset = audit_abs + 687
 audit_abs = filoffset − 687
 ```
 
-The constant 687 consists of: 64 (file header) + 8 (EPFM header) + 353 (EPFM data) + 8 (ESYS header) + 46 (ESYS data) + 8 (EFVT header) + 163 (EFVT data) + 8 (DPFM header) + 16 (DPFM sub-blob header including "Data..." and Performance Name prefix) + 13 (pre-Part area). Exact summation may vary per file type.
+Konstanten 687 består av: 64 (fil-header) + 8 (EPFM-header) + 353 (EPFM-data) + 8 (ESYS-header) + 46 (ESYS-data) + 8 (EFVT-header) + 163 (EFVT-data) + 8 (DPFM-header) + 16 (DPFM sub-blob header inklusive "Data..." och Performance Name-prefix) + 13 (pre-Part-area). Exakt summering kan variera per filtyp.
 
-**Verification:** The file offset where `waveform_lo = 6` (Init Normal AWM2 Element 1 = CFX v06 St) should be `687 + 12469 + 51 = 13207`. This is a reliable reference point for any binary analysis.
+**Verifiering:** Filoffset där `waveform_lo = 6` (Init Normal AWM2 Element 1 = CFX v06 St) ska vara `687 + 12469 + 51 = 13207`. Detta är en tillförlitlig referenspunkt vid varje binäranalys.
 
-**Note:** The serializer's `AWM2_ELEM_LAYOUT` uses a *different* convention where `ELEM_BASE = abs 12520`. Conversion to audit-abs:
+**OBS:** Serializerns `AWM2_ELEM_LAYOUT` använder en *annan* konvention där `ELEM_BASE = abs 12520`. Konversion mot audit-abs:
 
 ```
 audit_abs = AWM2_ELEM_LAYOUT_offset + 12520
-audit_rel_within_element = AWM2_ELEM_LAYOUT_offset + 51
+audit_rel_inom_element = AWM2_ELEM_LAYOUT_offset + 51
 ```
 
-Summary of three different "abs" conventions in the project:
-- **audit abs** (this reference): Element 1 base = 12469
+Sammanfattning av tre olika "abs"-konventioner i projektet:
+- **audit abs** (denna referens): Element 1 base = 12469
 - **AWM2_ELEM_LAYOUT** (serializer): Element 1 base = 12520 (ELEM_BASE = audit_abs − 51)
 - **AWM2_ELEM1_BASE** (serializer): 12532 (audit_abs + 63)
 
-### Per-element fields — COMPLETE
+### Per-element fält — KOMPLETT
 
-All rel values are within the 313-byte element. Element 1 base = audit abs 12469.
+Alla rel inom 313-byte element. Element 1 base = audit abs 12469.
 
 #### Header & metadata
 
-| Rel | Field | Encoding | Default | Status |
+| Rel | Fält | Encoding | Default | Status |
 |---:|---|---|---:|:---:|
 | +0 | `element_header` | bool | E1=1, E2-8=0 | ★★★★★ |
 | +1 | `keyondly_sync` | bool | 0 | ★★★★★ |
 | +2 | `aeg_half_damper` | bool | 0 | ★★★★★ |
 | +6 | `extended_lfo` | bool | 1 | ★★★★★ |
 | +49 | `elem_group` | direct | 0 | ★★★★★ |
-| +51 | `waveform_lo` | u8 | varies | ★★★★★ |
+| +51 | `waveform_lo` | u8 | varierar | ★★★★★ |
 | +59 | `pan` | c64 | 64 | ★★★★★ |
 | +61 | `aeg_random_pan` | u8 | 0 | ★★★★★ |
 | +63 | `aeg_alternate_pan` | c64 | 64 | ★★★★★ |
@@ -166,11 +166,11 @@ All rel values are within the 313-byte element. Element 1 base = audit abs 12469
 | +81 | `elem_connect` | enum | 1 | ★★★★★ |
 | +85 | `keyondly_sync_delay` | u8 | 11 | ★★★★★ |
 
-`extended_lfo` at rel +6 determines which Speed byte the UI shows — rel +289 when OFF, rel +307 when ON. Default is ON for Init Normal AWM2.
+`extended_lfo` vid rel +6 bestämmer vilken Speed-byte UI visar — rel +289 när AV, rel +307 när PÅ. Default är PÅ för Init Normal AWM2.
 
-#### AMP block
+#### AMP-block
 
-| Rel | Field | Encoding | Default | Status |
+| Rel | Fält | Encoding | Default | Status |
 |---:|---|---|---:|:---:|
 | +91 | `level` | direct | 127 | ★★★★★ |
 | +93 | `amp_level_vel` | c64 | 64 | ★★★★★ |
@@ -188,9 +188,9 @@ All rel values are within the 313-byte element. Element 1 base = audit abs 12469
 | +117 | `amp_segment_decay` | u8 | 4 | ★★★★★ |
 | +119 | `amp_time_vel` | c64 | 64 | ★★★★★ |
 
-#### Pitch block
+#### Pitch-block
 
-| Rel | Field | Encoding | Default | Status |
+| Rel | Fält | Encoding | Default | Status |
 |---:|---|---|---:|:---:|
 | +149 | `coarse_tune` | c64 | 64 | ★★★★★ |
 | +151 | `fine_tune` | c64 | 64 | ★★★★★ |
@@ -201,9 +201,9 @@ All rel values are within the 313-byte element. Element 1 base = audit abs 12469
 | +161 | `fine_key` | c64 | 64 | ★★★★★ |
 | +163 | `peg_hold_time` | u8 | 0 | ★★★★★ |
 
-#### PEG block
+#### PEG-block
 
-| Rel | Field | Encoding | Default | Status |
+| Rel | Fält | Encoding | Default | Status |
 |---:|---|---|---:|:---:|
 | +169 | `peg_signature` | u8 | 64 | ★★★★★ |
 | +173 | `peg_level_hold` | c128 | 128 | ★★★★★ |
@@ -218,9 +218,9 @@ All rel values are within the 313-byte element. Element 1 base = audit abs 12469
 | +193 | `peg_time_key` | c64 | 64 | ★★★★★ |
 | +195 | `peg_center_key` | MIDI | 60 | ★★★★★ |
 
-#### Filter block
+#### Filter-block
 
-| Rel | Field | Encoding | Default | Status |
+| Rel | Fält | Encoding | Default | Status |
 |---:|---|---|---:|:---:|
 | +201 | `filter_type` | enum | 4 | ★★★★★ |
 | +203 | `filter_cutoff_lo` | u16le | 128 | ★★★★★ |
@@ -231,11 +231,11 @@ All rel values are within the 313-byte element. Element 1 base = audit abs 12469
 | +213 | `filter_distance` | c128 | 128 | ★★★★★ |
 | +215 | `filter_gain` | u8 | 230 | ★★★★★ |
 
-Filter type values: LPF24A=1, LPF18=2, default=4, DualBEF=17.
+Filter type-värden: LPF24A=1, LPF18=2, default=4, DualBEF=17.
 
-#### FEG block (Filter Envelope)
+#### FEG-block (Filter Envelope)
 
-| Rel | Field | Encoding | Default | Status |
+| Rel | Fält | Encoding | Default | Status |
 |---:|---|---|---:|:---:|
 | +219 | `filter_time_attack` | u8 | 0 | ★★★★★ |
 | +221 | `filter_time_decay1` | c64 | 64 | ★★★★★ |
@@ -252,9 +252,9 @@ Filter type values: LPF24A=1, LPF18=2, default=4, DualBEF=17.
 | +243 | `feg_depth_vel` | c64 | 64 | ★★★★★ |
 | +245 | `filter_curve` | enum | 2 | ★★★★★ |
 
-#### EQ block
+#### EQ-block
 
-| Rel | Field | Encoding | Default | Status |
+| Rel | Fält | Encoding | Default | Status |
 |---:|---|---|---:|:---:|
 | +271 | `eq_type` | enum | 0 | ★★★★★ |
 | +273 | `eq_q_or_resonance` | u8 | 0 | ★★★★★ |
@@ -263,11 +263,11 @@ Filter type values: LPF24A=1, LPF18=2, default=4, DualBEF=17.
 | +279 | `eq_high_freq` | u8 | 231 | ★★★★★ |
 | +281 | `eq_high_gain` | c64 | 64 | ★★★★★ |
 
-EQ type values: 0=2-band, 1=P.EQ, 2=Boost6.
+EQ type-värden: 0=2-band, 1=P.EQ, 2=Boost6.
 
-#### LFO block
+#### LFO-block
 
-| Rel | Field | Encoding | Default | Status |
+| Rel | Fält | Encoding | Default | Status |
 |---:|---|---|---:|:---:|
 | +283 | `lfo_wave` | enum | 1 | ★★★★★ |
 | +285 | `lfo_keyonreset` | bool | 1 | ★★★★★ |
@@ -279,11 +279,11 @@ EQ type values: 0=2-band, 1=P.EQ, 2=Boost6.
 | +297 | `lfo_fade_in` | u8 | 0 | ★★★★★ |
 | +307 | `lfo_extended_speed` | u16le 0..415 | 60 | ★★★★★ |
 
-LFO wave: Saw=0, Tri=1, Square=2. `lfoSpeed` (+289) is active when `extended_lfo`=0; `lfo_extended_speed` (+307) is active when `extended_lfo`=1.
+LFO wave: Saw=0, Tri=1, Square=2. `lfoSpeed` (+289) är aktiv när `extended_lfo`=0; `lfo_extended_speed` (+307) är aktiv när `extended_lfo`=1.
 
 #### AMP Level Scaling (5 BP + 4 offsets)
 
-| Rel | Field | Encoding | Default | Status |
+| Rel | Fält | Encoding | Default | Status |
 |---:|---|---|---:|:---:|
 | +121 | `amp_time_key` | c64 | 64 | ★★★★★ |
 | +123 | `amp_scaling_center_key` | MIDI | 24 | ★★★★★ |
@@ -300,7 +300,7 @@ LFO wave: Saw=0, Tri=1, Square=2. `lfoSpeed` (+289) is active when `extended_lfo
 
 #### Filter Level Scaling (5 BP + 4 offsets)
 
-| Rel | Field | Encoding | Default | Status |
+| Rel | Fält | Encoding | Default | Status |
 |---:|---|---|---:|:---:|
 | +247 | `filter_time_key` | c64 | 64 | ★★★★★ |
 | +249 | `filter_scaling_center_key` | MIDI | 24 | ★★★★★ |
@@ -317,7 +317,7 @@ LFO wave: Saw=0, Tri=1, Square=2. `lfoSpeed` (+289) is active when `extended_lfo
 
 #### LFO Element Matrix
 
-| Rel | Field | Encoding | Default | Status |
+| Rel | Fält | Encoding | Default | Status |
 |---:|---|---|---:|:---:|
 | +299 | `element_lfo_phase_offset` | enum | 0 | ★★★★★ |
 | +301 | `element_lfo_dest1_depth` | u8 | 127 | ★★★★★ |
@@ -327,40 +327,40 @@ LFO wave: Saw=0, Tri=1, Square=2. `lfoSpeed` (+289) is active when `extended_lfo
 ### XA Control enum (rel +67)
 0=Normal, 1=Legato, 2=KeyOff, 3=Cycle, 4=Random, 5=A.Sw Off, 6=A.Sw1 On, 7=A.Sw2 On
 
-### [INTERN] bytes within AWM2 element
+### [INTERN]-bytes inom AWM2-element
 
-The following positions are firmware constants (verified 100% constant across 408 AWM2 test files):
+Följande positioner är firmware-konstanter (verifierat 100% konstanta över 408 AWM2-testfiler):
 
-| Rel | Default | Description |
+| Rel | Default | Beskrivning |
 |---:|---:|---|
-| +46 | 40 | Firmware constant |
-| +90 | 54 | Firmware constant |
-| +148 | 48 | Firmware constant |
-| +200 | 108 | Firmware constant |
+| +46 | 40 | Firmware-konstant |
+| +90 | 54 | Firmware-konstant |
+| +148 | 48 | Firmware-konstant |
+| +200 | 108 | Firmware-konstant |
 | +309..+311 | 0 | Padding |
 | +312 | 43 (0x2B '+') | Inter-element separator |
 
-**Per-element summary:**
-- 128 UI-mapped fields ★★★★★
-- 8 [INTERN] bytes
-- ~177 multi-byte split bytes (u16le hi-byte etc., already counted in UI fields)
+**Per-element sammanställning:**
+- 128 UI-mappade fält ★★★★★
+- 8 [INTERN]-bytes
+- ~177 multi-byte split-bytes (u16le hi-byte etc., redan räknade i UI-fält)
 
-Element 8 shows a different value at rel +312 because the DSYS chunk starts immediately after Element 8 without a padding zone.
+Element 8 visar avvikande värde på rel +312 p.g.a. att DSYS-chunken börjar direkt efter Element 8 utan padding-zon.
 
 ---
 
 ## FM-X Engine
 
-**Engine pool start:** payload 12466
+**Engine-pool start:** payload 12466
 **Pre-OP block:** rel +0..+147
 **OP1 base:** payload 12676 (= engine rel +210)
-**OP stride:** 123 bytes, 8 operators
+**OP-stride:** 123 bytes, 8 operators
 
 ### Pre-OP block
 
 #### PEG (Pitch EG) — rel +11..+41
 
-| Rel | Field | Encoding | Default |
+| Rel | Fält | Encoding | Default |
 |---:|---|---|---:|
 | +11 | peg_pitch_velocity | c64 | 64 |
 | +13 | peg_random_pitch | u8 | 0 |
@@ -379,7 +379,7 @@ Element 8 shows a different value at rel +312 because the DSYS chunk starts imme
 | +39 | peg_depth | enum | 0 |
 | +41 | peg_time_key | direct | 0 |
 
-#### Common LFO + Algorithm — rel +43..+69
+#### Common LFO + Algoritm — rel +43..+69
 - `+43` lfo_wave (enum, default 5)
 - `+47` second_lfo_phase (enum, default 0)
 - `+49` second_lfo_delay (u8, default 0)
@@ -392,7 +392,7 @@ Element 8 shows a different value at rel +312 because the DSYS chunk starts imme
 
 #### Filter — rel +81..+93
 
-| Rel | Field | Encoding | Default |
+| Rel | Fält | Encoding | Default |
 |---:|---|---|---:|
 | +81 | filter_type | enum | 21 |
 | +83 | filter_cutoff | u16le | 1023 |
@@ -402,11 +402,11 @@ Element 8 shows a different value at rel +312 because the DSYS chunk starts imme
 | +91 | filter_hpf_cutoff | direct | 0 |
 | +93 | filter_resonance_vel_v | c64 | 64 |
 
-Filter type values: Thru=21, LPF12+HPF12=4.
+Filter type-värden: Thru=21, LPF12+HPF12=4.
 
 #### FEG (Filter EG) — rel +95..+131
 
-| Rel | Field | Encoding | Default |
+| Rel | Fält | Encoding | Default |
 |---:|---|---|---:|
 | +95 | feg_gain | u8 direct (0..255) | 255 |
 | +97 | feg_hold_time | direct | 0 |
@@ -428,7 +428,7 @@ Filter type values: Thru=21, LPF12+HPF12=4.
 
 #### Key Follow — rel +127..+147
 
-| Rel | Field | Encoding | Default |
+| Rel | Fält | Encoding | Default |
 |---:|---|---|---:|
 | +127 | time_key_scaling | c64 | 64 |
 | +129 | center_key | MIDI | 24=C2 |
@@ -441,15 +441,15 @@ Filter type values: Thru=21, LPF12+HPF12=4.
 | +145 | cutoff_offset_3 | c128 | 128 |
 | +147 | cutoff_offset_4 | c128 | 128 |
 
-#### OP1-specific Pre-OP fields
+#### OP1-specifika Pre-OP-fält
 - `+206` op1_keyonreset (bool, default 1)
 - `+208` op1_freq_mode (enum 0=Ratio, 1=Fixed)
 
-### OP block (123 bytes per operator, OP1..OP8)
+### OP-block (123 bytes per operator, OP1..OP8)
 
-Per-OP field layout (offsets relative to OP_BASE):
+Per-OP fält-layout (offsets relativa till OP_BASE):
 
-| Rel | Field | Encoding | Default |
+| Rel | Fält | Encoding | Default |
 |---:|---|---|---:|
 | +0 | coarse | u8 | 1 |
 | +2 | fine | u8 | 0 |
@@ -486,22 +486,22 @@ Per-OP field layout (offsets relative to OP_BASE):
 | +68 | trailer_b | u8 | 127 [INTERN] |
 | +70 | trailer_c | u8 | 127 [INTERN] |
 
-Per-OP fields `second_lfo_pitch_mod_dest` (+58) and `second_lfo_amp_mod_dest` (+60) are replicated across all 8 operators with stride 123. The three trailer bytes per OP are firmware constants of the same category as the AN-X filter trailers.
+Per-OP-fälten `second_lfo_pitch_mod_dest` (+58) och `second_lfo_amp_mod_dest` (+60) är replicerade över alla 8 operatorer med stride 123. De tre trailer-bytes per OP är firmware-konstanter av samma kategori som AN-X filter-trailers.
 
 ---
 
 ## Drum Engine
 
-**Engine pool start:** payload 12466 (Drum Key 1 base = payload 12469, abs 13160)
+**Engine-pool start:** payload 12466 (Drum Key 1 base = payload 12469, abs 13160)
 **Drum Key stride:** 68 bytes per key
 **Drum Key count:** 73 (C0..C6, MIDI 12..84)
-**Address convention:** Drum uses `filoffset = audit + 669` (vs +687 for AWM2/AN-X/FM-X)
+**Adresseringskonvention:** Drum använder `filoffset = audit + 669` (vs +687 för AWM2/AN-X/FM-X)
 
-### Drum has its own Part Common layout
+### Drum har egen Part Common-layout
 
-Drum Part Common rel +144/+146 are **filter fields**, not AEG offsets. The interpretation of Part Common rel +126..+158 is therefore engine-type dependent. For Drum:
+Drum Part Common rel +144/+146 är **filter-fält**, inte AEG-offsets. Tolkningen av Part Common rel +126..+158 styrs alltså av engine_type. För Drum gäller:
 
-| Rel | Field | Encoding | Default |
+| Rel | Fält | Encoding | Default |
 |---:|---|---|---:|
 | +126 | drum_aeg_attack | c64 | 64 |
 | +128 | drum_aeg_decay | c64 | 64 |
@@ -510,9 +510,9 @@ Drum Part Common rel +144/+146 are **filter fields**, not AEG offsets. The inter
 | +144 | drum_filter_cutoff | c64 | 64 |
 | +146 | drum_filter_resonance | c64 | 64 |
 
-### Drum Key fields (per key, rel within 68-byte key block)
+### Drum Key-fält (per key, rel inom 68-byte key-block)
 
-| Rel | Field | Encoding | Default |
+| Rel | Fält | Encoding | Default |
 |---:|---|---|---:|
 | +0 | drumKeySW | bool | 1 |
 | +4 | drumKeyRcvNoteOff | bool | 0 |
@@ -542,9 +542,9 @@ Drum Part Common rel +144/+146 are **filter fields**, not AEG offsets. The inter
 | +60 | drumKeyEqHiFreq | direct | 231 |
 | +62 | drumKeyEqHiGain | c64 | 64 |
 
-### Drum Part Common (Part-level fields, absolute addresses)
+### Drum Part Common (Part-nivå fält, absoluta adresser)
 
-| Abs | Field | Encoding | Default |
+| Abs | Fält | Encoding | Default |
 |---:|---|---|---:|
 | 6736 | drumPartElemPanToggle | bool | 1 |
 | 6802 | drumPartArpPlayOnly | bool | 0 |
@@ -574,23 +574,23 @@ Drum Part Common rel +144/+146 are **filter fields**, not AEG offsets. The inter
 | 6919 | drumNoteShift | c64 | 64 |
 | 6961 | drumPart2EqType | enum | 0 |
 
-### UI differences from other engines
+### UI-skillnader mot övriga engines
 
-Drum does **not** have the Part Settings > AEG Offset menu that AWM2/FM-X/AN-X have. Instead, AEG is exposed as **absolute values** under the Filter/Amp tab. This means the Drum engine does not use the shared AEG offset block (rel +144..+150) like the other three engines, but has its own Part Common layout at the same byte positions.
+Drum har **inte** menyn Part Settings > AEG Offset som AWM2/FM-X/AN-X har. Istället exponeras AEG som **absolutvärden** under Filter/Amp-fliken. Det innebär att Drum-engine inte använder det delade AEG-offset-blocket (rel +144..+150) som övriga tre engines, utan har egen Part Common-layout på samma byte-positioner.
 
-### [INTERN] bytes within Drum keys
+### [INTERN]-bytes inom Drum keys
 
-Of the 4964 bytes in the drum-key zone (68 × 73 keys), 4934 (99.4%) are firmware constants. Specifically:
+Av de 4964 bytes i drum-key-zonen (68 × 73 keys) är 4934 (99,4%) firmware-konstanter. Specifikt:
 
-- 33 zero-padded byte positions per key (rel +1, +2, +3, +5, +7, +9, +13, +15, +17, +19, +20, +21, +23, +24, +25, +27, +29, +31, +33, +35, +37, +39, +41, +43, +47, +49, +53, +54, +55, +57, +59, +61, +63)
-- rel +18 (value 90) and rel +67 (value 64) — constant non-zero firmware values
+- 33 nollpaddade byte-positioner per key (rel +1, +2, +3, +5, +7, +9, +13, +15, +17, +19, +20, +21, +23, +24, +25, +27, +29, +31, +33, +35, +37, +39, +41, +43, +47, +49, +53, +54, +55, +57, +59, +61, +63)
+- rel +18 (värde 90) och rel +67 (värde 64) — konstanta icke-noll firmware-värden
 
 ---
 
 ## AN-X Engine
 
-**Engine pool start:** payload 12466
-**Pool size:** 684 bytes
+**Engine-pool start:** payload 12466
+**Pool-storlek:** 684 bytes
 
 ### Pre-OSC block (payload 12466..12489)
 - `12465` part_random_pan_anx (c64, default 0)
@@ -603,7 +603,7 @@ Of the 4964 bytes in the drum-key zone (68 × 73 keys), 4934 (99.4%) are firmwar
 - `12489` ageing (u8, default 100)
 
 ### Pitch LFO (payload 12491..12511)
-- `12491..12503` Pitch LFO fields
+- `12491..12503` Pitch LFO-fält
 - `12509` pitch_lfo_delay
 - `12511` pitch_lfo_fadein
 
@@ -619,7 +619,7 @@ Of the 4964 bytes in the drum-key zone (68 × 73 keys), 4934 (99.4%) are firmwar
 - `12523` feg_release (direct, default 160)
 - `12525` feg_sustain_anx (u8, default 0)
 - `12527` feg_release_anx (u8, default 160)
-- `12529` feg_time_vel (preliminary)
+- `12529` feg_time_vel (preliminär)
 
 ### Filter LFO (payload 12531..12541)
 - `12531` filter_lfo_wave (enum: Triangle=2, Square=1)
@@ -642,11 +642,11 @@ Of the 4964 bytes in the drum-key zone (68 × 73 keys), 4934 (99.4%) are firmwar
 - `12563` amp_lfo_wave (enum)
 - `12565` amp_lfo_speed (u16le, default 208)
 
-### OSC1/OSC2/OSC3 fields (per OSC)
+### OSC1/OSC2/OSC3 fält (per OSC)
 
-OSC1 base = audit abs 12626, OSC2 = 12751, OSC3 = 12876. Stride ~125 bytes per OSC. Selected fields:
+OSC1 base = audit abs 12626, OSC2 = 12751, OSC3 = 12876. Stride ~125 bytes per OSC. Utvalda fält:
 
-| Field | OSC1 abs | OSC2 abs | OSC3 abs |
+| Fält | OSC1 abs | OSC2 abs | OSC3 abs |
 |---|---:|---:|---:|
 | waveform | 12626 | 12751 | 12876 |
 | octave | 12628 | 12753 | 12878 |
@@ -687,7 +687,7 @@ OSC1 base = audit abs 12626, OSC2 = 12751, OSC3 = 12876. Stride ~125 bytes per O
 
 ### Wave Folder + Modifier LFO (payload 13116..13148)
 
-UI: [PART] Modifier tab with three sub-pages (Folder, EG, LFO). The Modifier tab has **only one** "LFO Depth" knob (abs 13122) — no separate byte for "Wave Folder LFO Depth".
+UI: [PART] Modifier-fliken med tre under-sidor (Folder, EG, LFO). Modifier-fliken har **endast en** "LFO Depth"-knapp (abs 13122) — ingen separat byte för "Wave Folder LFO Depth".
 
 - `13116` wavefolder_amount (u8, default 0)
 - `13118` wavefolder_vel (u8, default 0)
@@ -705,62 +705,62 @@ UI: [PART] Modifier tab with three sub-pages (Folder, EG, LFO). The Modifier tab
 - `13146` modlfo_delay
 - `13148` modlfo_fadein
 
-### UI control redundancy in AN-X
+### UI-kontroll-redundans i AN-X
 
-AN-X exposes AEG in two separate UI controls with different encodings:
+AN-X exponerar AEG i två separata UI-kontroller med olika encoding:
 
-| UI location | Address | Encoding |
+| UI-plats | Adress | Encoding |
 |---|---|---|
-| Part Settings > AEG Offset | Part Common rel +144..+150 | c64 (offset added) |
-| Filter/Amp > AMP > AEG | engine-pool 12549..12555 | direct (absolute value) |
+| Part Settings > AEG Offset | Part Common rel +144..+150 | c64 (offset adderas) |
+| Filter/Amp > AMP > AEG | engine-pool 12549..12555 | direct (absolut värde) |
 
-Both exist in parallel. An editor must expose both.
+Båda existerar parallellt. Editor måste exponera båda.
 
 ---
 
 ## Control Assign
 
-**Per-Part Control Assign:** 8 slots × 22 bytes stride, base address varies per Part
+**Per-Part Control Assign:** 8 slots × 22 bytes stride, basadress varierar per Part
 **Common Control Assign:** 32 slots × 22 bytes stride, abs 2452..3155 (944 bytes)
 
-### Slot structure (22 bytes)
+### Slot-struktur (22 bytes)
 
-Verified from 35 test files including `Test-AWM2_Part_ControlAssign_destination1-8`, `AWM2_00_Init_CA_Source_AsgnKnob1..8`, `CA_CurveType_*`, `CA_Param1_8`.
+Verifierat från 35 testfiler inklusive `Test-AWM2_Part_ControlAssign_destination1-8`, `AWM2_00_Init_CA_Source_AsgnKnob1..8`, `CA_CurveType_*`, `CA_Param1_8`.
 
-| Rel | Field | Encoding | Default | Notes |
+| Rel | Fält | Encoding | Default | Notering |
 |---:|---|---|---:|---|
-| +0 | enabled | bool | 0 | 0→1 on edit |
-| +2 | dest_category | u8 | 1 | → 8 when slot activated |
+| +0 | enabled | bool | 0 | 0→1 vid edit |
+| +2 | dest_category | u8 | 1 | → 8 vid aktiverad slot |
 | +3 | dest_category_hi | u8 | 0 | |
-| +4 | destination_lo | u8 | 1 | Actual destination (lo byte) |
-| +5 | destination_hi | u8 | 0 | 1 for index ≥128 |
+| +4 | destination_lo | u8 | 1 | Faktisk destination (lo-byte) |
+| +5 | destination_hi | u8 | 0 | 1 för index ≥128 |
 | +8 | param2_or_curve_aux | u8 | 0 | Param2 / Steps-count / Threshold-aux |
-| +10 | param1_or_curve_pri | u8 | 5 | Param1 AND curve primary (shared) |
+| +10 | param1_or_curve_pri | u8 | 5 | Param1 OCH curve primary (delas) |
 | +12 | curve_secondary | u8 | 0 | Sigmoid→3, Threshold→1 |
 | +14 | polarity | enum | 0 | Uni=0, Bi=1 |
 | +16 | endmark | u8 const | 192 | 0xC0 |
 | +21 | trailer | u8 | 18 | |
 
-### Destination encoding (critical!)
+### Destination encoding (kritiskt!)
 
-Destination consists of **two bytes**: `destination_lo` (+4) and `destination_hi` (+5). Together they form an index into the authoritative 414-entry list `CONTROLLER_DESTINATIONS` (`ysfc_enums/controllers.py`):
+Destination består av **två bytes**: `destination_lo` (+4) och `destination_hi` (+5). Tillsammans utgör de ett index i den auktoritativa 414-entries-listan `CONTROLLER_DESTINATIONS` (`ysfc_enums/controllers.py`):
 
 ```
 CONTROLLER_DESTINATIONS_idx = destination_lo + destination_hi * 256
 ```
 
-- For destinations with index **0..255**: write the value in `destination_lo`, `destination_hi=0`
-- For destinations with index **256..511** (Performance, MS, Arp, Per-Part Assign Knobs): write `destination_lo = (idx − 256)`, `destination_hi = 1`
+- För destinationer med index **0..255**: skriv värdet i `destination_lo`, `destination_hi=0`
+- För destinationer med index **256..511** (Performance, MS, Arp, Per-Part Assign Knobs): skriv `destination_lo = (idx − 256)`, `destination_hi = 1`
 
-### Destination quick reference (verified subset)
+### Destination-snabbreferens (verifierad subset)
 
-For the complete list, see `ysfc_enums/controllers.py` (CONTROLLER_DESTINATIONS, 414 entries).
+För komplett lista, se `ysfc_enums/controllers.py` (CONTROLLER_DESTINATIONS, 414 entries).
 
 | Lo | Hi | Idx | Destination | Status |
 |---:|---:|---:|---|:---:|
 | 1 | 0 | 1 | InsA Param 1 (default) | ★★★★★ |
-| 2..24 | 0 | 2..24 | InsA Param 2..24 (linear) | ★★★★★ |
-| 25 | 0 | 25 | InsB Param 1 (specific param# in CA+11) | ★★★★★ |
+| 2..24 | 0 | 2..24 | InsA Param 2..24 (linjärt) | ★★★★★ |
+| 25 | 0 | 25 | InsB Param 1 (specifikt param# i CA+11) | ★★★★★ |
 | 50 | 0 | 50 | Part Reverb Send | ★★★★★ |
 | 51 | 0 | 51 | Part Variation Send | ★★★★★ |
 | 59 | 0 | 59 | Part LFO Destination 3 Depth | ★★★★★ |
@@ -776,9 +776,9 @@ For the complete list, see `ysfc_enums/controllers.py` (CONTROLLER_DESTINATIONS,
 
 ### Part After Touch — Part rel +600..+663 (64 bytes)
 
-A separate 4-slot register with its own 16-byte stride. Has its own smaller destination enum.
+Separat 4-slot register med egen 16-byte stride. Egen mindre destination-enum.
 
-| Rel | Field | Encoding | Default |
+| Rel | Fält | Encoding | Default |
 |---:|---|---|---:|
 | +0 | enabled | bool | 0 |
 | +2 | destination | enum | 1 (Pitch; 9=FilterCutoff) |
@@ -790,9 +790,9 @@ A separate 4-slot register with its own 16-byte stride. Has its own smaller dest
 
 ---
 
-## Multi/GM 16-part files
+## Multi/GM 16-part-filer
 
-Multi/GM files use the same multi-part architecture as standard multi-part Y2L files:
+Multi/GM-filer använder samma multi-part-arkitektur som standard multi-part-Y2L-filer:
 
 ```
 Performance Common              6701 bytes
@@ -801,37 +801,37 @@ Engine pool                    42583 bytes (15 × AWM2_stride + 1 × Drum_stride
 DPFM total                    141536 bytes
 ```
 
-In a Multi/GM Init file, Parts 1–9 and 11–16 are AWM2 (Concert GrandPiano), and Part 10 is Drum (Standard Drum Kit). The 73 drum keys for Part 10 start at file offset 122261.
+I en Multi/GM Init-fil är Part 1–9 och 11–16 AWM2 (Concert GrandPiano), och Part 10 är Drum (Standard Drum Kit). De 73 drum keys för Part 10 startar på filoffset 122261.
 
-Multi/GM is supported by the existing multi-part code via `SUBBLOB_POINTER_REL = (5763, 5764)` and `get_subblob_pointer_pos()`. No new fields or structures are required in the serializer.
+Multi/GM stöds av befintlig multi-part-kod via `SUBBLOB_POINTER_REL = (5763, 5764)` och `get_subblob_pointer_pos()`. Inga nya fält eller strukturer behövs i serializern.
 
 ---
 
-## Encoding conventions
+## Encoding-konventioner
 
-| Notation | Description | Default |
+| Notation | Beskrivning | Default |
 |---|---|---:|
-| direct | raw = UI value | varies |
+| direct | raw = UI-värde | varierar |
 | c64 | UI = raw − 64 | 64 |
 | c128 | UI = raw − 128 | 128 |
 | c50 | UI = raw − 50 | 50 |
-| MIDI | C-2 = 0, C-1 = 12, ..., C3 = 60, ..., G8 = 127 | varies |
-| bool | 0 = Off, 1 = On | varies |
-| enum | enum-mapped | varies |
-| u16le | little-endian 16-bit | varies |
+| MIDI | C-2 = 0, C-1 = 12, ..., C3 = 60, ..., G8 = 127 | varierar |
+| bool | 0 = Off, 1 = On | varierar |
+| enum | enum-mappad | varierar |
+| u16le | little-endian 16-bit | varierar |
 
 ---
 
-## NOISE bytes (filtered out during diff analysis)
+## NOISE-bytes (filtreras vid diff-analys)
 
-Always:
+Alltid:
 `{22-24, 60-63, 66, 184-198, 232, 234, 358, 376, 396-399, 488, 654, 670, 6705-6725, 7167-7168, 7419}`
 
-Plus CRC/save-counter bytes:
+Plus CRC/save-bonus:
 `{710-711, 7411-7412}`
 
-EC-sensitive hash bytes (when Element Count changes):
+EC-känsliga hash-bytes (vid Element Count-ändringar):
 `{102, 103, 110, 111, 375, 673, 674, 685, 686}`
 
-For Drum-specific testing, also filter:
-`{filoffset 680-720, filoffset 7380-7400}` (DPFM sub-blob header noise)
+För Drum-specifik testning, filtrera även:
+`{filoffset 680-720, filoffset 7380-7400}` (DPFM sub-blob header brus)
