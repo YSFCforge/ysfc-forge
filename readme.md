@@ -1,6 +1,6 @@
 # YSFC Forge
 
-> 🇸🇪 **Svenska:** [README.sv.md](README.sv.md)
+> 🇸🇪 **Svenska:** [README_sv.md](README_sv.md)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Status: Active](https://img.shields.io/badge/Status-Active-brightgreen.svg)]()
