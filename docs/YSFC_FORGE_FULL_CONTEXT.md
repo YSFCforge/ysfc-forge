@@ -1,5 +1,7 @@
 # YSFC Forge — Full Context
 
+> 🇸🇪 **Svenska:** [YSFC_FORGE_FULL_CONTEXT_sv.md](YSFC_FORGE_FULL_CONTEXT_sv.md)
+
 *MODX M8 firmware 3.0 + ESP Plugin v3.0*
 *Foundation: 2010+ binary-verified test files*
 
