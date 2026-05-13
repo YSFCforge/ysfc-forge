@@ -11,7 +11,7 @@ Stjärnbetyg:
   ★★★★☆ Härledd från officiell källdata (Effect Type List, MIDI-tabell)
   ★★★☆☆ Predikterat från etablerat mönster
   [STRUKT] Strukturellt identifierat, ej UI-mappat
-  [INTERN] MODX-internt fält, ignoreras vid editing
+  [INTERN] MODX M internt fält, ignoreras vid editing
 
 Förkortningar:
   u8 unsigned 8-bit byte
