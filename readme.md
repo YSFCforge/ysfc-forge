@@ -1,19 +1,19 @@
 # YSFC Forge
 
-> 🇸🇪 \*\*Svenska:\*\* \[README.sv.md](README.sv.md)
+> 🇸🇪 **Svenska:** [README.sv.md](README.sv.md)
 
-[!\[License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-\[!\[Status: Active](https://img.shields.io/badge/Status-Active-brightgreen.svg)]()
-\[!\[Engines: 4/4](https://img.shields.io/badge/Engines-4%2F4%20mapped-blue.svg)]()
-\[!\[Test files: 2010+](https://img.shields.io/badge/Test%20files-2010%2B-blue.svg)]()
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Status: Active](https://img.shields.io/badge/Status-Active-brightgreen.svg)]()
+[![Engines: 4/4](https://img.shields.io/badge/Engines-4%2F4%20mapped-blue.svg)]()
+[![Test files: 2010+](https://img.shields.io/badge/Test%20files-2010%2B-blue.svg)]()
 
 **Open-source browser-based tools for Yamaha MODX M / ESP Plugin / Montage M performance files.**
 
 Reverse-engineered from scratch through binary analysis of Yamaha's undocumented `.Y2L` / `.Y2U` file format. Open the HTML files in any modern browser — no installation, no cloud upload, everything runs locally.
 
-!\[Forge Librarian screenshot](screenshots/image\_ysfc\_forge\_v1\_19.png)
+![Forge Librarian screenshot](screenshots/image_ysfc_forge_v1_19.png)
 
-\---
+---
 
 ## Table of Contents
 
@@ -25,7 +25,7 @@ Reverse-engineered from scratch through binary analysis of Yamaha's undocumented
 * [Contributing](#contributing)
 * [License](#license)
 
-\---
+---
 
 ## Features
 
@@ -35,13 +35,13 @@ Reverse-engineered from scratch through binary analysis of Yamaha's undocumented
 * **No installation** — works in Chrome, Firefox and Safari
 * **No telemetry** — everything runs locally
 
-\---
+---
 
 ## Quick Start
 
 ### Merge performances
 
-1. Download [`tools/ysfc\_forge\_v1.19.html`](tools/ysfc_forge_v1.19.html)
+1. Download [`tools/ysfc_forge_v1.19.html`](tools/ysfc_forge_v1.19.html)
 2. Open it in your browser
 3. Drag and drop `.Y2L` or `.Y2U` files
 4. Select the performances you want
@@ -50,13 +50,13 @@ Reverse-engineered from scratch through binary analysis of Yamaha's undocumented
 
 ### Edit a performance
 
-1. Download [`tools/ysfc\_performance\_editor\_v3.html`](tools/ysfc_performance_editor_v3.html)
+1. Download [`tools/ysfc_performance_editor_v3.html`](tools/ysfc_performance_editor_v3.html)
 2. Open it in your browser
 3. Click **Open Y2L** and choose a file
 4. Adjust parameters with sliders
 5. Click **Export Y2L** to save
 
-\---
+---
 
 ## Tools
 
@@ -87,10 +87,10 @@ Reverse-engineered from scratch through binary analysis of Yamaha's undocumented
 
 |||
 |-|-|
-|!\[Performance Editor](screenshots/image\_ysfc\_performance\_editor\_v4.png)|!\[ESP Librarian](screenshots/image\_ysfc\_esp\_librarian\_v7.png)|
+|![Performance Editor](screenshots/image_ysfc_performance_editor_v4.png)|![ESP Librarian](screenshots/image_ysfc_esp_librarian_v7.png)|
 |*Performance Editor — FM-X operator editor*|*ESP Librarian — performance list with engine detection*|
 
-\---
+---
 
 ## Status
 
@@ -133,18 +133,18 @@ All four synthesizer engines are **100% binary-verified mapped** through systema
 |Drum|84|
 |Other|294|
 
-See [`docs/REVERSE\_ENGINEERING.md`](docs/REVERSE_ENGINEERING.md) for detailed methodology, coverage tables and field-level documentation.
+See [`docs/REVERSE_ENGINEERING.md`](docs/REVERSE_ENGINEERING.md) for detailed methodology, coverage tables and field-level documentation.
 
-\---
+---
 
 ## Documentation
 
 |Document|Contents|
 |-|-|
-|[`docs/REVERSE\_ENGINEERING.md`](docs/REVERSE_ENGINEERING.md)|Methodology, coverage tables, technical highlights|
-|[`docs/YSFC\_FORGE\_REFERENCE.md`](docs/YSFC_FORGE_REFERENCE.md)|Compact reference manual|
-|[`docs/YSFC\_FORGE\_FULL\_CONTEXT.md`](docs/YSFC_FORGE_FULL_CONTEXT.md)|Complete technical reference (all field positions, evidence)|
-|[`serializer/ysfc\_serializer.py`](serializer/ysfc_serializer.py)|Python parameter constants — useful if you want to build your own tools|
+|[`docs/REVERSE_ENGINEERING.md`](docs/REVERSE_ENGINEERING.md)|Methodology, coverage tables, technical highlights|
+|[`docs/YSFC_FORGE_REFERENCE.md`](docs/YSFC_FORGE_REFERENCE.md)|Compact reference manual|
+|[`docs/YSFC_FORGE_FULL_CONTEXT.md`](docs/YSFC_FORGE_FULL_CONTEXT.md)|Complete technical reference (all field positions, evidence)|
+|[`serializer/ysfc_serializer.py`](serializer/ysfc_serializer.py)|Python parameter constants — useful if you want to build your own tools|
 
 ### Verification levels
 
@@ -153,9 +153,9 @@ Throughout the documentation, fields are rated by evidence:
 * **★★★★★** — Binary-verified with one or more test files
 * **★★★★☆** — Derived from official source data, highly confident
 * **★★★☆☆** — Likely correct, not binary-verified
-* **\[INTERN]** — MODX-internal firmware constant, not user-editable
+* **[INTERN]** — MODX-internal firmware constant, not user-editable
 
-\---
+---
 
 ## Known Limitations
 
@@ -165,27 +165,27 @@ Throughout the documentation, fields are rated by evidence:
 * **Patch translators** are approximations — the source synths use fundamentally different synthesis engines, so output is a starting point for sound design rather than a literal port
 * **No undo/redo** in Performance Editor yet — keep backups of your originals
 
-See [`docs/REVERSE\_ENGINEERING.md`](docs/REVERSE_ENGINEERING.md) for the full list.
+See [`docs/REVERSE_ENGINEERING.md`](docs/REVERSE_ENGINEERING.md) for the full list.
 
-\---
+---
 
 ## Contributing
 
 Bug reports, test files and reverse engineering findings are very welcome.
 
-* **Bug reports** — see [`.github/ISSUE\_TEMPLATE/bug\_report.md`](.github/ISSUE_TEMPLATE/bug_report.md)
+* **Bug reports** — see [`.github/ISSUE_TEMPLATE/bug_report.md`](.github/ISSUE_TEMPLATE/bug_report.md)
 * **Reverse engineering contributions** — see [`CONTRIBUTING.md`](CONTRIBUTING.md) for the methodology
-* **Feature requests** — see [`.github/ISSUE\_TEMPLATE/feature\_request.md`](.github/ISSUE_TEMPLATE/feature_request.md)
+* **Feature requests** — see [`.github/ISSUE_TEMPLATE/feature_request.md`](.github/ISSUE_TEMPLATE/feature_request.md)
 
 The most valuable contributions right now: test files for Smart Morph, Scene snapshots, and verification on real Montage M hardware.
 
-\---
+---
 
 ## Disclaimer
 
 This project is not affiliated with, endorsed by, or sponsored by Yamaha Corporation. MODX M, ESP plugin, Montage M and related product names are trademarks of Yamaha Corporation. The file format was reverse-engineered for interoperability purposes. Use at your own risk and always keep backups of your original files.
 
-\---
+---
 
 ## License
 

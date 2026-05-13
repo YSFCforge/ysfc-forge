@@ -1,19 +1,19 @@
 # YSFC Forge
 
-> 🇬🇧 \*\*English:\*\* \[README.md](README.md)
+> 🇬🇧 **English:** [README.md](README.md)
 
-[!\[License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-\[!\[Status: Active](https://img.shields.io/badge/Status-Active-brightgreen.svg)]()
-\[!\[Engines: 4/4](https://img.shields.io/badge/Engines-4%2F4%20mapped-blue.svg)]()
-\[!\[Test files: 2010+](https://img.shields.io/badge/Test%20files-2010%2B-blue.svg)]()
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Status: Active](https://img.shields.io/badge/Status-Active-brightgreen.svg)]()
+[![Engines: 4/4](https://img.shields.io/badge/Engines-4%2F4%20mapped-blue.svg)]()
+[![Test files: 2010+](https://img.shields.io/badge/Test%20files-2010%2B-blue.svg)]()
 
 **Webbläsarbaserade open-source-verktyg för Yamaha MODX M / ESP Plugin / Montage M performancefiler.**
 
 Reverse-engineerad från grunden genom binäranalys av Yamahas odokumenterade `.Y2L` / `.Y2U`-filformat. Öppna HTML-filerna i vilken modern webbläsare som helst — ingen installation, ingen molnuppladdning, allt körs lokalt.
 
-!\[Forge Librarian skärmdump](screenshots/image\_ysfc\_forge\_v1\_19.png)
+![Forge Librarian skärmdump](screenshots/image_ysfc_forge_v1_19.png)
 
-\---
+---
 
 ## Innehåll
 
@@ -25,7 +25,7 @@ Reverse-engineerad från grunden genom binäranalys av Yamahas odokumenterade `.
 * [Bidra](#bidra)
 * [Licens](#licens)
 
-\---
+---
 
 ## Funktioner
 
@@ -35,13 +35,13 @@ Reverse-engineerad från grunden genom binäranalys av Yamahas odokumenterade `.
 * **Ingen installation** — fungerar i Chrome, Firefox och Safari
 * **Ingen telemetri** — allt körs lokalt
 
-\---
+---
 
 ## Snabbstart
 
 ### Sammanfoga performances
 
-1. Ladda ner [`tools/ysfc\_forge\_v1.19.html`](tools/ysfc_forge_v1.19.html)
+1. Ladda ner [`tools/ysfc_forge_v1.19.html`](tools/ysfc_forge_v1.19.html)
 2. Öppna filen i din webbläsare
 3. Dra och släpp `.Y2L`- eller `.Y2U`-filer
 4. Markera de performances du vill ha
@@ -50,13 +50,13 @@ Reverse-engineerad från grunden genom binäranalys av Yamahas odokumenterade `.
 
 ### Redigera en performance
 
-1. Ladda ner [`tools/ysfc\_performance\_editor\_v3.html`](tools/ysfc_performance_editor_v3.html)
+1. Ladda ner [`tools/ysfc_performance_editor_v3.html`](tools/ysfc_performance_editor_v3.html)
 2. Öppna filen i din webbläsare
 3. Klicka på **Open Y2L** och välj en fil
 4. Justera parametrar med reglage
 5. Klicka på **Export Y2L** för att spara
 
-\---
+---
 
 ## Verktyg
 
@@ -87,10 +87,10 @@ Reverse-engineerad från grunden genom binäranalys av Yamahas odokumenterade `.
 
 |||
 |-|-|
-|!\[Performance Editor](screenshots/image\_ysfc\_performance\_editor\_v4.png)|!\[ESP Librarian](screenshots/image\_ysfc\_esp\_librarian\_v7.png)|
+|![Performance Editor](screenshots/image_ysfc_performance_editor_v4.png)|![ESP Librarian](screenshots/image_ysfc_esp_librarian_v7.png)|
 |*Performance Editor — FM-X-operatorredigerare*|*ESP Librarian — performancelista med engine-detektering*|
 
-\---
+---
 
 ## Status
 
@@ -133,18 +133,18 @@ Alla fyra synth-engines är **100% binärverifierat kartlagda** genom systematis
 |Drum|84|
 |Övrigt|294|
 
-Se [`docs/REVERSE\_ENGINEERING.md`](docs/REVERSE_ENGINEERING.md) för detaljerad metodik, täckningstabeller och fältnivådokumentation.
+Se [`docs/REVERSE_ENGINEERING.md`](docs/REVERSE_ENGINEERING.md) för detaljerad metodik, täckningstabeller och fältnivådokumentation.
 
-\---
+---
 
 ## Dokumentation
 
 |Dokument|Innehåll|
 |-|-|
-|[`docs/REVERSE\_ENGINEERING.md`](docs/REVERSE_ENGINEERING.md)|Metodik, täckningstabeller, tekniska detaljer|
-|[`docs/YSFC\_FORGE\_REFERENCE.md`](docs/YSFC_FORGE_REFERENCE.md)|Kompakt referensmanual|
-|[`docs/YSFC\_FORGE\_FULL\_CONTEXT.md`](docs/YSFC_FORGE_FULL_CONTEXT.md)|Komplett teknisk referens (alla fältpositioner, evidens)|
-|[`serializer/ysfc\_serializer.py`](serializer/ysfc_serializer.py)|Python-parameterkonstanter — användbart om du vill bygga egna verktyg|
+|[`docs/REVERSE_ENGINEERING.md`](docs/REVERSE_ENGINEERING.md)|Metodik, täckningstabeller, tekniska detaljer|
+|[`docs/YSFC_FORGE_REFERENCE.md`](docs/YSFC_FORGE_REFERENCE.md)|Kompakt referensmanual|
+|[`docs/YSFC_FORGE_FULL_CONTEXT.md`](docs/YSFC_FORGE_FULL_CONTEXT.md)|Komplett teknisk referens (alla fältpositioner, evidens)|
+|[`serializer/ysfc_serializer.py`](serializer/ysfc_serializer.py)|Python-parameterkonstanter — användbart om du vill bygga egna verktyg|
 
 ### Verifieringsnivåer
 
@@ -153,9 +153,9 @@ I dokumentationen klassificeras varje fält efter evidens:
 * **★★★★★** — Binärverifierad med en eller flera testfiler
 * **★★★★☆** — Härledd från officiell källdata, hög konfidens
 * **★★★☆☆** — Sannolikt korrekt, ej binärverifierad
-* **\[INTERN]** — MODX-intern firmware-konstant, inte användarredigerbar
+* **[INTERN]** — MODX-intern firmware-konstant, inte användarredigerbar
 
-\---
+---
 
 ## Kända begränsningar
 
@@ -165,27 +165,27 @@ I dokumentationen klassificeras varje fält efter evidens:
 * **Patch-översättare är approximationer** — källsyntarna använder fundamentalt olika synthesteknik, så resultatet är en utgångspunkt för ljuddesign snarare än en exakt portering
 * **Ingen undo/redo** i Performance Editor än — håll alltid backuper på dina original
 
-Se [`docs/REVERSE\_ENGINEERING.md`](docs/REVERSE_ENGINEERING.md) för fullständig lista.
+Se [`docs/REVERSE_ENGINEERING.md`](docs/REVERSE_ENGINEERING.md) för fullständig lista.
 
-\---
+---
 
 ## Bidra
 
 Buggrapporter, testfiler och reverse engineering-fynd är mycket välkomna.
 
-* **Buggrapporter** — se [`.github/ISSUE\_TEMPLATE/bug\_report.md`](.github/ISSUE_TEMPLATE/bug_report.md)
+* **Buggrapporter** — se [`.github/ISSUE_TEMPLATE/bug_report.md`](.github/ISSUE_TEMPLATE/bug_report.md)
 * **Reverse engineering-bidrag** — se [`CONTRIBUTING.md`](CONTRIBUTING.md) för metodiken
-* **Funktionsförslag** — se [`.github/ISSUE\_TEMPLATE/feature\_request.md`](.github/ISSUE_TEMPLATE/feature_request.md)
+* **Funktionsförslag** — se [`.github/ISSUE_TEMPLATE/feature_request.md`](.github/ISSUE_TEMPLATE/feature_request.md)
 
 Mest värdefulla bidrag just nu: testfiler för Smart Morph, Scene-snapshots, och verifiering på riktig Montage M-hårdvara.
 
-\---
+---
 
 ## Friskrivning
 
 Detta projekt är inte associerat med, godkänt eller sponsrat av Yamaha Corporation. MODX M, ESP plugin, Montage M och relaterade produktnamn är varumärken som tillhör Yamaha Corporation. Filformatet har reverse-engineerats för interoperabilitetsändamål. Använd på egen risk och håll alltid backuper på dina originalfiler.
 
-\---
+---
 
 ## Licens
 
