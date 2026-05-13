@@ -41,7 +41,7 @@ Reverse-engineerad från grunden genom binäranalys av Yamahas odokumenterade `.
 
 ### Sammanfoga performances
 
-1. Ladda ner [`tools/ysfc_forge_v1.19.html`](tools/ysfc_forge_v1.19.html)
+1. Ladda ner [`tools/ysfc_forge_v1_19.html`](tools/ysfc_forge_v1_19.html)
 2. Öppna filen i din webbläsare
 3. Dra och släpp `.Y2L`- eller `.Y2U`-filer
 4. Markera de performances du vill ha
@@ -50,7 +50,7 @@ Reverse-engineerad från grunden genom binäranalys av Yamahas odokumenterade `.
 
 ### Redigera en performance
 
-1. Ladda ner [`tools/ysfc_performance_editor_v3.html`](tools/ysfc_performance_editor_v3.html)
+1. Ladda ner [`tools/ysfc_performance_editor_v4_1.html`](tools/ysfc_performance_editor_v4_1.html)
 2. Öppna filen i din webbläsare
 3. Klicka på **Open Y2L** och välj en fil
 4. Justera parametrar med reglage
@@ -64,16 +64,16 @@ Reverse-engineerad från grunden genom binäranalys av Yamahas odokumenterade `.
 
 |Verktyg|Vad det gör|
 |-|-|
-|[**Forge Librarian**](tools/ysfc_forge_v1.19.html)|Sammanfoga performances från flera Y2L/Y2U-filer|
-|[**Performance Editor**](tools/ysfc_performance_editor_v3.html)|Redigera FM-X, AWM2 och AN-X-parametrar i webbläsaren|
+|[**Forge Librarian**](tools/ysfc_forge_v1_19.html)|Sammanfoga performances från flera Y2L/Y2U-filer|
+|[**Performance Editor**](tools/ysfc_performance_editor_v4_1.html)|Redigera FM-X, AWM2 och AN-X-parametrar i webbläsaren|
 
 ### Översättare
 
 |Verktyg|Vad det gör|
 |-|-|
-|[**DIVA Patch Translator**](translators/ysfc_diva_h2p_converter_v2_15.html)|Konvertera DIVA-patchar till Y2L/Y2U|
-|[**Vital Patch Translator**](translators/ysfc_vital_converter_v4_12.html)|Konvertera Vital-patchar till Y2L/Y2U|
-|[**Synth1 Patch Translator**](translators/ysfc_synth1_converter_v5_12.html)|Konvertera Synth1-patchar till Y2L/Y2U|
+|[**DIVA Patch Translator**](translators/ysfc_diva_h2p_converter_v2_16.html)|Konvertera DIVA-patchar till Y2L/Y2U|
+|[**Vital Patch Translator**](translators/ysfc_vital_converter_v4_13.html)|Konvertera Vital-patchar till Y2L/Y2U|
+|[**Synth1 Patch Translator**](translators/ysfc_synth1_converter_v5_13.html)|Konvertera Synth1-patchar till Y2L/Y2U|
 
 ### Tilläggsverktyg
 
