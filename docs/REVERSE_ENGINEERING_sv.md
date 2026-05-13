@@ -1,11 +1,13 @@
 # Reverse Engineering Status
 
+> 🇬🇧 **English:** [REVERSE_ENGINEERING.md](REVERSE_ENGINEERING.md)
+
 Detta dokument innehåller detaljerad reverse engineering-status och metodik för YSFC Forge. För en översikt, se huvud-README:n.
 
 ## Innehållsförteckning
 
-- Methodology
-- Test Corpus
+- [Methodology](#methodology)
+- [Test Corpus](#test-corpus)
 - Engine Coverage
 - Coverage by Section
 - Key Findings
@@ -14,6 +16,17 @@ Detta dokument innehåller detaljerad reverse engineering-status och metodik fö
 - What is Classified as Firmware Constants
 - What is Not Yet Mapped
 - Save Counter / Noise Bytes
+
+- [Methodology](#methodology)
+- [Test Corpus](#test-corpus)
+- [Engine Coverage](#engine-coverage)
+- [Coverage by Section](#coverage-by-section)
+- [Key Findings](#key-findings)
+- [File Structure](#file-structure)
+- [Encoding Reference](#encoding-reference)
+- [What is Classified as Firmware Constants](#what-is-classified-as-firmware-constants)
+- [What is Not Yet Mapped](#what-is-not-yet-mapped)
+- [Save Counter / Noise Bytes](#save-counter--noise-bytes)
 
 ---
 
