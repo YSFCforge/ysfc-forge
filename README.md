@@ -64,16 +64,16 @@ Reverse-engineered from scratch through binary analysis of Yamaha's undocumented
 
 |Tool|What it does|
 |-|-|
-|[**Forge Librarian**](tools/ysfc_forge_v1.19.html)|Merge performances from multiple Y2L/Y2U files|
-|[**Performance Editor**](tools/ysfc_performance_editor_v3.html)|Edit FM-X, AWM2 and AN-X parameters in the browser|
+|[**Forge Librarian**](tools/ysfc_forge_v1_19.html)|Merge performances from multiple Y2L/Y2U files|
+|[**Performance Editor**](tools/ysfc_performance_editor_v4_1.html)|Edit FM-X, AWM2 and AN-X parameters in the browser|
 
 ### Translators
 
 |Tool|What it does|
 |-|-|
-|[**DIVA Patch Translator**](translators/ysfc_diva_h2p_converter_v2_15.html)|Convert DIVA patches to Y2L/Y2U|
-|[**Vital Patch Translator**](translators/ysfc_vital_converter_v4_12.html)|Convert Vital patches to Y2L/Y2U|
-|[**Synth1 Patch Translator**](translators/ysfc_synth1_converter_v5_12.html)|Convert Synth1 patches to Y2L/Y2U|
+|[**DIVA Patch Translator**](translators/ysfc_diva_h2p_converter_v2_16.html)|Convert DIVA patches to Y2L/Y2U|
+|[**Vital Patch Translator**](translators/ysfc_vital_converter_v4_13.html)|Convert Vital patches to Y2L/Y2U|
+|[**Synth1 Patch Translator**](translators/ysfc_synth1_converter_v5_13.html)|Convert Synth1 patches to Y2L/Y2U|
 
 ### Utilities
 
