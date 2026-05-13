@@ -1,0 +1,2262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YSFC Forge — Performance Editor v4.1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --mono: 'DM Mono', monospace;
+  --sans: 'DM Sans', sans-serif;
+  --r: 6px;
+  --r-lg: 10px;
+  --tr: .15s ease;
+  --op-c: #3a9eff;
+  --op-m: #9b6bff;
+}
+
+[data-theme="dark"] {
+  --bg:      #0a0c12;
+  --sur:     #101318;
+  --sur2:    #161b26;
+  --sur3:    #1d2234;
+  --brd:     #222840;
+  --brd2:    #2c3450;
+  --txt:     #c4cce0;
+  --dim:     #5a6882;
+  --mut:     #333d58;
+  --acc:     #00cfc0;
+  --acc2:    #0099ee;
+  --grn:     #3ecf7a;
+  --org:     #e88c3a;
+  --red:     #e05050;
+  --awm2:    #3a8ef5;
+  --fmx:     #f07240;
+  --anx:     #3ed47a;
+}
+[data-theme="light"] {
+  --bg:      #eef0f5;
+  --sur:     #ffffff;
+  --sur2:    #f4f5fa;
+  --sur3:    #eaecf2;
+  --brd:     #dde0ea;
+  --brd2:    #c8ccd8;
+  --txt:     #1a1d2e;
+  --dim:     #5a607a;
+  --mut:     #9aa0b8;
+  --acc:     #0091c2;
+  --acc2:    #0060cc;
+  --grn:     #1a9e55;
+  --org:     #d97706;
+  --red:     #c0402a;
+  --awm2:    #1a6fd4;
+  --fmx:     #c95420;
+  --anx:     #1a9e55;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { height: 100%; }
+body {
+  font-family: var(--sans);
+  font-size: 13px;
+  background: var(--bg);
+  color: var(--txt);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── HEADER ── */
+header {
+  display: flex; align-items: center;
+  padding: 0 18px; height: 48px;
+  background: var(--sur);
+  border-bottom: 1px solid var(--brd);
+  gap: 12px; flex-shrink: 0;
+}
+.logo { font-family: var(--mono); font-size: 14px; font-weight: 500; }
+.logo-dot { color: var(--acc); }
+.logo-sub { font-size: 9.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--mut); margin-left: 6px; }
+.h-gap { flex: 1; }
+
+.hbtn {
+  font-family: var(--mono); font-size: 10px; letter-spacing: .05em;
+  background: var(--sur2); border: 1px solid var(--brd2);
+  color: var(--dim); border-radius: 20px; padding: 4px 12px;
+  cursor: pointer; transition: border-color var(--tr), color var(--tr);
+  display: flex; align-items: center; gap: 5px;
+}
+.hbtn:hover { border-color: var(--acc); color: var(--txt); }
+.hbtn:disabled { opacity: .35; cursor: default; }
+
+.engine-pill {
+  font-family: var(--mono); font-size: 10px; font-weight: 500;
+  padding: 2px 9px; border-radius: 99px; letter-spacing: .04em;
+}
+.pill-FMX  { background: rgba(240,114,64,.12); color: var(--fmx); border: 1px solid rgba(240,114,64,.25); }
+.pill-AWM2 { background: rgba(58,142,245,.12); color: var(--awm2); border: 1px solid rgba(58,142,245,.25); }
+.pill-ANX  { background: rgba(62,212,122,.12); color: var(--anx); border: 1px solid rgba(62,212,122,.25); }
+
+/* ── MAIN ── */
+main {
+  flex: 1; display: grid;
+  grid-template-columns: var(--left-w, 220px) 1fr 220px;
+  overflow: hidden;
+  height: calc(100vh - 48px);
+}
+/* Resize handle between left sidebar and centre */
+.resize-handle {
+  position: absolute;
+  top: 0; right: -3px;
+  width: 6px; height: 100%;
+  cursor: col-resize;
+  z-index: 10;
+  background: transparent;
+  transition: background .15s;
+}
+.resize-handle:hover,
+.resize-handle.dragging { background: var(--acc); opacity: .5; }
+
+/* ── LEFT SIDEBAR ── */
+.left {
+  border-right: 1px solid var(--brd);
+  background: var(--sur);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  min-width: 160px;
+  max-width: 480px;
+}
+.left-top {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--brd);
+  flex-shrink: 0;
+}
+.perf-name {
+  font-family: var(--mono); font-size: 12px; font-weight: 500;
+  color: var(--txt); margin-bottom: 5px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.sec-label {
+  font-family: var(--mono); font-size: 9px; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--mut); margin-bottom: 7px;
+}
+
+/* Section nav */
+.sec-nav { padding: 8px 0; flex: 1; overflow-y: auto; }
+.nav-group { padding: 0 8px 4px; }
+.nav-group-label {
+  font-family: var(--mono); font-size: 9px; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--mut);
+  padding: 8px 6px 4px; display: block;
+}
+.nav-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 5px 8px; border-radius: 5px;
+  cursor: pointer; transition: background var(--tr);
+  border-left: 2px solid transparent;
+  margin-bottom: 1px;
+}
+.nav-item:hover { background: var(--sur2); }
+.nav-item.active { background: var(--sur2); border-left-color: var(--acc); }
+.nav-num {
+  font-family: var(--mono); font-size: 11px; font-weight: 500;
+  width: 28px; flex-shrink: 0; color: var(--dim);
+}
+.nav-item.is-carrier .nav-num { color: var(--op-c); }
+.nav-item.is-modulator .nav-num { color: var(--op-m); }
+.nav-role { font-size: 10px; color: var(--mut); font-family: var(--mono); }
+.nav-val { margin-left: auto; font-family: var(--mono); font-size: 10px; color: var(--dim); }
+.nav-txt { font-family: var(--mono); font-size: 11px; color: var(--dim); }
+
+/* ── CENTRE ── */
+.centre {
+  overflow-y: auto; padding: 18px 20px;
+  background: var(--bg);
+}
+
+/* Drop zone */
+.drop-zone {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  height: 100%; gap: 14px; color: var(--mut);
+  min-height: 300px;
+}
+.dz-icon { font-size: 42px; opacity: .3; }
+.dz-text { font-family: var(--mono); font-size: 12.5px; letter-spacing: .06em; }
+.dz-sub { font-size: 11px; opacity: .6; }
+
+/* Editor sections */
+.esec {
+  background: var(--sur);
+  border: 1px solid var(--brd);
+  border-radius: var(--r-lg);
+  margin-bottom: 14px;
+  overflow: hidden;
+}
+.esec-hdr {
+  display: flex; align-items: center;
+  padding: 9px 15px; border-bottom: 1px solid var(--brd); gap: 8px;
+}
+.esec-title {
+  font-family: var(--mono); font-size: 10px; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--dim); font-weight: 500;
+}
+.esec-badge {
+  font-family: var(--mono); font-size: 9px; padding: 1px 7px; border-radius: 3px;
+  background: rgba(0,207,192,.08); color: var(--acc);
+}
+.esec-body { padding: 14px 15px; }
+
+/* Param grid */
+.pgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 10px;
+}
+.pgrid-wide { grid-column: 1 / -1; }
+.pgrid-2 { grid-template-columns: repeat(2, 1fr); }
+.pgrid-3 { grid-template-columns: repeat(3, 1fr); }
+.pgrid-4 { grid-template-columns: repeat(4, 1fr); }
+
+/* Slider row */
+.srow { display: flex; flex-direction: column; gap: 4px; }
+.srow-hdr { display: flex; justify-content: space-between; align-items: baseline; }
+.sname {
+  font-family: var(--mono); font-size: 9px; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--mut);
+}
+.sval {
+  font-family: var(--mono); font-size: 11.5px; font-weight: 500; color: var(--txt);
+  min-width: 30px; text-align: right;
+}
+.sval.chg { color: var(--acc); }
+
+.name-input {
+  width: 100%;
+  background: var(--sur2);
+  border: 1px solid var(--brd2);
+  border-radius: var(--r);
+  color: var(--txt);
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 5px 8px;
+  outline: none;
+  transition: border-color var(--tr);
+}
+.name-input:focus { border-color: var(--acc); }
+
+.left-perf-list {
+  display: flex;
+  flex-direction: column;
+  border-bottom: 1px solid var(--brd);
+  height: var(--list-h, 180px);
+  min-height: 60px;
+  max-height: 70vh;
+  flex-shrink: 0;
+  position: relative;
+}
+.perf-list-scroll {
+  overflow-y: auto;
+  flex: 1;
+}
+/* Resize handle below the perf list */
+.list-resize-handle {
+  position: absolute;
+  bottom: -3px; left: 0;
+  width: 100%; height: 6px;
+  cursor: row-resize;
+  z-index: 10;
+  background: transparent;
+  transition: background .15s;
+}
+.list-resize-handle:hover,
+.list-resize-handle.dragging { background: var(--acc); opacity: .5; }
+.perf-list-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  cursor: pointer;
+  transition: background var(--tr);
+  border-left: 2px solid transparent;
+}
+.perf-list-item:hover { background: var(--sur2); }
+.perf-list-item.active {
+  background: var(--sur2);
+  border-left-color: var(--acc);
+}
+.pli-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--acc);
+  flex-shrink: 0;
+  visibility: hidden;  /* always reserve space */
+}
+.perf-list-item.dirty .pli-dot { visibility: visible; }
+.pli-num {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--mut);
+  flex-shrink: 0;
+  min-width: 24px;
+}
+.pli-name {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--txt);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+
+input[type=range] {
+  -webkit-appearance: none; width: 100%; height: 3px;
+  border-radius: 2px; background: var(--sur3); outline: none; cursor: pointer;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 13px; height: 13px;
+  border-radius: 50%; background: var(--acc); transition: transform .1s;
+}
+input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.25); }
+input[type=range].chg::-webkit-slider-thumb { background: var(--acc); box-shadow: 0 0 0 3px rgba(0,207,192,.2); }
+input[type=checkbox] { accent-color: var(--acc); width: 14px; height: 14px; cursor: pointer; }
+
+select {
+  background: var(--sur2); border: 1px solid var(--brd2); border-radius: var(--r);
+  color: var(--txt); padding: 5px 8px; font-family: var(--mono); font-size: 11.5px;
+  cursor: pointer; width: 100%; outline: none;
+}
+select:focus { border-color: var(--acc); }
+
+/* Algorithm display */
+.algo-wrap { display: flex; align-items: flex-start; gap: 16px; }
+.algo-big {
+  font-family: var(--mono); font-size: 46px; font-weight: 500;
+  color: var(--txt); line-height: 1; min-width: 64px;
+}
+.algo-diagram {
+  display: grid; grid-template-columns: repeat(4, 30px);
+  grid-template-rows: repeat(2, 30px); gap: 3px;
+}
+.algo-op {
+  width: 30px; height: 30px; border-radius: 4px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono); font-size: 10px; font-weight: 500;
+  border: 1px solid var(--brd2); background: var(--sur2); color: var(--dim);
+}
+.algo-op.carrier  { background: rgba(58,158,255,.12); border-color: rgba(58,158,255,.4); color: var(--op-c); }
+.algo-op.modulator{ background: rgba(155,107,255,.12); border-color: rgba(155,107,255,.4); color: var(--op-m); }
+
+/* Checkbox row */
+.cb-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 6px 0;
+}
+.cb-label { font-family: var(--mono); font-size: 9px; letter-spacing: .1em; text-transform: uppercase; color: var(--mut); }
+.cb-val { font-family: var(--mono); font-size: 11px; color: var(--dim); }
+
+/* AWM2 element tabs */
+.elem-tabs {
+  display: flex; gap: 4px; padding: 0 0 12px; flex-wrap: wrap;
+}
+.elem-tab {
+  font-family: var(--mono); font-size: 10px;
+  padding: 3px 10px; border-radius: 99px;
+  border: 1px solid var(--brd2); background: var(--sur2);
+  color: var(--dim); cursor: pointer; transition: all var(--tr);
+}
+.elem-tab.active { border-color: var(--acc); background: rgba(0,207,192,.08); color: var(--acc); }
+
+/* ── RIGHT SIDEBAR ── */
+.right {
+  border-left: 1px solid var(--brd);
+  background: var(--sur);
+  display: flex; flex-direction: column;
+  overflow-y: auto; padding: 14px; gap: 14px;
+}
+.info-title { font-family: var(--mono); font-size: 9px; letter-spacing: .14em; text-transform: uppercase; color: var(--mut); margin-bottom: 6px; }
+.delta-list { display: flex; flex-direction: column; gap: 3px; }
+.delta-item {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 4px 8px; background: var(--sur2); border-radius: 4px; border: 1px solid var(--brd);
+}
+.delta-name { font-family: var(--mono); font-size: 10px; color: var(--dim); }
+.delta-val { font-family: var(--mono); font-size: 10px; color: var(--acc); font-weight: 500; }
+.no-chg { font-family: var(--mono); font-size: 11px; color: var(--mut); text-align: center; padding: 14px 0; }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed; bottom: 22px; right: 22px;
+  background: var(--sur2); border: 1px solid var(--brd2);
+  border-radius: 8px; padding: 10px 16px;
+  font-family: var(--mono); font-size: 12px; color: var(--txt);
+  opacity: 0; transform: translateY(8px);
+  transition: opacity .2s, transform .2s;
+  z-index: 200; pointer-events: none;
+}
+.toast.show { opacity: 1; transform: none; }
+.toast.ok  { border-color: var(--grn); color: var(--grn); }
+.toast.err { border-color: var(--red); color: var(--red); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">YSFC<span class="logo-dot">.</span>FORGE<span class="logo-sub">Performance Editor v4.1</span></div>
+  <span id="enginePill" style="display:none"></span>
+  <span id="perfNameHdr" style="font-family:var(--mono);font-size:12px;color:var(--dim);display:none"></span>
+  <div class="h-gap"></div>
+  <button class="hbtn" id="langBtn" title="Switch language / Växla språk">
+    <span>🌐</span> <span id="langLbl">SV</span>
+  </button>
+  <button class="hbtn" id="themeBtn">
+    <span id="themeIco">☀</span> <span id="themeLbl">Light</span>
+  </button>
+  <label class="hbtn" style="cursor:pointer">
+    <span data-i18n="open_y2l">Open Y2L</span>
+    <input type="file" accept=".Y2L,.y2l" style="display:none" id="fileIn">
+  </label>
+  <button class="hbtn" id="exportBtn" disabled data-i18n="export_y2l">Export Y2L</button>
+  <span id="dirtyInfo" style="font-family:var(--mono);font-size:10px;color:var(--acc);display:none"></span>
+  <button class="hbtn" id="resetBtn" disabled data-i18n="reset">Reset</button>
+</header>
+
+<main>
+  <!-- LEFT SIDEBAR -->
+  <div class="left" id="leftSidebar">
+    <div class="resize-handle" id="sidebarResizeHandle"></div>
+    <!-- Performance name editor -->
+    <div class="left-top" id="perfInfoBlock" style="display:none">
+      <div class="sec-label" data-i18n="perf_name">Performance name</div>
+      <input type="text" id="perfNameInput" class="name-input" maxlength="20"
+        data-i18n-placeholder="perf_name_ph"
+        placeholder="Performance name…"
+        oninput="writePerfName(this.value)"
+        data-i18n-title="perf_name_title"
+        title="Max 20 characters, ASCII only">
+    </div>
+
+    <!-- Performance list -->
+    <div class="left-perf-list" id="leftPerfList" style="display:none">
+      <div class="sec-label" style="padding:6px 14px 4px;flex-shrink:0">
+        <span data-i18n="performances">Performances</span>
+        <span id="perfListCount" style="color:var(--mut);font-size:9px;margin-left:6px"></span>
+      </div>
+      <div id="perfListEl" class="perf-list-scroll"></div>
+      <div class="list-resize-handle" id="listResizeHandle"></div>
+    </div>
+
+    <!-- Section nav -->
+    <div class="sec-nav" id="secNav">
+      <!-- populated by JS -->
+    </div>
+  </div>
+
+  <!-- CENTRE -->
+  <div class="centre" id="centre">
+    <div class="drop-zone">
+      <div class="dz-icon">◈</div>
+      <div class="dz-text" data-i18n="dz_text">Open a Y2L file to start editing</div>
+      <div class="dz-sub" data-i18n="dz_sub">Supports FM-X, AWM2 and AN-X engines</div>
+      <label class="hbtn" style="cursor:pointer;margin-top:10px;border-radius:6px;padding:7px 14px">
+        <span data-i18n="choose_file">Choose file</span>
+        <input type="file" accept=".Y2L,.y2l" style="display:none" id="fileIn2">
+      </label>
+    </div>
+  </div>
+
+  <!-- RIGHT SIDEBAR -->
+  <div class="right">
+    <div>
+      <div class="info-title" data-i18n="pending_changes">Pending Changes</div>
+      <div class="delta-list" id="deltaList">
+        <div class="no-chg" data-i18n="no_changes">No changes yet</div>
+      </div>
+    </div>
+    <div id="opInfoWrap" style="display:none">
+      <div class="info-title" id="opInfoTitle">OP Info</div>
+      <div id="opInfoContent" style="font-family:var(--mono);font-size:11px;color:var(--dim);line-height:1.6"></div>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+// ═══════════════════════════════════════════════════════════════════
+// YSFC Forge — Performance Editor v4.1
+// Engines: FM-X · AWM2 · AN-X
+// Serializer v5.10 — binärverifierade offsets (Steg 1–69max)
+// ═══════════════════════════════════════════════════════════════════
+
+// ── THEME ─────────────────────────────────────────────────────────
+(function() {
+  const s = localStorage.getItem('ysfc-theme');
+  const t = s || 'light';
+  applyTheme(t);
+})();
+function applyTheme(t) {
+  document.documentElement.setAttribute('data-theme', t);
+  localStorage.setItem('ysfc-theme', t);
+  document.getElementById('themeIco').textContent = t === 'dark' ? '☀' : '☾';
+  document.getElementById('themeLbl').textContent = t === 'dark' ? 'Light' : 'Dark';
+}
+document.getElementById('themeBtn').addEventListener('click', () => {
+  applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+});
+
+// ── I18N ──────────────────────────────────────────────────────────
+const LANG = {
+  en: {
+    // Header
+    open_y2l: 'Open Y2L',
+    export_y2l: 'Export Y2L',
+    reset: 'Reset',
+    // Left sidebar
+    perf_name: 'Performance name',
+    perf_name_ph: 'Performance name…',
+    perf_name_title: 'Max 20 characters, ASCII only',
+    performances: 'Performances',
+    // Drop zone
+    dz_text: 'Open a Y2L file to start editing',
+    dz_sub: 'Supports FM-X, AWM2 and AN-X engines',
+    choose_file: 'Choose file',
+    // Right sidebar
+    pending_changes: 'Pending Changes',
+    no_changes: 'No changes yet',
+    // Nav groups
+    nav_operators: 'Operators',
+    nav_elements: 'Elements',
+    nav_sections: 'Sections',
+    // FM-X sections
+    sec_algo_fx: 'Algorithm / FX',
+    sec_part_common: 'Part Common',
+    sec_pitch_eg: 'Pitch EG',
+    sec_filter: 'Filter',
+    sec_lfo: 'LFO',
+    sec_fm_color: 'FM Color',
+    sec_op_scaling: 'OP Scaling',
+    // AWM2 sections
+    sec_part_aeg_offset: 'Part AEG Offset',
+    sec_part_filter_eg: 'Part Filter EG',
+    sec_insertion_fx: 'Insertion FX',
+    // ANX sections
+    sec_osc1: 'OSC 1',
+    sec_filter1: 'Filter 1',
+    sec_filter2: 'Filter 2',
+    sec_wf_modeg: 'WaveFolder / ModEG',
+    // esec titles
+    es_insertion_fx_a: 'Insertion FX A',
+    es_insertion_fx_b: 'Insertion FX B',
+    es_part_common: 'Part Common',
+    es_aeg_offset: 'AEG Offset',
+    es_portamento: 'Portamento',
+    es_op_form: 'OP {op} — Form / Freq / Level',
+    es_amplitude_eg: 'Amplitude EG',
+    es_pitch_eg_op: 'Pitch EG (OP)',
+    es_algo_fb: 'Algorithm & Feedback',
+    es_insertion_fx: 'Insertion FX',
+    es_part_pitch_eg: 'Part Pitch EG',
+    es_fmx_filter: 'FM-X Filter',
+    es_lfo1: '1st LFO',
+    es_lfo2: '2nd LFO',
+    es_fmc_depth: 'FM Color — Depth',
+    es_fmc_env: 'FM Color — Envelope',
+    es_fmc_lfo: 'FM Color — LFO',
+    es_op_level_matrix: 'OP Level Matrix',
+    es_elem_waveform: 'Element {n} — Waveform & Limits',
+    es_elem_filter: 'Element — Filter',
+    es_elem_aeg: 'Element — AEG',
+    es_pan: 'Pan',
+    es_part_aeg_offset: 'Part AEG Offset',
+    es_part_filter_eg: 'Part Filter EG',
+    es_osc1: 'OSC 1',
+    es_osc1_eg: 'OSC 1 — EG',
+    es_osc1_sync_ring: 'OSC 1 — Self Sync & Ring Mod',
+    es_filter_n: 'Filter {n}',
+    es_wave_folder: 'Wave Folder',
+    es_modifier_eg: 'Modifier EG',
+    es_pitch_eg_depth_part: 'Pitch EG Depth (Part)',
+    es_output: 'Output',
+    es_feg_filter_eg_depth: 'FEG (Filter EG Depth)',
+    // Notes / hints
+    note_part_aeg: 'AEG Offset is a Part-level adjustment added to all elements\u2019 AEG values.',
+    note_part_feg: 'FEG only exists at Part level',
+    note_part_feg_body: 'FEG Attack/Decay/Sustain/Release exist only at Part level in AWM2 (not per element).',
+    badge_center64: 'center=64',
+    badge_center128: 'center=128',
+    // Field labels — non-Yamaha-nomenclature ones we may translate
+    lbl_section_not_impl: 'Section "{section}" not yet implemented.',
+    // Toasts
+    toast_loaded: 'Loaded {n} performance{pl}: {file}',
+    toast_error: 'Error: {msg}',
+    toast_exported: 'Exported {n} edited performance{pl}!',
+    toast_reset: 'Reset to original',
+    edited_label: '{n} edited',
+    perf_name_change: 'Performance Name',
+    // Errors
+    err_not_y2l: 'Not a Y2L file (bad header)',
+    err_epfm_not_found: 'EPFM not found at offset 64',
+    err_dpfm_not_found: 'DPFM not found',
+    err_invalid_count: 'Invalid perf count: {n}',
+    err_no_perfs: 'No performances found',
+  },
+  sv: {
+    // Header
+    open_y2l: 'Öppna Y2L',
+    export_y2l: 'Exportera Y2L',
+    reset: 'Återställ',
+    // Left sidebar
+    perf_name: 'Performance-namn',
+    perf_name_ph: 'Performance-namn…',
+    perf_name_title: 'Max 20 tecken, endast ASCII',
+    performances: 'Performances',
+    // Drop zone
+    dz_text: 'Öppna en Y2L-fil för att börja redigera',
+    dz_sub: 'Stöder FM-X, AWM2 och AN-X engines',
+    choose_file: 'Välj fil',
+    // Right sidebar
+    pending_changes: 'Väntande ändringar',
+    no_changes: 'Inga ändringar än',
+    // Nav groups
+    nav_operators: 'Operators',
+    nav_elements: 'Elements',
+    nav_sections: 'Sektioner',
+    // FM-X sections
+    sec_algo_fx: 'Algoritm / FX',
+    sec_part_common: 'Part Common',
+    sec_pitch_eg: 'Pitch EG',
+    sec_filter: 'Filter',
+    sec_lfo: 'LFO',
+    sec_fm_color: 'FM Color',
+    sec_op_scaling: 'OP Scaling',
+    // AWM2 sections
+    sec_part_aeg_offset: 'Part AEG Offset',
+    sec_part_filter_eg: 'Part Filter EG',
+    sec_insertion_fx: 'Insertion FX',
+    // ANX sections
+    sec_osc1: 'OSC 1',
+    sec_filter1: 'Filter 1',
+    sec_filter2: 'Filter 2',
+    sec_wf_modeg: 'WaveFolder / ModEG',
+    // esec titles
+    es_insertion_fx_a: 'Insertion FX A',
+    es_insertion_fx_b: 'Insertion FX B',
+    es_part_common: 'Part Common',
+    es_aeg_offset: 'AEG Offset',
+    es_portamento: 'Portamento',
+    es_op_form: 'OP {op} — Form / Freq / Level',
+    es_amplitude_eg: 'Amplitude EG',
+    es_pitch_eg_op: 'Pitch EG (OP)',
+    es_algo_fb: 'Algoritm & Feedback',
+    es_insertion_fx: 'Insertion FX',
+    es_part_pitch_eg: 'Part Pitch EG',
+    es_fmx_filter: 'FM-X Filter',
+    es_lfo1: '1:a LFO',
+    es_lfo2: '2:a LFO',
+    es_fmc_depth: 'FM Color — Depth',
+    es_fmc_env: 'FM Color — Envelope',
+    es_fmc_lfo: 'FM Color — LFO',
+    es_op_level_matrix: 'OP Level-matris',
+    es_elem_waveform: 'Element {n} — Waveform & gränser',
+    es_elem_filter: 'Element — Filter',
+    es_elem_aeg: 'Element — AEG',
+    es_pan: 'Pan',
+    es_part_aeg_offset: 'Part AEG Offset',
+    es_part_filter_eg: 'Part Filter EG',
+    es_osc1: 'OSC 1',
+    es_osc1_eg: 'OSC 1 — EG',
+    es_osc1_sync_ring: 'OSC 1 — Self Sync & Ring Mod',
+    es_filter_n: 'Filter {n}',
+    es_wave_folder: 'Wave Folder',
+    es_modifier_eg: 'Modifier EG',
+    es_pitch_eg_depth_part: 'Pitch EG Depth (Part)',
+    es_output: 'Utgång',
+    es_feg_filter_eg_depth: 'FEG (Filter EG Depth)',
+    // Notes / hints
+    note_part_aeg: 'AEG Offset är en Part-nivå-justering som adderas till alla elements AEG-värden.',
+    note_part_feg: 'FEG finns enbart på Part-nivå',
+    note_part_feg_body: 'FEG Attack/Decay/Sustain/Release finns endast på Part-nivå i AWM2 (ej per element).',
+    badge_center64: 'center=64',
+    badge_center128: 'center=128',
+    // Field labels
+    lbl_section_not_impl: 'Sektionen "{section}" är inte implementerad ännu.',
+    // Toasts
+    toast_loaded: 'Läste in {n} performance{pl}: {file}',
+    toast_error: 'Fel: {msg}',
+    toast_exported: 'Exporterade {n} redigerad{pl} performance{pl2}!',
+    toast_reset: 'Återställd till original',
+    edited_label: '{n} redigerade',
+    perf_name_change: 'Performance-namn',
+    // Errors
+    err_not_y2l: 'Inte en Y2L-fil (felaktig header)',
+    err_epfm_not_found: 'EPFM hittades inte vid offset 64',
+    err_dpfm_not_found: 'DPFM hittades inte',
+    err_invalid_count: 'Ogiltigt antal performances: {n}',
+    err_no_perfs: 'Inga performances hittades',
+  }
+};
+
+let currentLang = localStorage.getItem('ysfc-lang') || 'en';
+function t(key, vars) {
+  let s = (LANG[currentLang] || LANG.en)[key];
+  if (s == null) s = (LANG.en[key] != null ? LANG.en[key] : key);
+  if (vars) Object.keys(vars).forEach(k => { s = s.replace(new RegExp('\\{'+k+'\\}','g'), vars[k]); });
+  return s;
+}
+function applyI18n() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    el.textContent = t(el.dataset.i18n);
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    el.placeholder = t(el.dataset.i18nPlaceholder);
+  });
+  document.querySelectorAll('[data-i18n-title]').forEach(el => {
+    el.title = t(el.dataset.i18nTitle);
+  });
+  const lbl = document.getElementById('langLbl');
+  if (lbl) lbl.textContent = currentLang === 'en' ? 'SV' : 'EN';
+  document.documentElement.lang = currentLang;
+}
+document.getElementById('langBtn').addEventListener('click', () => {
+  currentLang = currentLang === 'en' ? 'sv' : 'en';
+  localStorage.setItem('ysfc-lang', currentLang);
+  applyI18n();
+  // Re-render dynamic content
+  if (typeof renderNav === 'function') renderNav();
+  if (typeof renderCentre === 'function') renderCentre();
+  if (typeof renderDeltas === 'function') renderDeltas();
+  if (typeof renderPerfList === 'function') renderPerfList();
+  if (typeof updateNameDisplay === 'function') updateNameDisplay();
+});
+
+// ── CONSTANTS (Serializer v5.10) ───────────────────────────────────
+const PART_BASE = 6708;
+
+// FM-X
+const OP1_BASE  = 12676;
+const OP_STRIDE = 123;
+const ALG_ABS   = 12525;
+const FB_ABS    = 12527;
+const OP_OFF = {
+  keyOnReset: -4, freqMode: -2,
+  coarse: 0, fine: 2, detune: 4, pitchKey: 6, pitchVel: 8,
+  spectralForm: 10, spectralSkirt: 12, spectralResonance: 14,
+  pegInitLevel: 16, pegAtkLevel: 18, pegAttackTime: 20, pegDecayTime: 22,
+  aegAttackLevel: 24, aegDecay1Level: 26, aegDecay2Level: 28, aegReleaseLevel: 30,
+  aegAttackTime: 32, aegDecay1Time: 34, aegDecay2Time: 36,
+  aegReleaseTime: 38, aegHoldTime: 40, aegTimeKeyFollow: 42,
+  level: 44, levelVel: 56,
+};
+const SPECTRAL_FORMS = ['Sine','All1','All2','Odd1','Odd2','Res1','Res2'];
+const FMC = {
+  lfoAmplWave: 12521, lfoAmplSpeed: 12523, algorithm: 12525, feedback: 12527,
+  lfoAmplDepth: 12529, depth: 12533, harmonics: 12535,
+  attack: 12537, decay: 12539, sustain: 12541, release: 12543, texture: 12545,
+};
+const FMX_FILT = { type: 12551, cutoffLo: 12553, cutoffHi: 12554, velSens: 12555, resonance: 12557 };
+const FMX_PEG = {
+  pitchVelSens: 12477, randomPitch: 12479, pitchKeyFollow: 12481, centerKey: 12483,
+  initialLevel: 12485, attackLevel: 12487, decay1Level: 12489, decay2Level: 12491, releaseLevel: 12493,
+  attackTime: 12495, decay1Time: 12497, decay2Time: 12499, releaseTime: 12501,
+  depthVelSens: 12503, depth: 12505, timeKeySens: 12507,
+};
+const FMX_LFO1 = {
+  tempoSync: 6770, loop: 6771,
+  wave: 7201, speed: 7203, tempoNote: 7205, delay: 7207,
+  fadeIn: 7209, hold: 7211, fadeOut: 7213, keyOnReset: 7215, randomSpeed: 7265,
+};
+const FMX_LFO2 = {
+  wave: 12509, speedNormal: 12511, phase: 12513, delay: 12515,
+  keyOnReset: 12517, extended: 12529, speedExtended: 12531,
+};
+const ALGO_CARRIERS = {
+  1:[8],2:[8],3:[1,8],4:[1,8],5:[1,5],6:[1,3,5],7:[1,2,5],8:[1,5],
+  9:[1,3,8],10:[1,3,8],11:[1,2,8],12:[1,2],13:[1,2],14:[1,2,3],
+  15:[1],16:[1,2,3,4],17:[1,2],18:[1,5,6,7,8],19:[1,2,3,5,8],20:[1,3,5,6,8],
+};
+const FMX_FILTER_TYPES = {
+  2:'LPF18D',3:'LPF18',4:'BPF6D',7:'HPF12',9:'HPF24',
+  11:'BPF12',12:'BPFw',13:'BPFn',14:'LPF6',15:'LPF12',16:'LPF24',21:'THRU'
+};
+const PEG_DEPTH_LABELS = ['8 oct','2 oct','1 oct','0.5 oct'];
+
+// AWM2 element layout (rel = abs - AWM2_ELEM1_BASE=12532)
+// ★★★★★ from Serializer v5.10 / Steg 69
+const AWM2_ELEM1_BASE = 12532;
+const AWM2_ELEM_STRIDE = 8267;  // typical part size
+const AWM2_ELEM = {
+  waveformLo: 12520, waveformHi: 12521,     // u16 LE 1-based
+  randomPan: 12532, alternatePan: 12534, scalingPan: 12536,
+  velCrossFade: 12538,
+  noteLowLimit: 12542, noteHighLimit: 12544,
+  velLowLimit: 12546, keyOnDelayLength: 12548,
+  aegOffset: 12566,
+  levelVel: 12562,         // u8 center=64 ★★★★★ Steg 66
+  aegTimeVel: 12588,       // u8 center=64 ★★★★★ Steg 69
+  filterResonance: 12676,  // u8 direct ★★★★★ Steg 66
+  filterFEGDepth: 12706,   // u8 center=64, default=+40 (raw=104) ★★★★★ Steg 69
+};
+const AWM2_FILTER_TYPES = ['LPF24D','LPF18D','LPF12D','LPF6D','LPF+HPF','HPF24D','HPF18D',
+  'HPF12D','HPF6D','BPF12D×2','BPF6D×2','BPF12A','LPF24A','LPF18A','LPF12A',
+  'HPF24A','HPF12A','BPF12A×2','BPF6A×2','LPF24A+HPF','BPFmono','Thru'];
+// AWM2 Part FEG (PART-level, ★★★★★ Steg 66-67)
+const AWM2_PART_FEG = { attack: 6857, decay: 6859, sustain: 6861, release: 6863 };
+
+// AN-X offsets — all verified ★★★★★ (Steg 60-69)
+const ANX = {
+  // Noise
+  noiseTone: PART_BASE+5805, noiseConnect: PART_BASE+5807,
+  noiseOutLevel: PART_BASE+5809, noiseOutLevelVelSens: PART_BASE+5811,
+  fegTimeVel: PART_BASE+5821,
+  // OSC1
+  osc1Wave: PART_BASE+5918, osc1Octave: PART_BASE+5920,
+  osc1Pitch: PART_BASE+5922,          // u16 LE center=504
+  osc1PitchEGDepth: PART_BASE+5924,   // u16 LE raw=UI_cent*247/4800+247 ★★★★★ Steg 69max
+  osc1PitchEGDepthVelSens: PART_BASE+5926, // u8 direct ★★★★★ Steg 69
+  osc1PitchLFODepth: PART_BASE+5928,  // u16 LE same ★★★★★ Steg 69
+  osc1SelfSyncPitch: PART_BASE+5930,  // u16 LE raw=UI/25+256 ★★★★★ Steg 66
+  osc1SyncPitchVelSens: PART_BASE+5932, // u8 direct ★★★★★
+  osc1SelfSyncLFODepth: PART_BASE+5936, // u16 LE raw=UI/25 ★★★★★ Steg 68
+  osc1PulseWidth: PART_BASE+5938,     // u8 raw=pct*256/100 ★★★★★
+  osc1PulseWidthVelSens: PART_BASE+5940, // u8 direct ★★★★★
+  osc1PulseWidthEGDepth: PART_BASE+5942, // u8 center=128 ★★★★★
+  osc1PulseWidthLFODepth: PART_BASE+5944, // u8 center=128 ★★★★★ Steg 69
+  osc1WaveShaper: PART_BASE+5946,     // u8 direct ★★★★★ Steg 68
+  osc1WaveShaperVelSens: PART_BASE+5948, // u8 direct ★★★★★
+  osc1Sharper: PART_BASE+5950,        // u8 center=128 ★★★★★
+  osc1FMLevel: PART_BASE+5954,        // u8 direct ★★★★★
+  osc1FMLevelVelSens: PART_BASE+5956, // u8 direct ★★★★★
+  osc1RingModDepth: PART_BASE+5958,   // u16 LE direct ★★★★★
+  osc1RingLevelVelSens: PART_BASE+5960,// u8 direct ★★★★★
+  osc1Connect: PART_BASE+5962,        // u8 enum 0=Filter,1=Amp ★★★★★
+  osc1Invert: PART_BASE+5964,         // u8 bool ★★★★★
+  osc1OutLevel: PART_BASE+5966,       // u16 LE direct, default=511 ★★★★★ Steg 69
+  osc1OutLevelVelSens: PART_BASE+5968,// u8 direct ★★★★★
+  osc1EGAttack: PART_BASE+5970, osc1EGDecay: PART_BASE+5972,
+  osc1EGSustain: PART_BASE+5974, osc1EGRelease: PART_BASE+5976,
+  // Filter 1 (★★★★★ Steg 66-67)
+  flt1Type: PART_BASE+6297,
+  flt1CutoffLo: PART_BASE+6299, flt1CutoffHi: PART_BASE+6300,
+  flt1CutoffVelSens: PART_BASE+6301,
+  flt1FEGDepthLo: PART_BASE+6303, flt1FEGDepthHi: PART_BASE+6304, // raw=UI/50+256
+  flt1FEGDepthVelSensLo: PART_BASE+6305, flt1FEGDepthVelSensHi: PART_BASE+6306,
+  flt1CutoffLFODepthLo: PART_BASE+6307, flt1CutoffLFODepthHi: PART_BASE+6308,
+  flt1CutoffKeyFollow: PART_BASE+6309,
+  flt1Resonance: PART_BASE+6311, flt1ResonanceVelSens: PART_BASE+6313,
+  flt1Drive: PART_BASE+6315, flt1OutLevel: PART_BASE+6319,
+  // Filter 2
+  flt2Type: PART_BASE+6374,
+  flt2CutoffLo: PART_BASE+6376, flt2CutoffVelSens: PART_BASE+6378,
+  flt2FEGDepthLo: PART_BASE+6380, flt2FEGDepthHi: PART_BASE+6381,
+  flt2CutoffLFODepthLo: PART_BASE+6384, flt2CutoffKeyFollow: PART_BASE+6386,
+  flt2Resonance: PART_BASE+6388, flt2ResonanceVelSens: PART_BASE+6390,
+  flt2Drive: PART_BASE+6392, flt2OutLevel: PART_BASE+6396,
+  // WaveFolder / ModEG (★★★★★ Steg 66-68)
+  waveFolderFold: PART_BASE+6408,
+  modEGAttack: PART_BASE+6420, modEGDecay: PART_BASE+6422,
+  modEGSustain: PART_BASE+6424, modEGRelease: PART_BASE+6426,
+  // Part common
+  pitchEGDepth: PART_BASE+6412,  // u8 center=128 ★★★★★ Steg 69
+};
+const ANX_WAVES = ['Saw','Tri','Square','—','Noise'];
+const ANX_OCTAVES = ['32\'','16\'','8\'','4\'','2\'','1\''];
+const ANX_CONNECT = ['Filter 1','Amp'];
+const ANX_FLT_TYPES = ['LPF6','—','LPF12','—','LPF18','LPF24','HPF6','HPF12','HPF18','HPF24','BPF6','BPF12'];
+
+// Common FX types (all engines)
+const FX_TYPES = {
+  0:'THRU', 130:'SPX HALL', 256:'CROSS DELAY', 384:'G CHORUS',
+  416:'SPX CHORUS', 432:'SYMPHONIC', 448:'ENSEMBLE DETUNE',
+  512:'VCM FLANGER', 528:'CLASSIC FLANGER', 544:'TEMPO FLANGER',
+  640:'VCM PHASER MONO', 672:'TEMPO PHASER', 784:'TREMOLO',
+  800:'ROTARY SPEAKER 1', 896:'AMP SIMULATOR 1', 928:'COMP DISTORTION',
+  1024:'VCM COMPRESSOR 376', 1040:'CLASSIC COMPRESSOR', 1056:'MULTI BAND COMP',
+  1280:'VCM AUTO WAH', 1424:'NOISY', 1616:'SLICE', 1672:'PRESENCE', 1704:'WAVE FOLDER'
+};
+const LFO_WAVES = ['Triangle','Triangle+','SawUp','SawDown','Squ1/4','Squ1/3',
+  'Square','Squ2/3','Squ3/4','Trapezoid','S&H1','S&H2','User'];
+const TEMPO_NOTES = ['1/16','1/8Tri','1/16Dot','1/8','1/4Tri','1/8Dot','1/4',
+  '1/2Tri','1/4Dot','1/2','WholeTri','1/2Dot','1/4×4','1/4×5','1/4×6',
+  '1/4×7','1/4×8','1/4×16','1/4×32','1/4×64'];
+
+// ── ENCODING HELPERS ──────────────────────────────────────────────
+const enc = {
+  direct:    v => Math.max(0, Math.min(255, Math.round(v))),
+  center7:   v => Math.max(0, Math.min(14,  Math.round(v)+7)),
+  center15:  v => Math.max(0, Math.min(30,  Math.round(v)+15)),
+  center50:  v => Math.max(0, Math.min(100, Math.round(v)+50)),
+  center64:  v => Math.max(0, Math.min(127, Math.round(v)+64)),
+  center128: v => Math.max(0, Math.min(255, Math.round(v)+128)),
+  algo:      v => Math.max(0, Math.min(87,  Math.round(v)-1)),
+  kf:        v => Math.max(0, Math.min(255, Math.round(v*64/200)+64)),
+  pw:        v => Math.max(0, Math.min(255, Math.round(v*256/100))),
+};
+const dec = {
+  direct:    r => r,
+  center7:   r => r - 7,
+  center15:  r => r - 15,
+  center50:  r => r - 50,
+  center64:  r => r - 64,
+  center128: r => r - 128,
+  algo:      r => r + 1,
+  kf:        r => Math.round((r-64)*200/64),
+  pw:        r => Math.round(r*100/256),
+};
+function fxTypeLo(idx) { return idx & 0x7F; }
+function fxTypeHi(idx) { return (idx >> 7) & 0x7F; }
+function fxFromBytes(lo, hi) { return hi * 128 + lo; }
+function u16le(p, off) { return p[off] | (p[off+1] << 8); }
+function w16le(abs, val, label) {
+  writeByte(abs,   val & 0xFF,       label + ' lo');
+  writeByte(abs+1, (val >> 8) & 0xFF, label + ' hi');
+}
+
+// ── STATE ─────────────────────────────────────────────────────────
+const S = {
+  rawBuffer: null,
+  allPerfs: [],     // [{name, bytes, plen, dpfmOffset}] — all perfs in file
+  perfIdx: 0,       // currently selected perf index
+  perfBytes: null,  // mutable Uint8Array for current perf
+  origBytes: null,  // original Uint8Array (for delta)
+  perfName: '',
+  engine: null,     // 'FMX' | 'AWM2' | 'ANX'
+  algo: 1,
+  section: 'common',
+  selOp: 1,
+  selElem: 1,       // AWM2 element index (1-based)
+  changes: {},      // abs → {label, orig, cur}
+  dirtyPerfs: new Set(), // indices of perfs with unsaved changes
+  fileName: '',
+};
+
+// ── PARSER ────────────────────────────────────────────────────────
+// Parse ALL performances from a Y2L buffer.
+// Returns { perfs: [{name, bytes, plen, dpfmBufOffset}], dpfmAbsOff }
+// dpfmBufOffset = byte offset of this perf's data inside the DPFM chunk data
+// Read chunk absolute file offset from EPFM directory (raw[72:136]).
+function dirChunkPos(d, tag) {
+  const tc = tag.split('').map(c => c.charCodeAt(0));
+  for (let i = 0; i < 64; i += 8) {
+    if (d[72+i]===tc[0]&&d[72+i+1]===tc[1]&&d[72+i+2]===tc[2]&&d[72+i+3]===tc[3]) {
+      const pos = (d[72+i+4]<<24)|(d[72+i+5]<<16)|(d[72+i+6]<<8)|d[72+i+7];
+      if (pos > 0 && pos + 8 < d.length) return pos;
+    }
+  }
+  return -1;
+}
+
+function parseAllPerfs(buf) {
+  const d = new Uint8Array(buf);
+
+  // Validate YAMAHA-YSFC header
+  const magic = String.fromCharCode(d[0],d[1],d[2],d[3],d[4],d[5],d[6],d[7],d[8],d[9],d[10]);
+  if (magic !== 'YAMAHA-YSFC') throw new Error(t('err_not_y2l'));
+
+  // EPFM is always at offset 64 in a valid Y2L/Y2U file
+  if (d[64]!==0x45||d[65]!==0x50||d[66]!==0x46||d[67]!==0x4D)
+    throw new Error(t('err_epfm_not_found'));
+
+  // Locate DPFM via EPFM directory (matches v6.0 Python serializer)
+  let dpfmAbsOff = dirChunkPos(d, 'DPFM');
+  if (dpfmAbsOff < 0) {
+    // Fallback: sequential scan for largest DPFM
+    let best = -1, bestSz = 0;
+    for (let i = 0; i < d.length - 8; i++) {
+      if (d[i]===0x44&&d[i+1]===0x50&&d[i+2]===0x46&&d[i+3]===0x4D) {
+        const sz = (d[i+4]<<24)|(d[i+5]<<16)|(d[i+6]<<8)|d[i+7];
+        if (sz > bestSz) { bestSz=sz; best=i; }
+      }
+    }
+    if (best < 0) throw new Error(t('err_dpfm_not_found'));
+    dpfmAbsOff = best;
+  }
+
+  const dpfm = d.subarray(dpfmAbsOff+8);
+  const n = (dpfm[0]<<24)|(dpfm[1]<<16)|(dpfm[2]<<8)|dpfm[3];
+  if (n < 1 || n > 256) throw new Error(t('err_invalid_count',{n}));
+
+  // Read EPFM catalog Entr-record positions for name sync during export
+  // Catalog stream starts at file[361] = file[72+289]
+  const catTag = String.fromCharCode(d[72+281],d[72+282],d[72+283],d[72+284]);
+  const catEntries = [];
+  if (catTag === 'EPFM') {
+    const dv2 = new DataView(buf);
+    const catN = dv2.getUint32(72+289, false);
+    let cpos = 4;  // relative to stream start
+    const streamBase = 361;  // = 72 + 289 (file offset of catalog stream[0])
+    for (let ci = 0; ci < catN && ci < 256; ci++) {
+      const abs = streamBase + cpos;
+      if (abs + 8 > d.length) break;
+      if (d[abs]!==0x45||d[abs+1]!==0x6e||d[abs+2]!==0x74||d[abs+3]!==0x72) break;
+      const esz = dv2.getUint32(abs+4, false);
+      catEntries.push({ abs: abs+8, size: esz });
+      cpos += 8 + esz;
+    }
+  }
+
+  const perfs = [];
+  // DPFM layout: [0:4]=count, then N x (Data[4]+plen[4]+data[plen])
+  let pos = 4;
+  for (let i = 0; i < n; i++) {
+    if (pos + 8 > dpfm.length) break;
+    const plen = (dpfm[pos+4]<<24)|(dpfm[pos+5]<<16)|(dpfm[pos+6]<<8)|dpfm[pos+7];
+    const dataStart = pos + 8;
+    if (dataStart + plen > dpfm.length) break;
+    const bytes = new Uint8Array(dpfm.buffer, dpfm.byteOffset + dataStart, plen).slice();
+    const name = readPerfNameFromBytes(bytes);
+    perfs.push({
+      name, bytes, plen,
+      dpfmBufOffset: dataStart,
+      catEntry: catEntries[i] || null,
+    });
+    pos = dataStart + plen;
+  }
+  if (perfs.length === 0) throw new Error(t('err_no_perfs'));
+  return { perfs, dpfmAbsOff };
+}
+// Legacy compat — parse first perf only (kept for any internal callers)
+function parsePerfBytes(buf) {
+  return parseAllPerfs(buf).perfs[0].bytes;
+}
+
+function detectEngine(perf) {
+  const plen = perf.length;
+  if (plen < 6708) return 'FMX';
+  const pds = plen - PART_BASE;
+  const eq = pds;  // single-part heuristic
+  if (eq >= 6430 && eq <= 6465) return 'ANX';
+  if (eq >= 6890 && eq <= 6930) return 'FMX';
+  if (eq >= 6000 && eq <= 13500) return 'AWM2';
+  return 'FMX';
+}
+
+function opBase(op) { return OP1_BASE + (op-1)*OP_STRIDE; }
+
+// ── WRITE / DELTA ─────────────────────────────────────────────────
+function writeByte(abs, val, label) {
+  if (!S.perfBytes || abs < 0 || abs >= S.perfBytes.length) return;
+  val = val & 0xFF;
+  S.perfBytes[abs] = val;
+  const orig = S.origBytes[abs];
+  if (val !== orig) {
+    S.changes[abs] = { label, orig, cur: val };
+    S.dirtyPerfs.add(S.perfIdx);
+  } else {
+    delete S.changes[abs];
+  }
+  renderDeltas();
+}
+
+function onSlider(id, label, uiVal, min, max, abs, encType) {
+  const v = Number(uiVal);
+  const clamped = Math.max(min, Math.min(max, v));
+  const raw = enc[encType] ? enc[encType](clamped) : clamped;
+  // Format display
+  const centered = ['center7','center15','center50','center64','center128','kf'].includes(encType);
+  const display = centered ? (clamped >= 0 ? '+'+clamped : ''+clamped) : clamped;
+  const valEl = document.getElementById(id+'_v');
+  if (valEl) {
+    valEl.textContent = display;
+    valEl.className = 'sval' + (raw !== S.origBytes[abs] ? ' chg' : '');
+  }
+  const slEl = document.getElementById(id);
+  if (slEl) slEl.className = raw !== S.origBytes[abs] ? 'chg' : '';
+  writeByte(abs, raw, label);
+  if (S.engine === 'FMX' && S.section === 'op') renderOpNav();
+}
+
+// ── SLIDER BUILDER ────────────────────────────────────────────────
+function sl(id, label, uiVal, min, max, abs, encType, fmtFn) {
+  if (!S.origBytes || abs < 0 || abs >= S.perfBytes.length) return '';
+  const orig = S.origBytes[abs];
+  const cur  = S.perfBytes[abs];
+  const chg  = cur !== orig;
+  const display = fmtFn ? fmtFn(uiVal) : (
+    ['center7','center15','center50','center64','center128','kf'].includes(encType)
+      ? (uiVal >= 0 ? '+'+uiVal : ''+uiVal) : uiVal
+  );
+  return `<div class="srow">
+    <div class="srow-hdr">
+      <span class="sname">${label}</span>
+      <span class="sval${chg?' chg':''}" id="${id}_v">${display}</span>
+    </div>
+    <input type="range" id="${id}" class="${chg?'chg':''}"
+      min="${min}" max="${max}" value="${uiVal}"
+      oninput="onSlider('${id}','${label}',this.value,${min},${max},${abs},'${encType}')">
+  </div>`;
+}
+
+function selRow(label, val, opts, abs, labelPfx, onChg) {
+  const optsHtml = opts.map((n,i)=>`<option value="${i}" ${i===val?'selected':''}>${n}</option>`).join('');
+  const id = 'sel_'+abs;
+  return `<div class="srow">
+    <div class="srow-hdr"><span class="sname">${label}</span>
+      <span class="sval" id="${id}_v">${opts[val]||val}</span></div>
+    <select onchange="writeByte(${abs},+this.value,'${labelPfx} ${label}');document.getElementById('${id}_v').textContent=this.options[this.selectedIndex].text">
+      ${optsHtml}</select>
+  </div>`;
+}
+
+function cbRow(label, val, abs, lbl) {
+  return `<div class="cb-row">
+    <span class="cb-label">${label}</span>
+    <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+      <input type="checkbox" ${val?'checked':''}
+        onchange="writeByte(${abs},this.checked?1:0,'${lbl} ${label}')">
+      <span class="cb-val">${val?'On':'Off'}</span>
+    </label>
+  </div>`;
+}
+
+// ── NAV RENDERING ─────────────────────────────────────────────────
+function renderNav() {
+  const nav = document.getElementById('secNav');
+  if (!S.engine) { nav.innerHTML = ''; return; }
+
+  if (S.engine === 'FMX') renderFMXNav(nav);
+  else if (S.engine === 'AWM2') renderAWM2Nav(nav);
+  else if (S.engine === 'ANX') renderANXNav(nav);
+}
+
+function navItem(id, label, cls, active, onclick) {
+  return `<div class="nav-item${active?' active':''}${cls?' '+cls:''}" onclick="${onclick}" id="${id}">
+    <span class="nav-txt">${label}</span>
+  </div>`;
+}
+
+function renderFMXNav(nav) {
+  const carriers = ALGO_CARRIERS[S.algo] || [1];
+  let html = '<div class="nav-group"><span class="nav-group-label">'+t('nav_operators')+'</span>';
+  for (let op = 1; op <= 8; op++) {
+    const isC = carriers.includes(op);
+    const lv = S.perfBytes[opBase(op) + OP_OFF.level];
+    const active = S.section === 'op' && S.selOp === op;
+    html += `<div class="nav-item${active?' active':''}${isC?' is-carrier':' is-modulator'}" onclick="selectFMXOp(${op})">
+      <span class="nav-num">OP${op}</span>
+      <span class="nav-role">${isC?'C':'M'}</span>
+      <span class="nav-val">${lv}</span>
+    </div>`;
+  }
+  html += '</div><div class="nav-group"><span class="nav-group-label">'+t('nav_sections')+'</span>';
+  const secs = [
+    ['common', t('sec_algo_fx')], ['part', t('sec_part_common')],
+    ['peg', t('sec_pitch_eg')],   ['filter', t('sec_filter')],
+    ['lfo', t('sec_lfo')], ['fmc', t('sec_fm_color')], ['scaling', t('sec_op_scaling')],
+  ];
+  for (const [id, lbl] of secs) {
+    html += navItem('nav_'+id, lbl, '', S.section===id, `selectSec('${id}')`);
+  }
+  html += '</div>';
+  nav.innerHTML = html;
+}
+
+function renderOpNav() { renderFMXNav(document.getElementById('secNav')); }
+
+function renderAWM2Nav(nav) {
+  // Count active AWM2 elements (waveform > 0)
+  // Waveform at abs 12520 (AWM2_ELEM.waveformLo), stride 313 bytes (Serializer v6.0)
+  const AWM2_ELEM_STRD = 313;
+  let numElems = 1;
+  if (S.perfBytes) {
+    numElems = 0;
+    for (let e = 0; e < 8; e++) {
+      const off = 12520 + e * AWM2_ELEM_STRD;
+      if (off + 1 >= S.perfBytes.length) break;
+      const wf = S.perfBytes[off] + S.perfBytes[off+1]*256;
+      if (wf > 0 && wf < 9999) numElems++;
+    }
+    numElems = Math.max(1, numElems);
+  }
+  let html = '<div class="nav-group"><span class="nav-group-label">'+t('nav_elements')+'</span>';
+  for (let e = 1; e <= numElems; e++) {
+    const wfOff = AWM2_ELEM.waveformLo + (e-1) * AWM2_ELEM_STRD;
+    const wfNr = (wfOff+1 < S.perfBytes.length)
+      ? S.perfBytes[wfOff] + S.perfBytes[wfOff+1]*256 : 0;
+    const active = S.section === 'awm2_elem' && S.selElem === e;
+    html += '<div class="nav-item' + (active?' active':'') + '" onclick="selectAWM2Elem('+e+')">'
+      + '<span class="nav-num" style="color:var(--accent)">Elem '+e+'</span>'
+      + '<span class="nav-val">#'+wfNr+'</span></div>';
+  }
+  html += '</div><div class="nav-group"><span class="nav-group-label">'+t('nav_sections')+'</span>';
+  const secs = [
+    ['awm2_part', t('sec_part_common')],
+    ['awm2_aeg',  t('sec_part_aeg_offset')],
+    ['awm2_feg',  t('sec_part_filter_eg')],
+    ['awm2_fx',   t('sec_insertion_fx')],
+  ];
+  for (const [id, lbl] of secs) {
+    html += navItem('nav_'+id, lbl, '', S.section===id, "selectSec('"+id+"')");
+  }
+  html += '</div>';
+  nav.innerHTML = html;
+}
+
+function selectAWM2Elem(e) {
+  S.selElem = e;
+  S.section = 'awm2_elem';
+  renderNav();
+  renderCentre();
+}
+
+function renderANXNav(nav) {
+  let html = '<div class="nav-group"><span class="nav-group-label">'+t('nav_sections')+'</span>';
+  const secs = [
+    ['anx_osc',  t('sec_osc1')],
+    ['anx_flt1', t('sec_filter1')],
+    ['anx_flt2', t('sec_filter2')],
+    ['anx_mod',  t('sec_wf_modeg')],
+    ['anx_part', t('sec_part_common')],
+    ['anx_fx',   t('sec_insertion_fx')],
+  ];
+  for (const [id, lbl] of secs) {
+    html += navItem('nav_'+id, lbl, '', S.section===id, `selectSec('${id}')`);
+  }
+  html += '</div>';
+  nav.innerHTML = html;
+}
+
+function selectFMXOp(op) {
+  S.selOp = op; S.section = 'op';
+  renderNav(); renderCentre();
+}
+function selectSec(id) {
+  S.section = id;
+  renderNav(); renderCentre();
+}
+
+// ── CENTRE RENDERING ─────────────────────────────────────────────
+function renderCentre() {
+  const c = document.getElementById('centre');
+  if (!S.perfBytes) return;
+  const p = S.perfBytes;
+  const fn = {
+    // FMX
+    op:       () => renderFMXOpEditor(c),
+    common:   () => renderFMXCommon(c),
+    part:     () => renderPartCommon(c, 'FM-X'),
+    peg:      () => renderFMXPeg(c),
+    filter:   () => renderFMXFilter(c),
+    lfo:      () => renderFMXLfo(c),
+    fmc:      () => renderFMXColor(c),
+    scaling:  () => renderFMXScaling(c),
+    // AWM2
+    awm2_part: () => renderPartCommon(c, 'AWM2'),
+    awm2_feg:  () => renderAWM2Feg(c),
+    awm2_aeg:  () => renderAWM2PartAeg(c),
+    awm2_elem: () => renderAWM2Elem(c, S.selElem),
+    awm2_fx:   () => renderFXEditor(c),
+    // ANX
+    anx_osc:  () => renderANXOsc(c),
+    anx_flt1: () => renderANXFilter(c, 1),
+    anx_flt2: () => renderANXFilter(c, 2),
+    anx_mod:  () => renderANXModWaveFolder(c),
+    anx_part: () => renderPartCommon(c, 'AN-X'),
+    anx_fx:   () => renderFXEditor(c),
+  };
+  if (fn[S.section]) fn[S.section]();
+  else c.innerHTML = `<div style="padding:20px;font-family:var(--mono);color:var(--mut)">${t('lbl_section_not_impl',{section:S.section})}</div>`;
+}
+
+// ── SHARED: FX EDITOR ─────────────────────────────────────────────
+function renderFXEditor(c) {
+  const p = S.perfBytes;
+  const fxaLo = p[PART_BASE+275], fxaHi = p[PART_BASE+276];
+  const fxbLo = p[PART_BASE+332], fxbHi = p[PART_BASE+333];
+  const fxaIdx = fxFromBytes(fxaLo, fxaHi);
+  const fxbIdx = fxFromBytes(fxbLo, fxbHi);
+  const fxOpts = (sel) => Object.entries(FX_TYPES).sort((a,b)=>+a[0]-+b[0])
+    .map(([idx,nm])=>`<option value="${idx}" ${+idx===sel?'selected':''}>${nm}</option>`).join('');
+
+  c.innerHTML = esec(t('es_insertion_fx_a'), '', `
+    <div class="srow">
+      <div class="srow-hdr"><span class="sname">Type</span>
+        <span class="sval" id="fxa_label">${FX_TYPES[fxaIdx]||'FX#'+fxaIdx}</span></div>
+      <select onchange="updateFX(0,this.value)">${fxOpts(fxaIdx)}</select>
+    </div>`) +
+  esec(t('es_insertion_fx_b'), '', `
+    <div class="srow">
+      <div class="srow-hdr"><span class="sname">Type</span>
+        <span class="sval" id="fxb_label">${FX_TYPES[fxbIdx]||'FX#'+fxbIdx}</span></div>
+      <select onchange="updateFX(1,this.value)">${fxOpts(fxbIdx)}</select>
+    </div>`);
+}
+function updateFX(ab, idxStr) {
+  const idx = +idxStr;
+  const baseRel = ab === 0 ? 275 : 332;
+  writeByte(PART_BASE+baseRel,   fxTypeLo(idx), (ab===0?'InsA':'InsB')+' lo');
+  writeByte(PART_BASE+baseRel+1, fxTypeHi(idx), (ab===0?'InsA':'InsB')+' hi');
+  const label = document.getElementById(ab===0?'fxa_label':'fxb_label');
+  if (label) label.textContent = FX_TYPES[idx]||'FX#'+idx;
+}
+
+// ── SHARED: PART COMMON ───────────────────────────────────────────
+function renderPartCommon(c, eng) {
+  const p = S.perfBytes;
+  // Offsets differ slightly by engine shift
+  const shift = (eng === 'FM-X' || eng === 'AN-X') ? -12 : 0;
+  const V   = PART_BASE + 123 + shift;
+  const PAN = PART_BASE + 121 + shift;
+  const REV = PART_BASE + 124 + shift;
+  const VAR = PART_BASE + 130 + shift;
+  const PSW = PART_BASE + 41;
+  const PT  = PART_BASE + 106;
+  const pan = dec.center64(p[PAN]);
+  const panFmt = v => v===0?'C':v>0?`R${v}`:`L${-v}`;
+
+  const aeBase = 6849;
+  const aegHtml = `
+    <div class="pgrid pgrid-4">
+      ${sl('pae_a','Attack', dec.center64(p[aeBase+0]),-64,63,aeBase+0,'center64')}
+      ${sl('pae_d','Decay',  dec.center64(p[aeBase+2]),-64,63,aeBase+2,'center64')}
+      ${sl('pae_s','Sustain',dec.center64(p[aeBase+4]),-64,63,aeBase+4,'center64')}
+      ${sl('pae_r','Release',dec.center64(p[aeBase+6]),-64,63,aeBase+6,'center64')}
+    </div>`;
+
+  c.innerHTML = esec(t('es_part_common'), eng, `
+    <div class="pgrid">
+      ${sl('pc_vol','Volume', p[V],   0,127,V,'direct')}
+      ${sl('pc_pan','Pan',    pan, -63,63, PAN,'center64',panFmt)}
+      ${sl('pc_rev','Rev Send',p[REV],0,127,REV,'direct')}
+      ${sl('pc_var','Var Send',p[VAR],0,127,VAR,'direct')}
+    </div>`) +
+  esec(t('es_aeg_offset'), t('badge_center64'), aegHtml) +
+  esec(t('es_portamento'), '', `
+    ${cbRow('Porta SW', p[PSW], PSW, eng)}
+    <div class="pgrid" style="margin-top:10px">
+      ${sl('pc_pt','Porta Time',p[PT],0,127,PT,'direct')}
+    </div>`);
+}
+
+// ── FM-X: OPERATOR EDITOR ─────────────────────────────────────────
+function renderFMXOpEditor(c) {
+  const op = S.selOp;
+  const base = opBase(op);
+  const p = S.perfBytes;
+  const carriers = ALGO_CARRIERS[S.algo] || [1];
+  const isC = carriers.includes(op);
+  const roleLbl = isC ? 'CARRIER' : 'MODULATOR';
+  const roleClr = isC ? 'var(--op-c)' : 'var(--op-m)';
+
+  const freqMode = p[base + OP_OFF.freqMode];
+  const coarse   = p[base + OP_OFF.coarse];
+  const fine     = p[base + OP_OFF.fine];
+  const detune   = dec.center15(p[base + OP_OFF.detune]);
+  const level    = p[base + OP_OFF.level];
+  const levelVel = dec.center7(p[base + OP_OFF.levelVel]);
+  const pitchKey = p[base + OP_OFF.pitchKey];
+  const pitchVel = dec.center7(p[base + OP_OFF.pitchVel]);
+  const spectral = p[base + OP_OFF.spectralForm];
+  const skirt    = p[base + OP_OFF.spectralSkirt];
+  const resona   = p[base + OP_OFF.spectralResonance];
+  const keyOnRst = p[base + OP_OFF.keyOnReset];
+
+  const fmOpts = `<option value="0" ${freqMode===0?'selected':''}>Ratio</option>
+    <option value="1" ${freqMode===1?'selected':''}>Fixed</option>`;
+  const spOpts = SPECTRAL_FORMS.map((n,i)=>`<option value="${i}" ${i===spectral?'selected':''}>${n}</option>`).join('');
+
+  c.innerHTML = esec(t('es_op_form',{op}),
+    `<span style="color:${roleClr};background:rgba(${isC?'58,158,255':'155,107,255'},.1);border:1px solid rgba(${isC?'58,158,255':'155,107,255'},.3);padding:1px 7px;border-radius:3px;font-family:var(--mono);font-size:9px">${roleLbl}</span>`,
+    `<div class="pgrid">
+      <div class="srow"><div class="srow-hdr"><span class="sname">Freq Mode</span></div>
+        <select onchange="writeByte(${base+OP_OFF.freqMode},+this.value,'OP${op} FreqMode')">${fmOpts}</select>
+      </div>
+      ${sl('op'+op+'_c',  'Coarse',    coarse,   0, 31, base+OP_OFF.coarse,  'direct')}
+      ${sl('op'+op+'_f',  'Fine',      fine,     0, 63, base+OP_OFF.fine,    'direct')}
+      ${sl('op'+op+'_d',  'Detune',    detune,  -7,  7, base+OP_OFF.detune,  'center15')}
+      ${sl('op'+op+'_lv', 'Level',     level,    0, 99, base+OP_OFF.level,   'direct')}
+      ${sl('op'+op+'_lv2','Level Vel', levelVel,-7,  7, base+OP_OFF.levelVel,'center7')}
+      ${sl('op'+op+'_pk', 'Pitch Key', pitchKey, 0,127, base+OP_OFF.pitchKey,'direct')}
+      ${sl('op'+op+'_pv', 'Pitch Vel', pitchVel,-7,  7, base+OP_OFF.pitchVel,'center7')}
+    </div>
+    ${cbRow('Key On Reset', keyOnRst, base+OP_OFF.keyOnReset, 'OP'+op)}
+    <div class="srow" style="margin-top:10px">
+      <div class="srow-hdr"><span class="sname">Spectral Form</span></div>
+      <select onchange="onSpectral(${op},this.value)">${spOpts}</select>
+    </div>
+    ${spectral>0 ? sl('op'+op+'_sk','Skirt',    skirt, 0,127,base+OP_OFF.spectralSkirt,'direct') : ''}
+    ${spectral>=5? sl('op'+op+'_re','Resonance',resona,0,127,base+OP_OFF.spectralResonance,'direct'):''}
+  `) +
+  renderFMXOpAEG(op, base, p) +
+  renderFMXOpPEG(op, base, p);
+}
+
+function onSpectral(op, val) {
+  const base = opBase(op);
+  writeByte(base+OP_OFF.spectralForm, +val, `OP${op} Spectral`);
+  renderCentre();
+}
+
+function renderFMXOpAEG(op, base, p) {
+  const pre = 'op'+op+'_';
+  const a = OP_OFF;
+  return esec(t('es_amplitude_eg'), '', `
+    <div style="margin-bottom:10px"><div class="sname" style="margin-bottom:8px">TIME</div>
+    <div class="pgrid">
+      ${sl(pre+'at','Attack',  p[base+a.aegAttackTime], 0,127,base+a.aegAttackTime,'direct')}
+      ${sl(pre+'d1','Decay 1', p[base+a.aegDecay1Time], 0,127,base+a.aegDecay1Time,'direct')}
+      ${sl(pre+'d2','Decay 2', p[base+a.aegDecay2Time], 0,127,base+a.aegDecay2Time,'direct')}
+      ${sl(pre+'rt','Release', p[base+a.aegReleaseTime],0,127,base+a.aegReleaseTime,'direct')}
+      ${sl(pre+'ht','Hold',    p[base+a.aegHoldTime],   0,127,base+a.aegHoldTime,'direct')}
+      ${sl('op'+op+'_tk','Time/Key',p[base+a.aegTimeKeyFollow],0,127,base+a.aegTimeKeyFollow,'direct')}
+    </div></div>
+    <div><div class="sname" style="margin-bottom:8px">LEVEL</div>
+    <div class="pgrid">
+      ${sl(pre+'al','Attack',  p[base+a.aegAttackLevel], 0,99,base+a.aegAttackLevel,'direct')}
+      ${sl(pre+'dl','Decay 1', p[base+a.aegDecay1Level], 0,99,base+a.aegDecay1Level,'direct')}
+      ${sl(pre+'d2l','Decay 2',p[base+a.aegDecay2Level], 0,99,base+a.aegDecay2Level,'direct')}
+      ${sl(pre+'rl','Release', p[base+a.aegReleaseLevel],0,99,base+a.aegReleaseLevel,'direct')}
+    </div></div>`);
+}
+
+function renderFMXOpPEG(op, base, p) {
+  const a = OP_OFF;
+  return esec(t('es_pitch_eg_op'), '', `<div class="pgrid">
+    ${sl('op'+op+'_pil','Init Level', p[base+a.pegInitLevel],0,99,base+a.pegInitLevel,'direct')}
+    ${sl('op'+op+'_pal','Atk Level',  p[base+a.pegAtkLevel], 0,99,base+a.pegAtkLevel,'direct')}
+    ${sl('op'+op+'_pat','Atk Time',   p[base+a.pegAttackTime],0,127,base+a.pegAttackTime,'direct')}
+    ${sl('op'+op+'_pdt','Dcy Time',   p[base+a.pegDecayTime], 0,127,base+a.pegDecayTime,'direct')}
+  </div>`);
+}
+
+// ── FM-X: COMMON (Algorithm / FX) ────────────────────────────────
+function renderFMXCommon(c) {
+  const p = S.perfBytes;
+  const algo = S.algo;
+  const fb   = p[FB_ABS];
+  const carriers = ALGO_CARRIERS[algo] || [1];
+  const diagHtml = [1,2,3,4,5,6,7,8].map(op => {
+    const isC = carriers.includes(op);
+    return `<div class="algo-op ${isC?'carrier':'modulator'}">O${op}</div>`;
+  }).join('');
+
+  c.innerHTML = esec(t('es_algo_fb'), '',`
+    <div class="algo-wrap">
+      <div class="algo-big" id="algoBig">${algo}</div>
+      <div>
+        <div class="algo-diagram" id="algoDiag">${diagHtml}</div>
+        <div style="display:flex;gap:8px;align-items:center;margin-top:10px">
+          <span class="sname" style="width:36px">ALGO</span>
+          <input type="range" id="algoSlider" min="1" max="88" value="${algo}" style="flex:1"
+            oninput="updateAlgo(this.value)">
+          <span class="sval" id="algoVal" style="min-width:28px">${algo}</span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
+          <span class="sname" style="width:36px">FB</span>
+          <input type="range" id="fbSlider" min="0" max="7" value="${fb}" style="flex:1"
+            oninput="updateFeedback(this.value)">
+          <span class="sval" id="fbVal" style="min-width:28px">${fb}</span>
+        </div>
+      </div>
+    </div>`) +
+  renderFXEditor_inline(c);
+}
+
+function renderFXEditor_inline(c) {
+  const p = S.perfBytes;
+  const fxaIdx = fxFromBytes(p[PART_BASE+275], p[PART_BASE+276]);
+  const fxbIdx = fxFromBytes(p[PART_BASE+332], p[PART_BASE+333]);
+  const fxOpts = (sel) => Object.entries(FX_TYPES).sort((a,b)=>+a[0]-+b[0])
+    .map(([idx,nm])=>`<option value="${idx}" ${+idx===sel?'selected':''}>${nm}</option>`).join('');
+  return esec(t('es_insertion_fx'), '',`
+    <div class="pgrid pgrid-2">
+      <div class="srow"><div class="srow-hdr"><span class="sname">Ins A</span>
+        <span class="sval" id="fxa_label">${FX_TYPES[fxaIdx]||'FX#'+fxaIdx}</span></div>
+        <select onchange="updateFX(0,this.value)">${fxOpts(fxaIdx)}</select></div>
+      <div class="srow"><div class="srow-hdr"><span class="sname">Ins B</span>
+        <span class="sval" id="fxb_label">${FX_TYPES[fxbIdx]||'FX#'+fxbIdx}</span></div>
+        <select onchange="updateFX(1,this.value)">${fxOpts(fxbIdx)}</select></div>
+    </div>`);
+}
+
+function updateAlgo(v) {
+  S.algo = +v;
+  document.getElementById('algoVal').textContent = v;
+  document.getElementById('algoBig').textContent = v;
+  writeByte(ALG_ABS, enc.algo(+v), 'Algorithm');
+  renderNav();
+  const carriers = ALGO_CARRIERS[S.algo] || [1];
+  const d = document.getElementById('algoDiag');
+  if (d) d.innerHTML = [1,2,3,4,5,6,7,8].map(op=>{
+    const isC = carriers.includes(op);
+    return `<div class="algo-op ${isC?'carrier':'modulator'}">O${op}</div>`;
+  }).join('');
+}
+function updateFeedback(v) {
+  document.getElementById('fbVal').textContent = v;
+  writeByte(FB_ABS, +v, 'Feedback');
+}
+
+// ── FM-X: PITCH EG ────────────────────────────────────────────────
+function renderFMXPeg(c) {
+  const p = S.perfBytes;
+  const P = FMX_PEG;
+  const depthRaw = p[P.depth];
+  const depthLabel = PEG_DEPTH_LABELS[depthRaw] || depthRaw;
+  const depthOpts = PEG_DEPTH_LABELS.map((n,i)=>`<option value="${i}" ${i===depthRaw?'selected':''}>${n}</option>`).join('');
+  c.innerHTML = esec(t('es_part_pitch_eg'), '', `
+    <div class="pgrid">
+      ${sl('peg_pvs','Pitch Vel Sens', dec.center64(p[P.pitchVelSens]),-64,63,P.pitchVelSens,'center64')}
+      ${sl('peg_rp', 'Random Pitch',  p[P.randomPitch],0,127,P.randomPitch,'direct')}
+      ${sl('peg_kf', 'Pitch Key Follow',dec.kf(p[P.pitchKeyFollow]),-100,100,P.pitchKeyFollow,'kf')}
+    </div>
+    <div class="pgrid" style="margin-top:10px">
+      <div class="srow"><div class="srow-hdr"><span class="sname">Depth Range</span>
+        <span class="sval">${depthLabel}</span></div>
+        <select onchange="writeByte(${P.depth},+this.value,'PEG Depth')">${depthOpts}</select>
+      </div>
+      ${sl('peg_dvs','Depth Vel Sens',dec.center64(p[P.depthVelSens]),-64,63,P.depthVelSens,'center64')}
+      ${sl('peg_tks','Time Key Sens', p[P.timeKeySens],0,127,P.timeKeySens,'direct')}
+    </div>
+    <div style="margin-top:12px"><div class="sname" style="margin-bottom:8px">LEVELS (center=50)</div>
+    <div class="pgrid">
+      ${sl('peg_il','Initial', dec.center50(p[P.initialLevel]),-50,50,P.initialLevel,'center50')}
+      ${sl('peg_al','Attack',  dec.center50(p[P.attackLevel]), -50,50,P.attackLevel, 'center50')}
+      ${sl('peg_d1l','Decay1', dec.center50(p[P.decay1Level]),-50,50,P.decay1Level, 'center50')}
+      ${sl('peg_d2l','Decay2', dec.center50(p[P.decay2Level]),-50,50,P.decay2Level, 'center50')}
+      ${sl('peg_rl','Release', dec.center50(p[P.releaseLevel]),-50,50,P.releaseLevel,'center50')}
+    </div></div>
+    <div style="margin-top:12px"><div class="sname" style="margin-bottom:8px">TIMES</div>
+    <div class="pgrid">
+      ${sl('peg_at','Attack',  p[P.attackTime], 0,127,P.attackTime, 'direct')}
+      ${sl('peg_d1t','Decay1', p[P.decay1Time], 0,127,P.decay1Time, 'direct')}
+      ${sl('peg_d2t','Decay2', p[P.decay2Time], 0,127,P.decay2Time, 'direct')}
+      ${sl('peg_rt','Release', p[P.releaseTime],0,127,P.releaseTime,'direct')}
+    </div></div>`);
+}
+
+// ── FM-X: FILTER ─────────────────────────────────────────────────
+function renderFMXFilter(c) {
+  const p = S.perfBytes;
+  const F = FMX_FILT;
+  const typeRaw = p[F.type];
+  const typeName = FMX_FILTER_TYPES[typeRaw] || 'THRU';
+  const typeOpts = Object.entries(FMX_FILTER_TYPES).map(([k,n])=>
+    `<option value="${k}" ${+k===typeRaw?'selected':''}>${n}</option>`).join('');
+  const cutoff = u16le(p, F.cutoffLo);
+
+  c.innerHTML = esec(t('es_fmx_filter'), '', `
+    <div class="pgrid">
+      <div class="srow"><div class="srow-hdr"><span class="sname">Type</span>
+        <span class="sval" id="ftype_v">${typeName}</span></div>
+        <select onchange="writeByte(${F.type},+this.value,'Filter Type');document.getElementById('ftype_v').textContent=this.options[this.selectedIndex].text">${typeOpts}</select>
+      </div>
+      <div class="srow"><div class="srow-hdr"><span class="sname">Cutoff</span>
+        <span class="sval" id="flt_cut_v">${cutoff} Hz</span></div>
+        <input type="range" id="flt_cut" min="0" max="1023" value="${cutoff}"
+          oninput="updateFMXCutoff(this.value)">
+      </div>
+      ${sl('flt_vs','Vel Sens',  dec.center64(p[F.velSens]), -64,63,F.velSens, 'center64')}
+      ${sl('flt_re','Resonance', p[F.resonance],0,127,F.resonance,'direct')}
+    </div>`);
+}
+function updateFMXCutoff(v) {
+  document.getElementById('flt_cut_v').textContent = v + ' Hz';
+  writeByte(FMX_FILT.cutoffLo,  +v & 0xFF,       'Filter Cutoff lo');
+  writeByte(FMX_FILT.cutoffHi, (+v >> 8) & 0xFF, 'Filter Cutoff hi');
+}
+
+// ── FM-X: LFO ────────────────────────────────────────────────────
+function renderFMXLfo(c) {
+  const p = S.perfBytes;
+  const L1 = FMX_LFO1, L2 = FMX_LFO2;
+  const w1  = p[L1.wave], w2 = p[L2.wave];
+  const kor1 = p[L1.keyOnReset], kor2 = p[L2.keyOnReset];
+  const tn  = p[L1.tempoNote];
+  const ph2 = p[L2.phase];
+  const ext = p[L2.extended];
+  const loop = p[L1.loop];
+  const PHASE = ['0°','90°','180°','270°','360°'];
+  const KOR = ['Off','Each','1st'];
+  const wOpts1 = LFO_WAVES.map((n,i)=>`<option value="${i}" ${i===w1?'selected':''}>${n}</option>`).join('');
+  const wOpts2 = LFO_WAVES.map((n,i)=>`<option value="${i}" ${i===w2?'selected':''}>${n}</option>`).join('');
+  const tnOpts = TEMPO_NOTES.map((n,i)=>`<option value="${i+5}" ${(i+5)===tn?'selected':''}>${n}</option>`).join('');
+  const phOpts = PHASE.map((n,i)=>`<option value="${i}" ${i===ph2?'selected':''}>${n}</option>`).join('');
+  const korOpts1 = KOR.map((n,i)=>`<option value="${i}" ${i===kor1?'selected':''}>${n}</option>`).join('');
+  const kor2Opts = `<option value="0" ${kor2===0?'selected':''}>Off</option><option value="1" ${kor2===1?'selected':''}>On</option>`;
+
+  c.innerHTML = esec(t('es_lfo1'), '', `
+    <div class="pgrid">
+      <div class="srow"><div class="srow-hdr"><span class="sname">Wave</span>
+        <span class="sval">${LFO_WAVES[w1]}</span></div>
+        <select onchange="writeByte(${L1.wave},+this.value,'LFO1 Wave');renderCentre()">${wOpts1}</select></div>
+      <div class="srow"><div class="srow-hdr"><span class="sname">Key On Reset</span></div>
+        <select onchange="writeByte(${L1.keyOnReset},+this.value,'LFO1 KOR')">${korOpts1}</select></div>
+      <div class="srow"><div class="srow-hdr"><span class="sname">Tempo Note</span>
+        <span class="sval">${TEMPO_NOTES[tn-5]||tn}</span></div>
+        <select onchange="writeByte(${L1.tempoNote},+this.value,'LFO1 TempoNote')">${tnOpts}</select></div>
+      ${sl('lfo1_sp','Speed',    p[L1.speed],     0,127,L1.speed,    'direct')}
+      ${sl('lfo1_dl','Delay',    p[L1.delay],     0,127,L1.delay,    'direct')}
+      ${sl('lfo1_fi','Fade In',  p[L1.fadeIn],    0,127,L1.fadeIn,   'direct')}
+      ${sl('lfo1_hl','Hold',     p[L1.hold],      0,127,L1.hold,     'direct')}
+      ${sl('lfo1_fo','Fade Out', dec.center64(p[L1.fadeOut]),-64,63,L1.fadeOut,'center64')}
+      ${sl('lfo1_rs','Rnd Speed',p[L1.randomSpeed],0,127,L1.randomSpeed,'direct')}
+    </div>
+    <div style="margin-top:10px">
+      ${cbRow('Tempo Sync', p[L1.tempoSync], L1.tempoSync, 'LFO1')}
+      ${cbRow('Loop (0=On)', loop, L1.loop, 'LFO1')}
+    </div>`) +
+  esec(t('es_lfo2'), '', `
+    <div class="pgrid">
+      <div class="srow"><div class="srow-hdr"><span class="sname">Wave</span></div>
+        <select onchange="writeByte(${L2.wave},+this.value,'LFO2 Wave')">${wOpts2}</select></div>
+      <div class="srow"><div class="srow-hdr"><span class="sname">Phase</span></div>
+        <select onchange="writeByte(${L2.phase},+this.value,'LFO2 Phase')">${phOpts}</select></div>
+      <div class="srow"><div class="srow-hdr"><span class="sname">Key On Reset</span></div>
+        <select onchange="writeByte(${L2.keyOnReset},+this.value,'LFO2 KOR')">${kor2Opts}</select></div>
+      ${sl('lfo2_sn','Speed (Normal)',  p[L2.speedNormal],  0,127,L2.speedNormal,  'direct')}
+      ${sl('lfo2_se','Speed (Ext ON)', p[L2.speedExtended],0,127,L2.speedExtended,'direct')}
+      ${sl('lfo2_dl','Delay',          p[L2.delay],        0,127,L2.delay,        'direct')}
+    </div>
+    ${cbRow('Extended', ext, L2.extended, 'LFO2')}`);
+}
+
+// ── FM-X: FM COLOR ────────────────────────────────────────────────
+function renderFMXColor(c) {
+  const p = S.perfBytes;
+  const F = FMC;
+  const fmt = v => v >= 0 ? '+'+v : ''+v;
+  const wOpts = LFO_WAVES.map((n,i)=>`<option value="${i}" ${i===p[F.lfoAmplWave]?'selected':''}>${n}</option>`).join('');
+  c.innerHTML = esec(t('es_fmc_depth'), t('badge_center128'), `<div class="pgrid">
+    ${sl('fmc_d','Depth',    dec.center128(p[F.depth]),    -128,127,F.depth,    'center128',fmt)}
+    ${sl('fmc_h','Harmonics',dec.center128(p[F.harmonics]),-128,127,F.harmonics,'center128',fmt)}
+    ${sl('fmc_t','Texture',  dec.center128(p[F.texture]),  -128,127,F.texture,  'center128',fmt)}
+  </div>`) +
+  esec(t('es_fmc_env'), '', `<div class="pgrid">
+    ${sl('fmc_a','Attack', dec.center128(p[F.attack]), -128,127,F.attack, 'center128',fmt)}
+    ${sl('fmc_dc','Decay',  dec.center128(p[F.decay]),  -128,127,F.decay,  'center128',fmt)}
+    ${sl('fmc_s','Sustain',dec.center128(p[F.sustain]),-128,127,F.sustain,'center128',fmt)}
+    ${sl('fmc_r','Release',dec.center128(p[F.release]),-128,127,F.release,'center128',fmt)}
+  </div>`) +
+  esec(t('es_fmc_lfo'), '', `<div class="pgrid">
+    <div class="srow"><div class="srow-hdr"><span class="sname">LFO Wave</span></div>
+      <select onchange="writeByte(${F.lfoAmplWave},+this.value,'FMC LFO Wave')">${wOpts}</select></div>
+    ${sl('fmc_ls','LFO Speed',p[F.lfoAmplSpeed],0,127,F.lfoAmplSpeed,'direct')}
+    ${sl('fmc_ld','LFO Depth',p[F.lfoAmplDepth],0,127,F.lfoAmplDepth,'direct')}
+  </div>`);
+}
+
+// ── FM-X: OP SCALING ─────────────────────────────────────────────
+function renderFMXScaling(c) {
+  const p = S.perfBytes;
+  let rows = '';
+  for (let op = 1; op <= 8; op++) {
+    const base = opBase(op);
+    rows += `<div style="display:grid;grid-template-columns:50px 1fr;align-items:center;gap:8px;margin-bottom:8px">
+      <span class="sname">OP ${op}</span>
+      ${sl('sc_'+op,'Level', p[base+OP_OFF.level],0,99,base+OP_OFF.level,'direct')}
+    </div>`;
+  }
+  c.innerHTML = esec(t('es_op_level_matrix'), '', rows);
+}
+
+// ── AWM2: ELEMENT EDITOR ─────────────────────────────────────────
+function renderAWM2Elem(c, elemNr) {
+  elemNr = elemNr || 1;
+  const AWM2_ELEM_STRD = 313;  // verified element stride (Serializer v6.0)
+  const eOff = (elemNr - 1) * AWM2_ELEM_STRD;
+  const p = S.perfBytes;
+  const E = AWM2_ELEM;
+  const wfLoAbs = E.waveformLo + eOff;
+  const wfHiAbs = E.waveformHi + eOff;
+  const wfNr = (wfLoAbs < p.length ? p[wfLoAbs] : 0) + (wfHiAbs < p.length ? p[wfHiAbs] : 0)*256;
+  const filterCutoff = u16le(p, PART_BASE+5857);
+
+  // Filter type
+  const ftRaw = p[PART_BASE+4];
+  const ftName = AWM2_FILTER_TYPES[ftRaw] || 'LPF12D';
+  const ftOpts = AWM2_FILTER_TYPES.map((n,i)=>
+    `<option value="${i}" ${i===ftRaw?'selected':''}>${n}</option>`).join('');
+
+  c.innerHTML = esec(t('es_elem_waveform',{n:elemNr}), '', `
+    <div class="pgrid">
+      <div class="srow"><div class="srow-hdr"><span class="sname">Waveform #</span>
+        <span class="sval">${wfNr}</span></div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <input type="number" min="1" max="9999" value="${wfNr}" style="width:80px;background:var(--sur2);border:1px solid var(--brd2);border-radius:4px;color:var(--txt);padding:4px 6px;font-family:var(--mono);font-size:12px"
+            onchange="updateWaveform(this.value)">
+          <span style="font-family:var(--mono);font-size:10px;color:var(--mut)">u16 LE</span>
+        </div>
+      </div>
+      ${sl('aw_nl','Note Low',  p[E.noteLowLimit],   0,127,E.noteLowLimit,  'direct')}
+      ${sl('aw_nh','Note High', p[E.noteHighLimit],  0,127,E.noteHighLimit, 'direct')}
+      ${sl('aw_vl','Vel Low',   p[E.velLowLimit],    1,127,E.velLowLimit,   'direct')}
+      ${sl('aw_vc','Vel X-Fade',p[E.velCrossFade],   0,127,E.velCrossFade,  'direct')}
+      ${sl('aw_kd','KeyOn Delay',p[E.keyOnDelayLength],0,127,E.keyOnDelayLength,'direct')}
+    </div>`) +
+  esec(t('es_elem_filter'), '', `
+    <div class="pgrid">
+      <div class="srow"><div class="srow-hdr"><span class="sname">Filter Type</span>
+        <span class="sval" id="ft_v">${ftName}</span></div>
+        <select onchange="writeByte(${PART_BASE+4},+this.value,'Filter Type');document.getElementById('ft_v').textContent=AWM2_FILTER_TYPES[+this.value]||this.value">${ftOpts}</select>
+      </div>
+      <div class="srow"><div class="srow-hdr"><span class="sname">Cutoff</span>
+        <span class="sval" id="aw_cut_v">${filterCutoff} Hz</span></div>
+        <input type="range" id="aw_cut" min="0" max="8191" value="${filterCutoff}"
+          oninput="updateAWM2Cutoff(this.value)">
+      </div>
+      ${sl('aw_re','Resonance',  p[E.filterResonance],0,127,E.filterResonance,'direct')}
+      ${sl('aw_fd','FEG Depth',  dec.center64(p[E.filterFEGDepth])-40,-64,63,E.filterFEGDepth,'center64')}
+    </div>`) +
+  esec(t('es_elem_aeg'), t('badge_center64'), `
+    <div class="pgrid">
+      ${sl('aw_lv','Level Vel',  dec.center64(p[E.levelVel]),   -64,63,E.levelVel, 'center64')}
+      ${sl('aw_ao','AEG Offset', dec.center64(p[E.aegOffset]),  -64,63,E.aegOffset,'center64')}
+      ${sl('aw_tv','AEG TimeVel',dec.center64(p[E.aegTimeVel]),-64,63,E.aegTimeVel,'center64')}
+    </div>`) +
+  esec(t('es_pan'), '', `<div class="pgrid">
+    ${sl('aw_rp','Random Pan',    dec.center64(p[E.randomPan]),   -64,63,E.randomPan,   'center64')}
+    ${sl('aw_ap','Alternate Pan', dec.center64(p[E.alternatePan]),-64,63,E.alternatePan,'center64')}
+    ${sl('aw_sp','Scaling Pan',   dec.center64(p[E.scalingPan]),  -64,63,E.scalingPan,  'center64')}
+  </div>`);
+}
+function updateWaveform(v, eOff) {
+  eOff = eOff || 0;
+  const nr = Math.max(1, Math.min(9999, Math.round(+v)));
+  writeByte(AWM2_ELEM.waveformLo + eOff,  nr & 0xFF,       'Waveform lo');
+  writeByte(AWM2_ELEM.waveformHi + eOff, (nr >> 8) & 0xFF, 'Waveform hi');
+}
+function updateAWM2Cutoff(v) {
+  document.getElementById('aw_cut_v').textContent = v + ' Hz';
+  const abs = PART_BASE+5857;
+  writeByte(abs,   +v & 0xFF,       'AWM2 Cutoff lo');
+  writeByte(abs+1,(+v >> 8) & 0xFF, 'AWM2 Cutoff hi');
+}
+
+// ── AWM2: PART AEG OFFSET ───────────────────────────────────────
+function renderAWM2PartAeg(c) {
+  const p = S.perfBytes;
+  const aeBase = 6849;
+  const fmt = v => v >= 0 ? '+'+v : ''+v;
+  c.innerHTML = esec(t('es_part_aeg_offset'), '', `
+    <div style="padding:7px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:12px;font-family:var(--mono);font-size:10.5px;color:var(--text-muted)">
+      ${t('note_part_aeg')}
+    </div>
+    <div class="param-grid">
+      ${makeSlider('pae_a','Attack',  dec.center64(p[aeBase+0]),-64,63,aeBase+0,'center64')}
+      ${makeSlider('pae_d','Decay',   dec.center64(p[aeBase+2]),-64,63,aeBase+2,'center64')}
+      ${makeSlider('pae_s','Sustain', dec.center64(p[aeBase+4]),-64,63,aeBase+4,'center64')}
+      ${makeSlider('pae_r','Release', dec.center64(p[aeBase+6]),-64,63,aeBase+6,'center64')}
+    </div>`);
+}
+
+// ── AWM2: PART FEG ────────────────────────────────────────────────
+function renderAWM2Feg(c) {
+  const p = S.perfBytes;
+  const F = AWM2_PART_FEG;
+  const fmt = v => v >= 0 ? '+'+v : ''+v;
+  c.innerHTML = esec(t('es_part_filter_eg'), t('note_part_feg'), `
+    <div style="padding:8px;background:var(--sur2);border:1px solid var(--brd);border-radius:var(--r);margin-bottom:12px;font-family:var(--mono);font-size:11px;color:var(--mut)">
+      ${t('note_part_feg_body')}
+    </div>
+    <div class="pgrid pgrid-4">
+      ${sl('feg_a','Attack',  dec.center64(p[F.attack]), -64,63,F.attack, 'center64',fmt)}
+      ${sl('feg_d','Decay',   dec.center64(p[F.decay]),  -64,63,F.decay,  'center64',fmt)}
+      ${sl('feg_s','Sustain', dec.center64(p[F.sustain]),-64,63,F.sustain,'center64',fmt)}
+      ${sl('feg_r','Release', dec.center64(p[F.release]),-64,63,F.release,'center64',fmt)}
+    </div>`);
+}
+
+// ── AN-X: OSC 1 EDITOR ───────────────────────────────────────────
+function renderANXOsc(c) {
+  const p = S.perfBytes;
+  const A = ANX;
+  const wave = p[A.osc1Wave];
+  const octave = p[A.osc1Octave];
+  const connect = p[A.osc1Connect];
+  const pw = dec.pw(p[A.osc1PulseWidth]);
+  const outLvl = u16le(p, A.osc1OutLevel);
+
+  const wOpts = ANX_WAVES.map((n,i)=>`<option value="${i}" ${i===wave?'selected':''}>${n}</option>`).join('');
+  const octOpts = ANX_OCTAVES.map((n,i)=>`<option value="${i}" ${i===octave?'selected':''}>${n}</option>`).join('');
+  const conOpts = ANX_CONNECT.map((n,i)=>`<option value="${i}" ${i===connect?'selected':''}>${n}</option>`).join('');
+
+  c.innerHTML = esec(t('es_osc1'), '', `
+    <div class="pgrid">
+      <div class="srow"><div class="srow-hdr"><span class="sname">Wave</span>
+        <span class="sval">${ANX_WAVES[wave]}</span></div>
+        <select onchange="writeByte(${A.osc1Wave},+this.value,'OSC1 Wave');renderCentre()">${wOpts}</select></div>
+      <div class="srow"><div class="srow-hdr"><span class="sname">Octave</span></div>
+        <select onchange="writeByte(${A.osc1Octave},+this.value,'OSC1 Octave')">${octOpts}</select></div>
+      <div class="srow"><div class="srow-hdr"><span class="sname">Connect To</span></div>
+        <select onchange="writeByte(${A.osc1Connect},+this.value,'OSC1 Connect')">${conOpts}</select></div>
+      ${sl('anx_pw', 'PulseWidth %', pw,            0,100, A.osc1PulseWidth,'pw')}
+      ${sl('anx_sh', 'WaveShaper',   p[A.osc1WaveShaper],0,127,A.osc1WaveShaper,'direct')}
+      ${sl('anx_sp', 'Sharper',      dec.center128(p[A.osc1Sharper]),-127,127,A.osc1Sharper,'center128')}
+    </div>
+    <div style="margin-top:10px"><div class="srow-hdr" style="margin-bottom:8px"><span class="sname">${t('es_output')}</span></div>
+    <div class="pgrid pgrid-2">
+      <div class="srow"><div class="srow-hdr"><span class="sname">Out Level</span>
+        <span class="sval" id="anx_ol_v">${outLvl}</span></div>
+        <input type="range" id="anx_ol" min="0" max="511" value="${outLvl}"
+          oninput="updateANXOutLevel(this.value)">
+      </div>
+      ${sl('anx_olvs','Out Vel Sens',p[A.osc1OutLevelVelSens],0,127,A.osc1OutLevelVelSens,'direct')}
+    </div></div>`) +
+  esec(t('es_osc1_eg'), '', `<div class="pgrid pgrid-4">
+    ${sl('anx_ea','Attack',  p[A.osc1EGAttack], 0,127,A.osc1EGAttack, 'direct')}
+    ${sl('anx_ed','Decay',   p[A.osc1EGDecay],  0,127,A.osc1EGDecay,  'direct')}
+    ${sl('anx_es','Sustain', p[A.osc1EGSustain],0,127,A.osc1EGSustain,'direct')}
+    ${sl('anx_er','Release', p[A.osc1EGRelease],0,127,A.osc1EGRelease,'direct')}
+  </div>`) +
+  esec(t('es_osc1_sync_ring'), '', `<div class="pgrid">
+    ${sl('anx_ss','SelfSync Pitch (cents)', 0, -4800,4800, A.osc1SelfSyncPitch,'direct', v=>v+' c')}
+    ${sl('anx_rm','Ring Mod Depth',  u16le(p,A.osc1RingModDepth),0,511,A.osc1RingModDepth,'direct')}
+    ${sl('anx_fm','FM Level',        p[A.osc1FMLevel],       0,127,A.osc1FMLevel,       'direct')}
+    ${sl('anx_fmv','FM Level Vel',   p[A.osc1FMLevelVelSens],0,127,A.osc1FMLevelVelSens,'direct')}
+    ${cbRow('Invert', p[A.osc1Invert], A.osc1Invert, 'OSC1')}
+  </div>`);
+}
+function updateANXOutLevel(v) {
+  document.getElementById('anx_ol_v').textContent = v;
+  writeByte(ANX.osc1OutLevel,   +v & 0xFF,       'OSC1 OutLevel lo');
+  writeByte(ANX.osc1OutLevel+1,(+v >> 8) & 0xFF, 'OSC1 OutLevel hi');
+}
+
+// ── AN-X: FILTER ─────────────────────────────────────────────────
+function renderANXFilter(c, n) {
+  const p = S.perfBytes;
+  const A = ANX;
+  const isF1 = n === 1;
+  const prefix = isF1 ? 'flt1' : 'flt2';
+  const typAbs = isF1 ? A.flt1Type : A.flt2Type;
+  const cutAbs = isF1 ? A.flt1CutoffLo : A.flt2CutoffLo;
+  const resAbs = isF1 ? A.flt1Resonance : A.flt2Resonance;
+  const drvAbs = isF1 ? A.flt1Drive : A.flt2Drive;
+  const kfAbs  = isF1 ? A.flt1CutoffKeyFollow : A.flt2CutoffKeyFollow;
+  const fegAbs = isF1 ? A.flt1FEGDepthLo : A.flt2FEGDepthLo;
+
+  const typeRaw = p[typAbs];
+  const typeOpts = ANX_FLT_TYPES.map((n,i)=>`<option value="${i}" ${i===typeRaw?'selected':''}>${n}</option>`).join('');
+  const cutHz = u16le(p, cutAbs);
+  // FEGDepth: u16 LE center=256, raw=round(UI/50)+256
+  const fegRaw = u16le(p, fegAbs);
+  const fegUI  = (fegRaw - 256) * 50;
+
+  c.innerHTML = esec(t('es_filter_n',{n}), '', `
+    <div class="pgrid">
+      <div class="srow"><div class="srow-hdr"><span class="sname">Type</span>
+        <span class="sval" id="${prefix}_typ_v">${ANX_FLT_TYPES[typeRaw]||typeRaw}</span></div>
+        <select onchange="writeByte(${typAbs},+this.value,'F${n} Type');document.getElementById('${prefix}_typ_v').textContent=ANX_FLT_TYPES[+this.value]||this.value">${typeOpts}</select>
+      </div>
+      <div class="srow"><div class="srow-hdr"><span class="sname">Cutoff</span>
+        <span class="sval" id="${prefix}_cut_v">${cutHz} Hz</span></div>
+        <input type="range" id="${prefix}_cut" min="0" max="8191" value="${cutHz}"
+          oninput="updateANXCutoff(${cutAbs},'${prefix}',this.value)">
+      </div>
+      ${sl(prefix+'_re','Resonance', p[resAbs],0,127,resAbs,'direct')}
+      ${sl(prefix+'_dr','Drive',     p[drvAbs],0,80, drvAbs,'direct')}
+      ${sl(prefix+'_kf','Key Follow (enum)', p[kfAbs],0,7,kfAbs,'direct')}
+    </div>
+    <div style="margin-top:10px"><div class="sname" style="margin-bottom:8px">${t('es_feg_filter_eg_depth')}</div>
+    <div class="srow">
+      <div class="srow-hdr">
+        <span class="sname">FEG Depth (±12700 cents)</span>
+        <span class="sval" id="${prefix}_feg_v">${fegUI}</span>
+      </div>
+      <input type="range" id="${prefix}_feg" min="-12700" max="12700" step="50" value="${fegUI}"
+        oninput="updateANXFEGDepth(${fegAbs},'${prefix}',this.value)">
+    </div></div>`);
+}
+function updateANXCutoff(abs, prefix, v) {
+  document.getElementById(prefix+'_cut_v').textContent = v + ' Hz';
+  writeByte(abs,   +v & 0xFF,       'F Cutoff lo');
+  writeByte(abs+1,(+v >> 8) & 0xFF, 'F Cutoff hi');
+}
+function updateANXFEGDepth(abs, prefix, v) {
+  const ui = Math.round(+v / 50) * 50;
+  document.getElementById(prefix+'_feg_v').textContent = ui;
+  const raw = Math.max(0, Math.min(511, Math.round(ui/50) + 256));
+  writeByte(abs,   raw & 0xFF,       'FEG Depth lo');
+  writeByte(abs+1,(raw >> 8) & 0xFF, 'FEG Depth hi');
+}
+
+// ── AN-X: WAVEFOLDER / MOD EG ────────────────────────────────────
+function renderANXModWaveFolder(c) {
+  const p = S.perfBytes;
+  const A = ANX;
+  c.innerHTML = esec(t('es_wave_folder'), '', `<div class="pgrid">
+    ${sl('wf_fold','Fold',      p[A.waveFolderFold], 0,127,A.waveFolderFold,'direct')}
+  </div>`) +
+  esec(t('es_modifier_eg'), '', `<div class="pgrid pgrid-4">
+    ${sl('meg_a','Attack',  p[A.modEGAttack], 0,127,A.modEGAttack, 'direct')}
+    ${sl('meg_d','Decay',   p[A.modEGDecay],  0,127,A.modEGDecay,  'direct')}
+    ${sl('meg_s','Sustain', p[A.modEGSustain],0,127,A.modEGSustain,'direct')}
+    ${sl('meg_r','Release', p[A.modEGRelease],0,127,A.modEGRelease,'direct')}
+  </div>`) +
+  esec(t('es_pitch_eg_depth_part'), '', `<div class="pgrid">
+    ${sl('anx_ped','PEG Depth (center=128)', dec.center128(p[A.pitchEGDepth]),-128,127,A.pitchEGDepth,'center128')}
+  </div>`);
+}
+
+// ── SECTION HELPER ────────────────────────────────────────────────
+function esec(title, badge, body) {
+  const bdg = badge ? `<div class="esec-badge">${badge}</div>` : '';
+  return `<div class="esec">
+    <div class="esec-hdr"><div class="esec-title">${title}</div>${bdg}</div>
+    <div class="esec-body">${body}</div>
+  </div>`;
+}
+
+// ── DELTA PANEL ───────────────────────────────────────────────────
+function renderDeltas() {
+  const list = document.getElementById('deltaList');
+  const entries = Object.values(S.changes);
+  if (!entries.length) {
+    list.innerHTML = '<div class="no-chg">' + t('no_changes') + '</div>';
+    return;
+  }
+  list.innerHTML = entries.slice(-14).reverse().map(c => `
+    <div class="delta-item">
+      <span class="delta-name">${c.label}</span>
+      <span class="delta-val">${c.orig} → ${c.cur}</span>
+    </div>`).join('');
+  document.getElementById('exportBtn').disabled = false;
+  // Update dirty count indicator
+  const di = document.getElementById('dirtyInfo');
+  if (di) {
+    const n = S.dirtyPerfs.size;
+    di.textContent = n > 0 ? t('edited_label', {n}) : '';
+    di.style.display = n > 0 ? '' : 'none';
+  }
+}
+
+// ── FILE LOADING ──────────────────────────────────────────────────
+function loadFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const { perfs, dpfmAbsOff } = parseAllPerfs(e.target.result);
+      S.rawBuffer  = e.target.result;
+      S.allPerfs   = perfs;
+      S.dpfmAbsOff = dpfmAbsOff;
+      S.fileName   = file.name;
+      S.dirtyPerfs = new Set();
+      S.changes    = {};
+
+      renderPerfList();
+      selectPerf(0);
+      showToast(t('toast_loaded',{n:perfs.length, pl: perfs.length>1?'s':'', file: file.name}), 'ok');
+    } catch(err) {
+      showToast(t('toast_error',{msg: err.message}), 'err');
+      console.error(err);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// Populate the performance list panel
+function renderPerfList() {
+  const list = document.getElementById('perfListEl');
+  if (!list) return;
+  list.innerHTML = '';
+  S.allPerfs.forEach((p, i) => {
+    const div = document.createElement('div');
+    div.className = 'perf-list-item' + (i === S.perfIdx ? ' active' : '') + (S.dirtyPerfs.has(i) ? ' dirty' : '');
+    div.dataset.idx = i;
+    const engine = detectEngine(p.bytes);
+    const engCls = engine === 'FMX' ? 'pill-FMX' : engine === 'AWM2' ? 'pill-AWM2' : 'pill-ANX';
+    const engLbl = engine === 'FMX' ? 'FM-X' : engine === 'AWM2' ? 'AWM2' : 'AN-X';
+    div.innerHTML =
+      '<span class="pli-dot"></span>' +
+      '<span class="pli-num">' + String(i+1).padStart(3,'0') + '</span>' +
+      '<span class="engine-pill ' + engCls + '" style="font-size:8px;padding:1px 5px">' + engLbl + '</span>' +
+      '<span class="pli-name">' + escHtml(p.name) + '</span>';
+    div.onclick = () => selectPerf(i);
+    list.appendChild(div);
+  });
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// Switch to a different performance in the list
+function selectPerf(idx) {
+  if (!S.allPerfs[idx]) return;
+  // Save current changes back into allPerfs before switching
+  if (S.perfBytes && S.perfIdx !== undefined && S.allPerfs[S.perfIdx]) {
+    S.allPerfs[S.perfIdx].bytes = new Uint8Array(S.perfBytes);
+    S.allPerfs[S.perfIdx].name = S.perfName;
+    if (Object.keys(S.changes).length > 0) S.dirtyPerfs.add(S.perfIdx);
+  }
+
+  S.perfIdx   = idx;
+  const p     = S.allPerfs[idx];
+  S.perfBytes = new Uint8Array(p.bytes);
+  S.origBytes = new Uint8Array(p.bytes);
+  S.perfName  = p.name;
+  S.engine    = detectEngine(p.bytes);
+  S.changes   = {};
+
+  if (S.engine === 'FMX') {
+    S.algo = dec.algo(p.bytes[ALG_ABS]);
+    S.section = 'op'; S.selOp = 1;
+  } else if (S.engine === 'AWM2') {
+    S.section = 'awm2_elem'; S.selElem = 1;
+  } else {
+    S.section = 'anx_osc';
+  }
+
+  // Update header
+  const pillColors = { FMX: 'pill-FMX', AWM2: 'pill-AWM2', ANX: 'pill-ANX' };
+  const pillLabels = { FMX: 'FM-X', AWM2: 'AWM2', ANX: 'AN-X' };
+  const pill = document.getElementById('enginePill');
+  pill.className = 'engine-pill ' + (pillColors[S.engine]||'');
+  pill.textContent = pillLabels[S.engine] || S.engine;
+  pill.style.display = '';
+  document.getElementById('perfNameHdr').style.display = '';
+  document.getElementById('perfInfoBlock').style.display = '';
+  document.getElementById('exportBtn').disabled = false;
+  document.getElementById('resetBtn').disabled = false;
+  document.getElementById('deltaList').innerHTML = '<div class="no-chg">' + t('no_changes') + '</div>';
+
+  updateNameDisplay();
+  renderPerfList();
+  renderNav();
+  renderCentre();
+}
+
+// Update all name displays from S.perfName
+function updateNameDisplay() {
+  // header span
+  const hdr = document.getElementById('perfNameHdr');
+  if (hdr) hdr.textContent = S.allPerfs.length > 1
+    ? `[${S.perfIdx+1}/${S.allPerfs.length}] ${S.perfName}`
+    : S.perfName;
+  // name input
+  const inp = document.getElementById('perfNameInput');
+  if (inp) inp.value = S.perfName;
+  // show/hide perf list panel
+  const listPanel = document.getElementById('leftPerfList');
+  if (listPanel) listPanel.style.display = S.allPerfs.length > 0 ? '' : 'none';
+  // update count badge
+  const badge = document.getElementById('perfListCount');
+  if (badge) badge.textContent = S.allPerfs.length > 1 ? `(${S.allPerfs.length})` : '';
+}
+
+// Write performance name into perfBytes (perf[4:22], null-terminated)
+// CRITICAL: never overwrite perf[23+] — those are timestamps MODX validates
+function writePerfName(newName) {
+  if (!S.perfBytes) return;
+  const safe = newName.replace(/[^ -~]/g, '').slice(0, 20);
+  const nb = new TextEncoder().encode(safe);
+  // Clear only name bytes up to null terminator
+  for (let i = 4; i < 4 + 20; i++) S.perfBytes[i] = 0;
+  nb.forEach((b, i) => { S.perfBytes[4 + i] = b; });
+  S.perfBytes[4 + nb.length] = 0; // null terminator — do NOT touch [23+]
+  S.perfName = safe || 'Unnamed';
+  // Track as change
+  S.changes['_name'] = { label: t('perf_name_change'), orig: S.allPerfs[S.perfIdx]?.name, cur: safe };
+  S.dirtyPerfs.add(S.perfIdx);
+  updateNameDisplay();
+  renderDeltas();
+  renderPerfList();
+}
+
+function readPerfNameFromBytes(perf) {
+  let s = '';
+  for (let i = 4; i < 36; i++) {
+    if (perf[i] === 0) break;
+    s += String.fromCharCode(perf[i]);
+  }
+  return s.trim() || 'Unnamed';
+}
+// Alias för bakåtkompatibilitet
+function readPerfName(perf) { return readPerfNameFromBytes(perf); }
+
+// ── EXPORT ────────────────────────────────────────────────────────
+function exportY2L() {
+  if (!S.rawBuffer || !S.allPerfs.length) return;
+
+  // Flush current perf's pending edits into allPerfs
+  if (S.perfBytes && S.allPerfs[S.perfIdx]) {
+    S.allPerfs[S.perfIdx].bytes = new Uint8Array(S.perfBytes);
+    S.allPerfs[S.perfIdx].name = S.perfName;
+    if (Object.keys(S.changes).length > 0) S.dirtyPerfs.add(S.perfIdx);
+  }
+
+  // Build result by patching all dirty performances back into original buffer
+  const result = new Uint8Array(S.rawBuffer);
+  const dpfmChunkStart = S.dpfmAbsOff + 8; // skip chunk tag+size = +8
+
+  // Perf data starts at: dpfmChunkStart + 4 (count) + per-entry: 8 (tag+plen) + plen
+  // We use the pre-computed dpfmBufOffset from parseAllPerfs
+  let patchCount = 0;
+  S.allPerfs.forEach((p, i) => {
+    if (!S.dirtyPerfs.has(i)) return;
+
+    // 1. Patch DPFM performance blob
+    const absStart = dpfmChunkStart + p.dpfmBufOffset;
+    if (absStart + p.bytes.length <= result.length)
+      p.bytes.forEach((b, j) => { result[absStart + j] = b; });
+
+    // 2. Patch EPFM catalog name if it changed (Entr[26+1] = ASCII name + null)
+    // Entr record layout: [0:4]=blob_size, [4:8]=blob_dp_off, [10:12]=idx, [26:]=?+name+0
+    if (p.catEntry && p.catEntry.abs + p.catEntry.size <= result.length) {
+      const nameAbs = p.catEntry.abs + 27;  // [26]=unknown byte, [27]=name start
+      const nb = new TextEncoder().encode(p.name.slice(0, 20));
+      nb.forEach((b, k) => { if (nameAbs + k < result.length) result[nameAbs + k] = b; });
+      // Null-terminate
+      if (nameAbs + nb.length < result.length) result[nameAbs + nb.length] = 0;
+    }
+  });
+
+  const suffix = S.dirtyPerfs.size > 0 ? `_${S.dirtyPerfs.size}edited` : '_edited';
+  const blob = new Blob([result], {type:'application/octet-stream'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = S.fileName.replace(/\.y2l$/i,'') + suffix + '.Y2L';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  const total = S.dirtyPerfs.size || 1;
+  showToast(t('toast_exported',{n: total, pl: total>1?'s':''}), 'ok');
+}
+
+function resetChanges() {
+  if (!S.allPerfs[S.perfIdx]) return;
+  // Restore from original parsed bytes (re-parse from rawBuffer)
+  const { perfs } = parseAllPerfs(S.rawBuffer);
+  const orig = perfs[S.perfIdx];
+  if (!orig) return;
+  S.perfBytes = new Uint8Array(orig.bytes);
+  S.origBytes = new Uint8Array(orig.bytes);
+  S.allPerfs[S.perfIdx].bytes = new Uint8Array(orig.bytes);
+  S.allPerfs[S.perfIdx].name = orig.name;
+  S.perfName = orig.name;
+  S.changes = {};
+  S.dirtyPerfs.delete(S.perfIdx);
+  updateNameDisplay();
+  renderPerfList();
+  renderCentre();
+  renderDeltas();
+  showToast(t('toast_reset'));
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────
+function showToast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (type ? ' '+type : '');
+  clearTimeout(t._t);
+  t._t = setTimeout(() => t.className = 'toast', 2500);
+}
+
+// ── EVENT LISTENERS ───────────────────────────────────────────────
+['fileIn','fileIn2'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('change', e => {
+    if (e.target.files[0]) loadFile(e.target.files[0]);
+    e.target.value = '';
+  });
+});
+document.getElementById('exportBtn').addEventListener('click', exportY2L);
+document.getElementById('resetBtn').addEventListener('click', resetChanges);
+
+// Drag-and-drop
+document.addEventListener('dragover', e => e.preventDefault());
+document.addEventListener('drop', e => {
+  e.preventDefault();
+  const f = e.dataTransfer.files[0];
+  if (f && /\.y2l$/i.test(f.name)) loadFile(f);
+});
+
+// ── RESIZE LOGIC ─────────────────────────────────────────────────
+function initResizeHandles() {
+  // Sidebar width resize
+  const sHandle = document.getElementById('sidebarResizeHandle');
+  const mainEl  = document.querySelector('main');
+  if (sHandle && mainEl) {
+    let startX, startW;
+    sHandle.addEventListener('mousedown', e => {
+      startX = e.clientX;
+      startW = parseInt(getComputedStyle(document.documentElement)
+                        .getPropertyValue('--left-w') || '220', 10);
+      sHandle.classList.add('dragging');
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+      function onMove(e) {
+        const newW = Math.max(160, Math.min(480, startW + (e.clientX - startX)));
+        document.documentElement.style.setProperty('--left-w', newW + 'px');
+      }
+      function onUp() {
+        sHandle.classList.remove('dragging');
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+        window.removeEventListener('mousemove', onMove);
+        window.removeEventListener('mouseup', onUp);
+      }
+      window.addEventListener('mousemove', onMove);
+      window.addEventListener('mouseup', onUp);
+      e.preventDefault();
+    });
+  }
+
+  // Perf-list height resize
+  const lHandle = document.getElementById('listResizeHandle');
+  const listPanel = document.getElementById('leftPerfList');
+  if (lHandle && listPanel) {
+    let startY, startH;
+    lHandle.addEventListener('mousedown', e => {
+      startY = e.clientY;
+      startH = listPanel.offsetHeight;
+      lHandle.classList.add('dragging');
+      document.body.style.cursor = 'row-resize';
+      document.body.style.userSelect = 'none';
+      function onMove(e) {
+        const newH = Math.max(60, Math.min(window.innerHeight * 0.7,
+                                           startH + (e.clientY - startY)));
+        document.documentElement.style.setProperty('--list-h', newH + 'px');
+      }
+      function onUp() {
+        lHandle.classList.remove('dragging');
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+        window.removeEventListener('mousemove', onMove);
+        window.removeEventListener('mouseup', onUp);
+      }
+      window.addEventListener('mousemove', onMove);
+      window.addEventListener('mouseup', onUp);
+      e.preventDefault();
+    });
+  }
+}
+
+// Expose globals needed by inline handlers
+window.onSlider = onSlider;
+window.writeByte = writeByte;
+window.updateFX = updateFX;
+window.updateAlgo = updateAlgo;
+window.updateFeedback = updateFeedback;
+window.updateFMXCutoff = updateFMXCutoff;
+window.updateANXOutLevel = updateANXOutLevel;
+window.updateANXCutoff = updateANXCutoff;
+window.updateANXFEGDepth = updateANXFEGDepth;
+window.updateWaveform = updateWaveform;
+window.updateAWM2Cutoff = updateAWM2Cutoff;
+window.onSpectral = onSpectral;
+window.selectFMXOp = selectFMXOp;
+window.selectPerf = selectPerf;
+window.renderPerfList = renderPerfList;
+window.writePerfName = writePerfName;
+window.updateNameDisplay = updateNameDisplay;
+window.selectAWM2Elem = selectAWM2Elem;
+window.renderAWM2PartAeg = renderAWM2PartAeg;
+window.selectSec = selectSec;
+window.renderCentre = renderCentre;
+window.AWM2_FILTER_TYPES = AWM2_FILTER_TYPES;
+window.ANX_FLT_TYPES = ANX_FLT_TYPES;
+window.ANX = ANX;
+window.FX_TYPES = FX_TYPES;
+window.LFO_WAVES = LFO_WAVES;
+window.ANX_WAVES = ANX_WAVES;
+initResizeHandles();
+applyI18n();
+</script>
+</body>
+</html>
