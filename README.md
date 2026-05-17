@@ -50,7 +50,7 @@ Reverse-engineered from scratch through binary analysis of Yamaha's undocumented
 
 ### Merge performances including dependencies
 
-1. Download [`tools/yysfc_forge_library_builder_v13_17.html`](tools/ysfc_forge_library_builder_v13_17.html)
+1. Download [`tools/ysfc_forge_library_builder_v13_17.html`](tools/ysfc_forge_library_builder_v13_17.html)
 2. Open it in your browser
 3. Drag and drop `.Y2L` or `.Y2U` files
 4. Select the performances you want
