@@ -48,7 +48,7 @@ Reverse-engineered from scratch through binary analysis of Yamaha's undocumented
 5. Click **Save as Y2L** or **Save as Y2U**
 6. Import the exported file in MODX M / ESP plugin / Montage M
 
-### Merge performances including waveforms, samples and arpeggios
+### Merge performances including dependencies
 
 1. Download [`tools/yysfc_forge_library_builder_v13_17.html`](tools/ysfc_forge_library_builder_v13_17.html)
 2. Open it in your browser
@@ -74,7 +74,7 @@ Reverse-engineered from scratch through binary analysis of Yamaha's undocumented
 |Tool|What it does|
 |-|-|
 |[**Performance Merger**](tools/ysfc_forge_performance_merger_v1_19.html)|Merge performances from multiple Y2L/Y2U files|
-|[**Library Builder**](utilities/ysfc_forge_library_builder_v13_17.html)|Standalone prototype librarian (merge performances from multiple Y2L/Y2U files)|
+|[**Library Builder**](tools/ysfc_forge_library_builder_v13_17.html)|Prototype library builder (merge performances from multiple Y2L/Y2U files including dependencies)|
 |[**Performance Editor**](tools/ysfc_forge_performance_editor_v5_1.html)|Edit FM-X, AWM2 and AN-X parameters in the browser|
 
 ### Translators
