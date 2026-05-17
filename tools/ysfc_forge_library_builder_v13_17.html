@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>YSFC Forge Library Builder v13.13 — Y2L/Y2U Merge för MODX M / Montage M</title>
+  <title>YSFC Forge Library Builder v13.17 — Y2L/Y2U Merge för MODX M / Montage M</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
 
@@ -437,7 +437,7 @@
 <h1>
   YSFC Forge Library Builder
   <span class="sep">│</span>
-  <span class="ver">v13.13</span>
+  <span class="ver">v13.17</span>
   <span class="sep">│</span>
   Y2L · Y2U → Y2L merge
   <span class="spacer"></span>
@@ -524,7 +524,7 @@
   <div style="display:flex; flex-direction:column; gap:10px;">
 
     <!-- Selection -->
-    <div class="card" style="flex:1;">
+    <div class="card" style="flex:0 0 auto;">
       <div class="card-header">
         <span data-i18n="selection">Urval</span>
         <span class="count-badge" id="selCountBadge">0 performances</span>
@@ -626,7 +626,7 @@
 
 <script>
 /* ============================================================
-   YSFC Forge Library Builder v13.13 — Y2L/Y2U → Y2L merge
+   YSFC Forge Library Builder v13.17 — Y2L/Y2U → Y2L merge
    MODX M / ESP plugin / Montage M
 
    FOKUS: Detta verktyg hanterar uteslutande Y2L/Y2U-filer
@@ -725,6 +725,8 @@ const LANG = {
     legend_note: 'Visas endast när performancen faktiskt refererar beroendet. Sista kolumnen visar ljudmotorn (AWM2 / FM-X / AN-X).',
     selection: 'Urval',
     sel_count: '{n} performances',
+    usage_slots: '{used} valda / {cap} slots i container',
+    usage_dpfm: 'DPFM-pool: {used} behövs / {cap} i container',
     move_up: 'Flytta upp',
     move_down: 'Flytta ner',
     remove: '➖ Ta bort',
@@ -766,12 +768,16 @@ const LANG = {
     err_parse: 'Parse-fel: {msg}',
     err_epfm_dpfm_missing: 'EPFM/DPFM saknas.',
     deps_count: 'Deps: {list}',
-    deps_none: 'Inga egna deps.',
+    deps_none: 'Inga egna beroenden.',
     // Dep log
     log_wf_summary:  'Waveforms: {tot} totalt (bas bevarad + {nw} nya), {sz}',
     log_wf_overflow: '⚠ Waveforms: rymdes ej i basfilen ({sz} > kapacitet) — hoppades över.',
     log_wf_none:     'Waveforms: inga att kopiera.',
     log_wf_no_section: 'Waveforms: basfilen saknar EWFM/DWFM-sektioner.',
+    log_sm_summary:   'Samples: {tot} totalt ({nw} nya), {sz}',
+    log_sm_overflow:  '⚠ Samples: rymdes inte i basfilen ({sz}) — hoppades över.',
+    log_sm_none:      'Samples: inga att kopiera.',
+    log_sm_no_section: 'Samples: basfilen saknar EWIM/DWIM-sektioner.',
     log_arp_summary:  'Arpeggios: {tot} totalt (bas bevarad + {na} nya), {sz}',
     log_arp_overflow: '⚠ Arpeggios: rymdes ej i basfilen — hoppades över.',
     log_arp_none:     'Arpeggios: inga att kopiera.',
@@ -852,6 +858,8 @@ const LANG = {
     legend_note: 'Shown only when the performance actually references the dependency. The last column shows the sound engine (AWM2 / FM-X / AN-X).',
     selection: 'Selection',
     sel_count: '{n} performances',
+    usage_slots: '{used} selected / {cap} container slots',
+    usage_dpfm: 'DPFM pool: {used} needed / {cap} in container',
     move_up: 'Move up',
     move_down: 'Move down',
     remove: '➖ Remove',
@@ -893,12 +901,16 @@ const LANG = {
     err_parse: 'Parse error: {msg}',
     err_epfm_dpfm_missing: 'EPFM/DPFM missing.',
     deps_count: 'Deps: {list}',
-    deps_none: 'No own deps.',
+    deps_none: 'No own dependencies.',
     // Dep log
     log_wf_summary:  'Waveforms: {tot} total (base preserved + {nw} new), {sz}',
     log_wf_overflow: '⚠ Waveforms: did not fit in base file ({sz} > capacity) — skipped.',
     log_wf_none:     'Waveforms: nothing to copy.',
     log_wf_no_section: 'Waveforms: base file lacks EWFM/DWFM sections.',
+    log_sm_summary:   'Samples: {tot} total ({nw} new), {sz}',
+    log_sm_overflow:  '⚠ Samples: did not fit in base file ({sz}) — skipped.',
+    log_sm_none:      'Samples: nothing to copy.',
+    log_sm_no_section: 'Samples: base file lacks EWIM/DWIM sections.',
     log_arp_summary:  'Arpeggios: {tot} total (base preserved + {na} new), {sz}',
     log_arp_overflow: '⚠ Arpeggios: did not fit in base file — skipped.',
     log_arp_none:     'Arpeggios: nothing to copy.',
@@ -2296,7 +2308,13 @@ function applyI18n() {
       wim,
       arp,
       notes: t('synthetic_notes') || "Syntetisk container",
-      synthetic: true
+      synthetic: true,
+      // Declared capacities for the usage bars. Synthetic EPFM payloads
+      // are sized to the EXACT Init record (entries.length === 1), so the
+      // generic (payloadSize-8)/128 slot estimate is wrong for them —
+      // carry the real declared slot count and pool size instead.
+      synthSlotCount: slotCount,
+      synthDpfmPayloadSize: dpfmPayloadSize
     };
   }
 
@@ -2505,6 +2523,7 @@ function applyI18n() {
       }
 
       let epfm = null, dpfm = null, wfm = null, wim = null, arp = null, ok = false, notes = "";
+      let notesKey = null, notesParams = null;
       try {
         epfm = parseEPFM(ysfc);
         dpfm = parseDPFM(ysfc);
@@ -2513,20 +2532,23 @@ function applyI18n() {
         wim = parseDepSection(ysfc, "EWIM", "DWIM");
         arp = parseDepSection(ysfc, "EARP", "DARP");
         ok = !!(epfm && dpfm);
-        if (!ok) notes = t('err_epfm_dpfm_missing');
+        if (!ok) { notesKey = 'err_epfm_dpfm_missing'; notes = t(notesKey); }
         else {
           const deps = [];
           if (wfm) deps.push(`${wfm.entries.length} wfm`);
           if (wim) deps.push(`${wim.entries.length} wim`);
           if (arp) deps.push(`${arp.entries.length} arp`);
-          notes = deps.length ? t('deps_count',{list: deps.join(", ")}) : t('deps_none');
+          if (deps.length) { notesKey = 'deps_count'; notesParams = {list: deps.join(", ")}; }
+          else             { notesKey = 'deps_none'; }
+          notes = t(notesKey, notesParams || {});
         }
       } catch (e) {
         ok = false;
-        notes = t('err_parse',{msg: (e?.message || e)});
+        notesKey = 'err_parse'; notesParams = {msg: (e?.message || e)};
+        notes = t(notesKey, notesParams);
       }
 
-      files.push({ idx: files.length, name: f.name, ext, family, ysfc, tags, ok, epfm, dpfm, wfm, wim, arp, notes });
+      files.push({ idx: files.length, name: f.name, ext, family, ysfc, tags, ok, epfm, dpfm, wfm, wim, arp, notes, notesKey, notesParams });
     }));
 
     const okCount = supportedFiles().length;
@@ -2550,6 +2572,15 @@ function applyI18n() {
     updateDepSummary();
   }
 
+  // Returns the file's notes translated to the CURRENT language. Notes
+  // are stored as a {notesKey, notesParams} descriptor so a language
+  // switch re-renders them correctly; falls back to the frozen .notes
+  // string (e.g. legacy checkY2 notes that have no key).
+  function fileNotes(f) {
+    if (f && f.notesKey) return t(f.notesKey, f.notesParams || {});
+    return f ? (f.notes || "") : "";
+  }
+
   function refreshFileList() {
     const fl = $("fileList");
     const prev = fl.value;
@@ -2564,7 +2595,8 @@ function applyI18n() {
       let extra = "";
       if (f.ysfc) extra = `  v${f.ysfc.version}  dir:${f.ysfc.dirUsedName}@0x${f.ysfc.dirUsedOff.toString(16)}`;
       if (f.ok) extra += `  EPFM:${f.epfm.entries.length}  pool:${f.dpfm.dataPool.length}B`;
-      if (f.notes) extra += `  (${f.notes})`;
+      const fnotes = fileNotes(f);
+      if (fnotes) extra += `  (${fnotes})`;
       opt.textContent = `${badge} ${f.name}${extra}`;
       fl.appendChild(opt);
     }
@@ -2587,7 +2619,7 @@ function applyI18n() {
     $("clearFilesBtn").disabled = files.length === 0;
     $("perfHint").textContent = ok
       ? t('perf_hint_count',{n: f.epfm.entries.length})
-      : (f ? t('perf_hint_legacy',{notes: f.notes || t('perf_hint_missing'), tags: f.tags.join(", ")}) : t('perf_hint_select_above'));
+      : (f ? t('perf_hint_legacy',{notes: fileNotes(f) || t('perf_hint_missing'), tags: f.tags.join(", ")}) : t('perf_hint_select_above'));
   }
 
   function refreshPerfList() {
@@ -2741,13 +2773,24 @@ function applyI18n() {
       for (const f of okFiles) {
         const opt = document.createElement("option");
         opt.value = String(f.idx);
-        opt.textContent = t('base_file_option',{name: f.name, slots: f.epfm.entries.length, pool: fmtBytes(f.dpfm.dataPool.length)});
+        // Synthetic containers have only the Init EPFM entry but are
+        // pre-allocated for synthSlotCount slots; show the declared
+        // capacity so the dropdown matches the usage bars.
+        const optSlots = (f.synthetic && f.synthSlotCount != null)
+          ? f.synthSlotCount : f.epfm.entries.length;
+        const optPool = (f.synthetic && f.synthDpfmPayloadSize != null)
+          ? f.synthDpfmPayloadSize - 8 : f.dpfm.dataPool.length;
+        opt.textContent = t('base_file_option',{name: f.name, slots: optSlots, pool: fmtBytes(optPool)});
         bf.appendChild(opt);
       }
-      // Auto-select: largest DPFM pool
+      // Auto-select: largest DPFM pool (use declared pool for synthetics)
+      const poolOf = (f) => (f.synthetic && f.synthDpfmPayloadSize != null)
+        ? f.synthDpfmPayloadSize : files[f.idx].dpfm.dataPool.length;
       let best = okFiles[0].idx;
+      let bestPool = poolOf(okFiles[0]);
       for (const f of okFiles) {
-        if (files[f.idx].dpfm.dataPool.length > files[best].dpfm.dataPool.length) best = f.idx;
+        const p = poolOf(f);
+        if (p > bestPool) { best = f.idx; bestPool = p; }
       }
       bf.value = prev && okFiles.find(f => f.idx === parseInt(prev)) ? prev : String(best);
     }
@@ -2774,26 +2817,92 @@ function applyI18n() {
     return total;
   }
 
+  // Capacity planning across ALL loaded performances. The user can
+  // select every performance from every loaded file, so the usage bars
+  // should show capacity sized for that worst case rather than a small
+  // mismatched base file (which made the bars permanently "over"/red).
+  // Recomputed on every updateBars() call, so adding or removing files
+  // later automatically re-derives the totals.
+  function calcAllLoadedTotals() {
+    let perfCount = 0;
+    // DPFM pool: use the EXACT same formula as calcSyntheticDimensions
+    // (the real export sizing) so the displayed capacity matches what an
+    // export would actually allocate. That function computes:
+    //   dpfmAcc = Σ (8 + dataLen)   over every blob
+    //   dpfmExact = dpfmAcc − 4 + 8 (first blob has no per-blob tag;
+    //                                +8 = count + global 'Data')
+    // Mirroring it here removes the ~16-byte estimate drift that made
+    // the bars read "968.8 / 968.7 — too small" even though the export
+    // (which uses calcSyntheticDimensions) sized the pool correctly.
+    let dpfmAcc = 0;
+    let dpfmBlobCount = 0;
+    for (const f of files) {
+      if (!f || !f.ok || !f.epfm) continue;
+      for (const e of f.epfm.entries) {
+        if (!e || e.dataLen == null) continue;
+        dpfmAcc += 8 + e.dataLen;
+        dpfmBlobCount++;
+        perfCount++;
+      }
+    }
+    const poolBytes = dpfmBlobCount > 0 ? (dpfmAcc - 4 + 8) : (4 + 4);
+    // Slot capacity a synthetic container would allocate for them:
+    // calcSyntheticDimensions rounds up to a multiple of 16, min 16,
+    // capped at 640 — mirror that so the bar's "total" matches what an
+    // exported container would actually hold.
+    const slotCap = perfCount > 0
+      ? Math.min(640, Math.max(16, Math.ceil(perfCount / 16) * 16))
+      : 0;
+    return { perfCount, slotCap, poolBytes };
+  }
+
   function updateBars() {
     const baseIdxStr = $("baseFileSelect").value;
     if (!baseIdxStr) { setBars(0,0,0,0); return; }
     const base = files[parseInt(baseIdxStr, 10)];
     if (!base || !base.ok) { setBars(0,0,0,0); return; }
 
-    // Riktig slot-kapacitet: payload-storleken / ~128 byte per record.
-    // För syntetiska filer har vi förallokerat fler slots än det aktuella
-    // antalet records (entries.length=1 men payloadSize rymmer flera).
-    // För riktiga laddade filer är entries.length oftast den faktiska
-    // kapaciteten (filer är inte överallokerade).
+    // Riktig slot-kapacitet. Syntetiska containrar har bara 1 EPFM-post
+    // (Init) men är förallokerade för synthSlotCount slots, så den
+    // generiska (payloadSize-8)/128-uppskattningen blir helt fel för
+    // dem. Använd det deklarerade slot-talet och pool-storleken direkt
+    // för syntetiska filer; för riktiga laddade filer används den
+    // faktiska entries-längden / payload-storleken som tidigare.
     const slotBudgetBytes = 128;  // ungefärlig per-record-storlek
-    const epfmCapacity = Math.max(
-      base.epfm.entries.length,
-      Math.floor((base.epfm.payloadSize - 8) / slotBudgetBytes)
-    );
+    let epfmCapacity, capBytes;
+    if (base.synthetic && base.synthSlotCount != null) {
+      epfmCapacity = base.synthSlotCount;
+      // Full DPFM payload size (matches calcSyntheticDimensions /
+      // the exporter — no −8, so it lines up with calcNeededPoolBytes
+      // and calcAllLoadedTotals which both include the 8-byte
+      // count+'Data' header).
+      capBytes = (base.synthDpfmPayloadSize != null
+        ? base.synthDpfmPayloadSize
+        : base.dpfm.payloadSize);
+    } else {
+      epfmCapacity = Math.max(
+        base.epfm.entries.length,
+        Math.floor((base.epfm.payloadSize - 8) / slotBudgetBytes)
+      );
+      capBytes = base.dpfm.payloadSize;
+    }
+
+    // Capacity-planning baseline: the bars should reflect a container
+    // sized for every loadable performance (what an export would
+    // auto-size to), not a small mismatched base file. Take the larger
+    // of the base file's real capacity and the all-loaded planning
+    // total, so a correctly-sized target never reads as "over"/red and
+    // the numbers update whenever files are added or removed. All three
+    // quantities (capBytes, totals.poolBytes, neededBytes) are now the
+    // FULL DPFM payload size on the same scale — this removes the
+    // ~16-byte drift that showed "968.8 / 968.7 — too small" while the
+    // export itself sized the pool correctly.
+    const totals = calcAllLoadedTotals();
+    epfmCapacity = Math.max(epfmCapacity, totals.slotCap);
+    capBytes     = Math.max(capBytes, totals.poolBytes);
 
     const usedSlots = selection.length;
     const neededBytes = calcNeededPoolBytes(selection);
-    const capBytes = base.dpfm.payloadSize - 8;
     setBars(usedSlots, epfmCapacity, neededBytes, capBytes);
   }
 
@@ -2801,16 +2910,26 @@ function applyI18n() {
     const slotPct = totalSlots > 0 ? Math.min(100, (usedSlots / totalSlots) * 100) : 0;
     const bytePct = capBytes > 0 ? Math.min(100, (usedBytes / capBytes) * 100) : 0;
 
+    // Colour reflects validity, not fullness. A selection that FITS the
+    // container — even one that fills it exactly — is OK and stays
+    // green (the default .usage-bar-inner background). Red ("over") is
+    // shown ONLY when the selection genuinely exceeds capacity and
+    // would not fit. Compare the raw values (the percentages above are
+    // clamped to 100, so "exactly full" and "overflowing" both read as
+    // 100 and must be distinguished by the unclamped amounts).
+    const slotsOver = totalSlots > 0 && usedSlots > totalSlots;
+    const bytesOver = capBytes  > 0 && usedBytes > capBytes;
+
     const ub = $("usageBar");
     ub.style.width = slotPct + "%";
-    ub.className = "usage-bar-inner" + (slotPct >= 100 ? " over" : slotPct >= 80 ? " warn" : "");
+    ub.className = "usage-bar-inner" + (slotsOver ? " over" : "");
 
     const db = $("dpfmBar");
     db.style.width = bytePct + "%";
-    db.className = "usage-bar-inner" + (bytePct >= 100 ? " over" : bytePct >= 80 ? " warn" : "");
+    db.className = "usage-bar-inner" + (bytesOver ? " over" : "");
 
-    $("usageLabel").textContent = `${usedSlots} / ${totalSlots} slots`;
-    $("dpfmLabel").textContent = `DPFM: ${fmtBytes(usedBytes)} / ${fmtBytes(capBytes)}`;
+    $("usageLabel").textContent = t('usage_slots',{used: usedSlots, cap: totalSlots});
+    $("dpfmLabel").textContent = t('usage_dpfm',{used: fmtBytes(usedBytes), cap: fmtBytes(capBytes)});
   }
 
   function fmtBytes(n) {
@@ -3325,15 +3444,15 @@ function applyI18n() {
           if (built) {
             outU8.set(built.eOut, outWim.eSec.payloadStart);
             outU8.set(built.dOut, outWim.dSec.payloadStart);
-            depLog.push(`Samples: ${wimRecs.length} totalt (${newWimCount} nya), ${fmtBytes(totalSz)}`);
+            depLog.push(t('log_sm_summary',{tot: wimRecs.length, nw: newWimCount, sz: fmtBytes(totalSz)}));
           } else {
-            depLog.push(`⚠ Samples: rymdes inte i basfil (${fmtBytes(totalSz)}) — hoppades över.`);
+            depLog.push(t('log_sm_overflow',{sz: fmtBytes(totalSz)}));
           }
         } else {
-          depLog.push("Samples: inga att kopiera.");
+          depLog.push(t('log_sm_none'));
         }
       } else {
-        depLog.push("Samples: basfilen saknar EWIM/DWIM-sektioner.");
+        depLog.push(t('log_sm_no_section'));
       }
     }
 
@@ -3533,7 +3652,7 @@ function applyI18n() {
     files.length = 0;
     selection.length = 0;
     refreshAll();
-    setStatus("Inga filer inlästa.", "", "neutral");
+    setStatus(t('status_no_files'), "", "neutral");
   });
 
   // Create new empty Y2L container — dimensions auto-sized to current selection,

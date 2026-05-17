@@ -1,6 +1,6 @@
 # YSFC Forge
 
-> 🇸🇪 **Svenska:** [README_sv.md](README_sv.md)
+> 🇸🇪 **Svenska:** [README_sv.md](README_._sv.md)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Status: Active](https://img.shields.io/badge/Status-Active-brightgreen.svg)]()
@@ -48,6 +48,15 @@ Reverse-engineered from scratch through binary analysis of Yamaha's undocumented
 5. Click **Save as Y2L** or **Save as Y2U**
 6. Import the exported file in MODX M / ESP plugin / Montage M
 
+### Merge performances including waveforms, samples and arpeggios
+
+1. Download [`tools/yysfc_forge_library_builder_v13_17.html`](tools/ysfc_forge_library_builder_v13_17.html)
+2. Open it in your browser
+3. Drag and drop `.Y2L` or `.Y2U` files
+4. Select the performances you want
+5. Click **Save as Y2L** or **Save as Y2U**
+6. Import the exported file in MODX M / ESP plugin / Montage M
+
 ### Edit a performance
 
 1. Download [`tools/ysfc_forge_performance_editor_v5_1.html`](tools/ysfc_forge_performance_editor_v5_1.html)
@@ -65,7 +74,7 @@ Reverse-engineered from scratch through binary analysis of Yamaha's undocumented
 |Tool|What it does|
 |-|-|
 |[**Performance Merger**](tools/ysfc_forge_performance_merger_v1_19.html)|Merge performances from multiple Y2L/Y2U files|
-|[**Library Builder**](utilities/ysfc_forge_library_builder_v13_13.html)|Standalone prototype librarian (merge performances from multiple Y2L/Y2U files)|
+|[**Library Builder**](utilities/ysfc_forge_library_builder_v13_17.html)|Standalone prototype librarian (merge performances from multiple Y2L/Y2U files)|
 |[**Performance Editor**](tools/ysfc_forge_performance_editor_v5_1.html)|Edit FM-X, AWM2 and AN-X parameters in the browser|
 
 ### Translators
@@ -85,8 +94,8 @@ Reverse-engineered from scratch through binary analysis of Yamaha's undocumented
 
 ### Screenshots
 
-||||
-|-|-|-|
+|||
+|-|-|
 |![Performance Editor](screenshots/image_ysfc_forge_performance_editor.png)|![Library Builder](screenshots/image_ysfc_forge_library_builder.png)|![DIVA Patch Translator](screenshots/image_ysfc_diva_h2p_translator.png)|
 |*Performance Editor — FM-X operator editor*|*Library Builder — performance list with engine detection*|*DIVA Patch Translator — Convert DIVA patches to Y2L/Y2U*|
 
@@ -96,12 +105,12 @@ Reverse-engineered from scratch through binary analysis of Yamaha's undocumented
 
 All four synthesizer engines are **100% binary-verified mapped** through systematic A/B diff analysis on real MODX M hardware.
 
-|Engine|UI fields|Status|
-|-|-:|-|
-|**AWM2**|128|✅ 100%|
-|**AN-X**|171|✅ 100%|
-|**FM-X**|141|✅ 100%|
-|**Drum**|54|✅ 100%|
+|Engine|UI fields|Internal/firmware|Status|
+|-|-:|-:|-|
+|**AWM2**|128|8|✅ 100%|
+|**AN-X**|171|458|✅ 100%|
+|**FM-X**|141|863|✅ 100%|
+|**Drum**|54|4934|✅ 100%|
 
 ### Supported file types
 

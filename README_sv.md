@@ -50,7 +50,7 @@ Reverse-engineerad från grunden genom binäranalys av Yamahas odokumenterade `.
 
 ### Sammanfoga performances inklusive waveforms, samples och arpeggios
 
-1. Ladda ner [`tools/yysfc_forge_library_builder_v13_13.html`](tools/ysfc_forge_library_builder_v13_13.html)
+1. Ladda ner [`tools/yysfc_forge_library_builder_v13_17.html`](tools/ysfc_forge_library_builder_v13_17.html)
 2. Öppna filen i din webbläsare
 3. Dra och släpp `.Y2L`- eller `.Y2U`-filer
 4. Markera de performances du vill ha
@@ -74,7 +74,7 @@ Reverse-engineerad från grunden genom binäranalys av Yamahas odokumenterade `.
 |Verktyg|Vad det gör|
 |-|-|
 |[**Performance Merger**](tools/ysfc_forge_performance_merger_v1_19.html)|Sammanfoga performances från flera Y2L/Y2U-filer|
-|[**Library Builder**](tools/ysfc_forge_library_builder_v13_13.html)|Fristående prototyp för library builder (sammanfoga performances inklusive waveforms, samples and arpeggios från flera Y2L/Y2U filer)|
+|[**Library Builder**](tools/ysfc_forge_library_builder_v13_17.html)|Fristående prototyp för library builder (sammanfoga performances inklusive waveforms, samples and arpeggios från flera Y2L/Y2U filer)|
 |[**Performance Editor**](tools/ysfc_forge_performance_editor_v5_1.html)|Redigera FM-X, AWM2 och AN-X-parametrar i webbläsaren|
 
 ### Översättare
@@ -94,8 +94,8 @@ Reverse-engineerad från grunden genom binäranalys av Yamahas odokumenterade `.
 
 ### Skärmdumpar
 
-||||
-|-|-|-|
+|||
+|-|-|
 |![Performance Editor](screenshots/image_ysfc_forge_performance_editor.png)|![Library Builder](screenshots/image_ysfc_forge_library_builder.png)|![DIVA Patch Translator](screenshots/image_ysfc_diva_h2p_translator.png)|
 |*Performance Editor — FM-X-operatorredigerare*|*Library Builder — performancelista med engine-detektering*|*DIVA Patch Translator — Konvertera DIVA patches to Y2L/Y2U*|
 
@@ -105,12 +105,12 @@ Reverse-engineerad från grunden genom binäranalys av Yamahas odokumenterade `.
 
 Alla fyra synth-engines är **100% binärverifierat kartlagda** genom systematisk A/B-diffanalys på riktig MODX M-hårdvara.
 
-|Engine|UI-fält|Status|
-|-|-:|-|
-|**AWM2**|128|✅ 100%|
-|**AN-X**|171|✅ 100%|
-|**FM-X**|141|✅ 100%|
-|**Drum**|54|✅ 100%|
+|Engine|UI-fält|Intern/firmware|Status|
+|-|-:|-:|-|
+|**AWM2**|128|8|✅ 100%|
+|**AN-X**|171|458|✅ 100%|
+|**FM-X**|141|863|✅ 100%|
+|**Drum**|54|4934|✅ 100%|
 
 ### Filtyper som stöds
 
