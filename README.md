@@ -11,7 +11,7 @@
 
 Reverse-engineered from scratch through binary analysis of Yamaha's undocumented `.Y2L` / `.Y2U` file format. Open the HTML files in any modern browser — no installation, no cloud upload, everything runs locally.
 
-> A hobby project that started as a way to merge `.Y2L` libraries without endless clicking on the hardware, and turned into a full reverse-engineering of the format.
+> A hobby project that started as a way to merge .Y2L libraries without endless clicking on the hardware, and grew into an in-depth mapping of the format.
 
 ![Forge Performance Merger screenshot](screenshots/image_ysfc_forge_performance_merger.png)
 
