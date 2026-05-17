@@ -7,7 +7,7 @@
 
 ## Current status
 
-| Engine | Mapped fields | UI coverage |
+| Engine | Mapped fields | Status |
 |---|---:|---:|
 | **AWM2** (per element × 8..128) | 128 fields + 8 [INTERN] | ✅ **Verified** |
 | **AN-X** (engine total) | 171 fields + 458 [INTERN] | ✅ **Verified** |

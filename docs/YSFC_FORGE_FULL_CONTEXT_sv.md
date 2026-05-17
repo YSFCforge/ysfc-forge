@@ -7,7 +7,7 @@
 
 ## Aktuell status
 
-| Engine | Mappade fält | UI-täckning |
+| Engine | Mappade fält | Status |
 |---|---:|---:|
 | **AWM2** (per element × 8..128) | 128 fält + 8 [INTERN] | ✅ **Verifierad** |
 | **AN-X** (engine totalt) | 171 fält + 458 [INTERN] | ✅ **Verifierad** |
