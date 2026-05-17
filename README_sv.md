@@ -100,7 +100,7 @@ Reverse-engineerad från grunden genom binäranalys av Yamahas odokumenterade `.
 
 Alla fyra synth-**engines** är **100% binärverifierat kartlagda** genom systematisk A/B-diffanalys på riktig MODX M-hårdvara. Detta omfattar varje användarredigerbart parameterfält per engine; filnivåstrukturer som Smart Morph och Scene-snapshots är kartlagda separat — se [Kända begränsningar](#kända-begränsningar).
 
-|Engine|UI-fält|Intern/firmware|Status|
+|Engine|UI-fält|Intern/firmware konstanter|Status|
 |-|-:|-:|-|
 |**AWM2**|128|8|✅ 100%|
 |**AN-X**|171|458|✅ 100%|
@@ -108,6 +108,8 @@ Alla fyra synth-**engines** är **100% binärverifierat kartlagda** genom system
 |**Drum**|54|4934|✅ 100%|
 
 > *"100%" avser de användarredigerbara parameterfälten i de fyra synthesengines:arna. Filnivåstrukturer utanför engines — Smart Morph-interpolationstabeller och Scene-snapshots — spåras separat under [Kända begränsningar](#kända-begränsningar).*
+
+> *"Intern/firmware konstanter" räknar de bytes i varje engines datablock som inte är användarredigerbara — firmware-konstanter, uppslagstabeller och padding som är identiska oavsett UI-inställningar. Ett högt tal är ingen lucka: det betyder att hela blocket är kartlagt och varje byte redovisad, inte bara parametrarna. (Drum keys är t.ex. en avsiktligt gles struktur — bara en handfull bytes per key är aktiva.)*
 
 ### Filtyper som stöds
 
