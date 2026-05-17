@@ -105,12 +105,12 @@ Reverse-engineerad från grunden genom binäranalys av Yamahas odokumenterade `.
 
 Alla fyra synth-engines är **100% binärverifierat kartlagda** genom systematisk A/B-diffanalys på riktig MODX M-hårdvara.
 
-|Engine|UI-fält|Intern/firmware|Status|
-|-|-:|-:|-|
-|**AWM2**|128|8|✅ 100%|
-|**AN-X**|171|458|✅ 100%|
-|**FM-X**|141|863|✅ 100%|
-|**Drum**|54|4934|✅ 100%|
+|Engine|UI-fält|Status|
+|-|-:|-|
+|**AWM2**|128|✅ 100%|
+|**AN-X**|171|✅ 100%|
+|**FM-X**|141|✅ 100%|
+|**Drum**|54|✅ 100%|
 
 ### Filtyper som stöds
 
