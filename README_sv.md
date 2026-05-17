@@ -81,15 +81,11 @@ Reverse-engineerad från grunden genom binäranalys av Yamahas odokumenterade `.
 
 ### Experimentella / extra verktyg
 
-> ⚠️ Detta är hjälp- och approximationsverktyg — **inte** hållna till samma binärverifierade standard som kärnverktygen ovan. Patch-översättarna är i synnerhet approximationer: källsyntarna använder fundamentalt olika synthesteknik, så resultatet är en utgångspunkt för ljuddesign, inte en exakt portering. Håll alltid backuper.
+> ⚠️ Detta är hjälp- och approximationsverktyg — **inte** hållna till samma binärverifierade standard som kärnverktygen ovan. 
 
 |Verktyg|Vad det gör|
 |-|-|
-|[**DIVA Patch Translator**](translators/ysfc_diva_h2p_converter_v2_15.html)|Konvertera DIVA-patchar till Y2L/Y2U (approximativt)|
-|[**Vital Patch Translator**](translators/ysfc_vital_converter_v4_12.html)|Konvertera Vital-patchar till Y2L/Y2U (approximativt)|
-|[**Synth1 Patch Translator**](translators/ysfc_synth1_converter_v5_12.html)|Konvertera Synth1-patchar till Y2L/Y2U (approximativt)|
 |[**Smart Name Compressor**](utilities/ysfc_smart_name_compressor.html)|Standardiserad namngivning för performances|
-|[**Synth Converter**](utilities/ysfc_synth_converter.html)|Konvertera patchar mellan 8+ format|
 
 ### Skärmdumpar
 
