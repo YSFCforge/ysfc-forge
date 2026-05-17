@@ -94,8 +94,8 @@ Reverse-engineerad från grunden genom binäranalys av Yamahas odokumenterade `.
 
 ### Skärmdumpar
 
-|||
-|-|-|
+||||
+|-|-|-|
 |![Performance Editor](screenshots/image_ysfc_forge_performance_editor.png)|![Library Builder](screenshots/image_ysfc_forge_library_builder.png)|![DIVA Patch Translator](screenshots/image_ysfc_diva_h2p_translator.png)|
 |*Performance Editor — FM-X-operatorredigerare*|*Library Builder — performancelista med engine-detektering*|*DIVA Patch Translator — Konvertera DIVA patches to Y2L/Y2U*|
 
