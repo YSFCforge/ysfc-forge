@@ -32,7 +32,7 @@ Reverse-engineerad från grunden genom binäranalys av Yamahas odokumenterade `.
 ## Funktioner
 
 * **Sammanfoga** performances från flera `.Y2L` / `.Y2U`-filer
-* **Redigera** FM-X, AWM2, AN-X och Drum-parametrar i webbläsaren
+* **Redigera** FM-X, AWM2 och AN-X-parametrar i webbläsaren
 * **Ingen installation** — fungerar i Chrome, Firefox och Safari
 * **Ingen telemetri** — allt körs lokalt
 * Plus experimentella verktyg — se [Experimentella / extra verktyg](#experimentella--extra-verktyg)
@@ -76,7 +76,7 @@ Reverse-engineerad från grunden genom binäranalys av Yamahas odokumenterade `.
 |Verktyg|Vad det gör|
 |-|-|
 |[**Performance Merger**](tools/ysfc_forge_performance_merger_v1_19.html)|Sammanfoga performances från flera Y2L/Y2U-filer|
-|[**Library Builder**](tools/ysfc_forge_library_builder_v13_17.html)|Sammanfoga performances inklusive beroenden från flera Y2L/Y2U filer)|
+|[**Library Builder**](tools/ysfc_forge_library_builder_v13_17.html)|Sammanfoga performances inklusive beroenden från flera Y2L/Y2U-filer|
 |[**Performance Editor**](tools/ysfc_forge_performance_editor_v5_1.html)|Redigera FM-X, AWM2 och AN-X-parametrar i webbläsaren|
 
 ### Experimentella / extra verktyg
@@ -98,16 +98,16 @@ Reverse-engineerad från grunden genom binäranalys av Yamahas odokumenterade `.
 
 ## Status
 
-Alla fyra synth-**engines** är **100% binärverifierat kartlagda** genom systematisk A/B-diffanalys på riktig MODX M-hårdvara. Detta omfattar varje användarredigerbart parameterfält per engine; filnivåstrukturer som Smart Morph och Scene-snapshots är kartlagda separat — se [Kända begränsningar](#kända-begränsningar).
+Alla fyra synth-**engines** har **varje känt användarredigerbart parameterfält binärverifierat** genom systematisk A/B-diffanalys över 2010+ testexporter på riktig MODX M-hårdvara. Filnivåstrukturer som Smart Morph och Scene-snapshots är kartlagda separat — se [Kända begränsningar](#kända-begränsningar).
 
 |Engine|UI-fält|Intern/firmware konstanter|Status|
 |-|-:|-:|-|
-|**AWM2**|128|8|✅ 100%|
-|**AN-X**|171|458|✅ 100%|
-|**FM-X**|141|863|✅ 100%|
-|**Drum**|54|4934|✅ 100%|
+|**AWM2**|128|8|✅ Verifierad|
+|**AN-X**|171|458|✅ Verifierad|
+|**FM-X**|141|863|✅ Verifierad|
+|**Drum**|54|4934|✅ Verifierad|
 
-> *"100%" avser de användarredigerbara parameterfälten i de fyra synthesengines:arna. Filnivåstrukturer utanför engines — Smart Morph-interpolationstabeller och Scene-snapshots — spåras separat under [Kända begränsningar](#kända-begränsningar).*
+> *Kartläggningen återspeglar alla parametrar som observerats över de 2010+ testexporterna. Formatet är odokumenterat, så det är möjligt att en sällan använd parameter existerar som ännu inte dykt upp i testning — hittar du en är en testfil som visar den det mest värdefulla du kan bidra med.*
 
 > *"Intern/firmware konstanter" räknar de bytes i varje engines datablock som inte är användarredigerbara — firmware-konstanter, uppslagstabeller och padding som är identiska oavsett UI-inställningar. Ett högt tal är ingen lucka: det betyder att hela blocket är kartlagt och varje byte redovisad, inte bara parametrarna. (Drum keys är t.ex. en avsiktligt gles struktur — bara en handfull bytes per key är aktiva.)*
 

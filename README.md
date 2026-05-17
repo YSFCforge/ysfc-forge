@@ -32,7 +32,7 @@ Reverse-engineered from scratch through binary analysis of Yamaha's undocumented
 ## Features
 
 * **Merge** performances from multiple `.Y2L` / `.Y2U` files
-* **Edit** FM-X, AWM2, AN-X and Drum parameters in the browser
+* **Edit** FM-X, AWM2 and AN-X parameters in the browser
 * **No installation** — works in Chrome, Firefox and Safari
 * **No telemetry** — everything runs locally
 * Plus experimental tools/utilities — see [Experimental / Extra Tools](#experimental--extra-tools)
@@ -98,18 +98,18 @@ Reverse-engineered from scratch through binary analysis of Yamaha's undocumented
 
 ## Status
 
-All four synthesizer **engines** are **100% binary-verified mapped** through systematic A/B diff analysis on real MODX M hardware. This covers every user-editable parameter field per engine; file-level structures such as Smart Morph and Scene snapshots are mapped separately — see [Known Limitations](#known-limitations).
+All four synthesizer **engines** have **every known user-editable parameter binary-verified** through systematic A/B diff analysis across 2010+ test exports on real MODX M hardware. File-level structures such as Smart Morph and Scene snapshots are mapped separately — see [Known Limitations](#known-limitations).
 
 |Engine|UI fields|Internal/firmware constants|Status|
 |-|-:|-:|-|
-|**AWM2**|128|8|✅ 100%|
-|**AN-X**|171|458|✅ 100%|
-|**FM-X**|141|863|✅ 100%|
-|**Drum**|54|4934|✅ 100%|
+|**AWM2**|128|8|✅ Verified|
+|**AN-X**|171|458|✅ Verified|
+|**FM-X**|141|863|✅ Verified|
+|**Drum**|54|4934|✅ Verified|
 
-> *"100%" refers to the user-editable parameter fields of the four synthesis engines. File-level structures outside the engines — Smart Morph interpolation tables and Scene snapshots — are tracked separately under [Known Limitations](#known-limitations).*
+> *Mapping reflects all parameters observed across the 2010+ test exports. The format is undocumented, so it's possible a rarely-used parameter exists that hasn't appeared in testing yet — if you find one, a test file showing it is the single most useful thing you can contribute.*
 
->*Internal/firmware constants" counts the bytes in each engine's data block that are not user-editable — firmware constants, lookup tables and padding that stay identical regardless of UI settings. A high number isn't a gap: it means the entire block was mapped and every byte accounted for, not just the parameters. (Drum keys, for example, are a deliberately sparse structure — only a handful of bytes per key are active.)*
+> *"Internal/firmware constants" counts the bytes in each engine's data block that are not user-editable — firmware constants, lookup tables and padding that stay identical regardless of UI settings. A high number isn't a gap: it means the entire block was mapped and every byte accounted for, not just the parameters. (Drum keys, for example, are a deliberately sparse structure — only a handful of bytes per key are active.)*
 
 ### Supported file types
 
