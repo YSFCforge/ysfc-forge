@@ -11,6 +11,8 @@
 
 Reverse-engineerad från grunden genom binäranalys av Yamahas odokumenterade `.Y2L` / `.Y2U`-filformat. Öppna HTML-filerna i vilken modern webbläsare som helst — ingen installation, ingen molnuppladdning, allt körs lokalt.
 
+> Ett hobbyprojekt som började som ett sätt att sammanfoga `.Y2L`-bibliotek utan ändlöst klickande på hårdvaran, och växte till en fullständig reverse-engineering av formatet.
+
 ![Forge Performance Merger skärmdump](screenshots/image_ysfc_forge_performance_merger.png)
 
 ---
@@ -31,9 +33,9 @@ Reverse-engineerad från grunden genom binäranalys av Yamahas odokumenterade `.
 
 * **Sammanfoga** performances från flera `.Y2L` / `.Y2U`-filer
 * **Redigera** FM-X, AWM2, AN-X och Drum-parametrar i webbläsaren
-* **Översätt** patchar från DIVA, Vital och Synth1 till Yamaha-format
 * **Ingen installation** — fungerar i Chrome, Firefox och Safari
 * **Ingen telemetri** — allt körs lokalt
+* Plus experimentella verktyg — se [Experimentella / extra verktyg](#experimentella--extra-verktyg)
 
 ---
 
@@ -77,27 +79,24 @@ Reverse-engineerad från grunden genom binäranalys av Yamahas odokumenterade `.
 |[**Library Builder**](tools/ysfc_forge_library_builder_v13_17.html)|Library builder prototyp (sammanfoga performances inklusive beroenden från flera Y2L/Y2U filer)|
 |[**Performance Editor**](tools/ysfc_forge_performance_editor_v5_1.html)|Redigera FM-X, AWM2 och AN-X-parametrar i webbläsaren|
 
-### Översättare
+### Experimentella / extra verktyg
+
+> ⚠️ Detta är hjälp- och approximationsverktyg — **inte** hållna till samma binärverifierade standard som kärnverktygen ovan. Patch-översättarna är i synnerhet approximationer: källsyntarna använder fundamentalt olika synthesteknik, så resultatet är en utgångspunkt för ljuddesign, inte en exakt portering. Håll alltid backuper.
 
 |Verktyg|Vad det gör|
 |-|-|
-|[**DIVA Patch Translator**](translators/ysfc_diva_h2p_converter_v2_15.html)|Konvertera DIVA-patchar till Y2L/Y2U|
-|[**Vital Patch Translator**](translators/ysfc_vital_converter_v4_12.html)|Konvertera Vital-patchar till Y2L/Y2U|
-|[**Synth1 Patch Translator**](translators/ysfc_synth1_converter_v5_12.html)|Konvertera Synth1-patchar till Y2L/Y2U|
-
-### Tilläggsverktyg
-
-|Verktyg|Vad det gör|
-|-|-|
+|[**DIVA Patch Translator**](translators/ysfc_diva_h2p_converter_v2_15.html)|Konvertera DIVA-patchar till Y2L/Y2U (approximativt)|
+|[**Vital Patch Translator**](translators/ysfc_vital_converter_v4_12.html)|Konvertera Vital-patchar till Y2L/Y2U (approximativt)|
+|[**Synth1 Patch Translator**](translators/ysfc_synth1_converter_v5_12.html)|Konvertera Synth1-patchar till Y2L/Y2U (approximativt)|
 |[**Smart Name Compressor**](utilities/ysfc_smart_name_compressor.html)|Standardiserad namngivning för performances|
 |[**Synth Converter**](utilities/ysfc_synth_converter.html)|Konvertera patchar mellan 8+ format|
 
 ### Skärmdumpar
 
-||||
-|-|-|-|
-|![Performance Editor](screenshots/image_ysfc_forge_performance_editor.png)|![Library Builder](screenshots/image_ysfc_forge_library_builder.png)|![DIVA Patch Translator](screenshots/image_ysfc_diva_h2p_translator.png)|
-|*Performance Editor — FM-X-operatorredigerare*|*Library Builder — performancelista med engine-detektering*|*DIVA Patch Translator — Konvertera DIVA patches till Y2L/Y2U*|
+|||
+|-|-|
+|![Performance Editor](screenshots/image_ysfc_forge_performance_editor.png)|![Library Builder](screenshots/image_ysfc_forge_library_builder.png)|
+|*Performance Editor — FM-X-operatorredigerare*|*Library Builder — performancelista med engine-detektering*|
 
 ---
 
@@ -172,7 +171,6 @@ I dokumentationen klassificeras varje fält efter evidens:
 * **Performance Editor** visar i nuläget bara den första partens engine; redigering av alla 16 parts är på roadmap
 * **Smart Morph**-interpolationstabeller är inte kartlagda än
 * **Scene-snapshots** — strukturen är verifierad, men endast \~10 fält per scen har UI-bekräftade mappningar
-* **Patch-översättare är approximationer** — källsyntarna använder fundamentalt olika synthesteknik, så resultatet är en utgångspunkt för ljuddesign snarare än en exakt portering
 * **Ingen undo/redo** i Performance Editor än — håll alltid backuper på dina original
 
 Se [`docs/REVERSE_ENGINEERING.md`](docs/REVERSE_ENGINEERING.md) för fullständig lista.

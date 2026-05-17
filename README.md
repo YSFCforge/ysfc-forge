@@ -11,6 +11,8 @@
 
 Reverse-engineered from scratch through binary analysis of Yamaha's undocumented `.Y2L` / `.Y2U` file format. Open the HTML files in any modern browser — no installation, no cloud upload, everything runs locally.
 
+> A hobby project that started as a way to merge `.Y2L` libraries without endless clicking on the hardware, and turned into a full reverse-engineering of the format.
+
 ![Forge Performance Merger screenshot](screenshots/image_ysfc_forge_performance_merger.png)
 
 ---
@@ -31,9 +33,9 @@ Reverse-engineered from scratch through binary analysis of Yamaha's undocumented
 
 * **Merge** performances from multiple `.Y2L` / `.Y2U` files
 * **Edit** FM-X, AWM2, AN-X and Drum parameters in the browser
-* **Translate** patches from DIVA, Vital and Synth1 to Yamaha format
 * **No installation** — works in Chrome, Firefox and Safari
 * **No telemetry** — everything runs locally
+* Plus experimental tools/utilities — see [Experimental / Extra Tools](#experimental--extra-tools)
 
 ---
 
@@ -77,18 +79,15 @@ Reverse-engineered from scratch through binary analysis of Yamaha's undocumented
 |[**Library Builder**](tools/ysfc_forge_library_builder_v13_17.html)|Prototype library builder (merge performances from multiple Y2L/Y2U files including dependencies)|
 |[**Performance Editor**](tools/ysfc_forge_performance_editor_v5_1.html)|Edit FM-X, AWM2 and AN-X parameters in the browser|
 
-### Translators
+### Experimental / Extra Tools
+
+> ⚠️ These are convenience and approximation tools — **not** held to the same binary-verified standard as the core tools above. The patch translators in particular are approximations: the source synths use fundamentally different synthesis engines, so output is a starting point for sound design, not a literal port. Always keep backups.
 
 |Tool|What it does|
 |-|-|
-|[**DIVA Patch Translator**](translators/ysfc_diva_h2p_converter_v2_15.html)|Convert DIVA patches to Y2L/Y2U|
-|[**Vital Patch Translator**](translators/ysfc_vital_converter_v4_12.html)|Convert Vital patches to Y2L/Y2U|
-|[**Synth1 Patch Translator**](translators/ysfc_synth1_converter_v5_12.html)|Convert Synth1 patches to Y2L/Y2U|
-
-### Utilities
-
-|Tool|What it does|
-|-|-|
+|[**DIVA Patch Translator**](translators/ysfc_diva_h2p_converter_v2_15.html)|Convert DIVA patches to Y2L/Y2U (approximate)|
+|[**Vital Patch Translator**](translators/ysfc_vital_converter_v4_12.html)|Convert Vital patches to Y2L/Y2U (approximate)|
+|[**Synth1 Patch Translator**](translators/ysfc_synth1_converter_v5_12.html)|Convert Synth1 patches to Y2L/Y2U (approximate)|
 |[**Smart Name Compressor**](utilities/ysfc_smart_name_compressor.html)|Standardized naming for performances|
 |[**Synth Converter**](utilities/ysfc_synth_converter.html)|Convert patches between 8+ formats|
 
@@ -96,8 +95,8 @@ Reverse-engineered from scratch through binary analysis of Yamaha's undocumented
 
 ||||
 |-|-|-|
-|![Performance Editor](screenshots/image_ysfc_forge_performance_editor.png)|![Library Builder](screenshots/image_ysfc_forge_library_builder.png)|![DIVA Patch Translator](screenshots/image_ysfc_diva_h2p_translator.png)|
-|*Performance Editor — FM-X operator editor*|*Library Builder — performance list with engine detection*|*DIVA Patch Translator — Convert DIVA patches to Y2L/Y2U*|
+|![Performance Editor](screenshots/image_ysfc_forge_performance_editor.png)|![Library Builder](screenshots/image_ysfc_forge_library_builder.png)|png)|
+|*Performance Editor — FM-X operator editor*|*Library Builder — performance list with engine detection*|
 
 ---
 
@@ -172,7 +171,6 @@ Throughout the documentation, fields are rated by evidence:
 * **Performance Editor** currently shows only the first part's engine; full 16-part editing is on the roadmap
 * **Smart Morph** interpolation tables are not yet mapped
 * **Scene snapshots** — structure verified, but only \~10 fields per scene have UI-confirmed mappings
-* **Patch translators** are approximations — the source synths use fundamentally different synthesis engines, so output is a starting point for sound design rather than a literal port
 * **No undo/redo** in Performance Editor yet — keep backups of your originals
 
 See [`docs/REVERSE_ENGINEERING.md`](docs/REVERSE_ENGINEERING.md) for the full list.
