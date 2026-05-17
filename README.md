@@ -95,7 +95,7 @@ Reverse-engineered from scratch through binary analysis of Yamaha's undocumented
 
 ||||
 |-|-|-|
-|![Performance Editor](screenshots/image_ysfc_forge_performance_editor.png)|![Library Builder](screenshots/image_ysfc_forge_library_builder.png)|png)|
+|![Performance Editor](screenshots/image_ysfc_forge_performance_editor.png)|![Library Builder](screenshots/image_ysfc_forge_library_builder.png)|
 |*Performance Editor — FM-X operator editor*|*Library Builder — performance list with engine detection*|
 
 ---
