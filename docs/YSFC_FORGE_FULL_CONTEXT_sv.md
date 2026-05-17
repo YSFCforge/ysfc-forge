@@ -1,7 +1,5 @@
 # YSFC Forge — Full Context
 
-> 🇬🇧 **English:** [YSFC_FORGE_FULL_CONTEXT.md](YSFC_FORGE_FULL_CONTEXT.md)
-
 *MODX M8 firmware 3.0 + ESP Plugin v3.0*
 *Underlag: 2010+ binärverifierade testfiler*
 
@@ -20,7 +18,7 @@
 **Total fält-positioner i serializer:** ~2057
 **Testkorpus:** 2010+ binärverifierade filer
 
-Alla fyra engines är nu binärverifierat 100% kartlagda. Multi/GM 16-part-filer stöds också (15 AWM2 + 1 Drum på Part 10, via befintlig multi-part-arkitektur).
+Alla fyra engines är binärverifierat 100% kartlagda. Multi/GM 16-part-filer stöds (15 AWM2 + 1 Drum på Part 10, via multi-part-arkitekturen).
 
 **Strukturell insikt: Drum-engine har egen Part Common-layout**
 
@@ -28,11 +26,43 @@ Drum delar inte det universella AEG-offset-blocket (rel +144..+150) som AWM2/FM-
 - Rel +126..+132 = drum AEG (Attack/Decay/Sustain/Release, c64)
 - Rel +144/+146 = drum filter cutoff/resonance (c64)
 
-Tolkningen av Part Common rel +126..+158 styrs av engine_type. Den dokumenterade "shared AEG-block"-arkitekturen gäller alltså bara för tre av fyra engines.
+Tolkningen av Part Common rel +126..+158 styrs av engine_type. Den delade AEG-block-arkitekturen gäller alltså bara för tre av fyra engines.
 
 **Om AN-X coverage:** AN-X-engine är fundamentalt annorlunda än AWM2. AWM2 är en sample-spelare där 8 identiska element delar struktur — varje byte tenderar att vara en direkt UI-parameter. AN-X är en analog-modell med komplex modulation-routing: av engine-poolens 684 bytes är 458 firmware-konstanter ([INTERN]) inklusive routing-matriser och lösa flaggor. De 171 UI-fälten täcker alla user-editable parametrar.
 
 ---
+
+## Performance ↔ Waveform / Sample / Arpeggio-koppling
+
+Selektiv export kopierar bara de beroenden som en vald uppsättning performances faktiskt använder. En giltig Y2L kräver att katalog-ID:n är en **kontinuerlig sekvens**, så exporten både kopierar de refererade beroendena och renumrerar dem, och skriver om blob-referenserna så att de matchar.
+
+**Referensmodell.** En performance refererar en USER-waveform via en fast byte-struktur i DPFM-blobben. Två kodningar finns (båda byte-verifierade mot ESP-facit och kontrollerade CFX-en-ändrings-par):
+
+- `SIG_A`: `00 00 00 28  01(bank)  XX  YY  00  [ID]  00 01 00 01` — element-slot
+- `SIG_B`: `01 00 00 00  01 00 0C 00  [ID]  00 40` — element-config
+
+Byten efter `0x28` är **bank**: `0x01` = USER-waveform (`[ID]`-byten indexerar EWFM/EWIM-katalogen), `0x00` = preset/ROM (ignoreras). `XX YY` varierar (`00 00` eller `00 01`); båda matchas. `[ID]` är en enda byte. Katalog-ID:t ligger i `recPayload[10:12]` (big-endian u16) i varje EWFM/EWIM `Entr`-post.
+
+**Renumreringsregeln.** Samla unika refererade gamla ID:n, sortera dem, tilldela nya ID:n `1..N` (1-baserat för waveform/sample). Skriv om varje `[ID]`-byte i varje behållen performance-blob gammalt→nytt, och skriv de nya ID:n i de ombyggda EWFM/EWIM `recPayload[10:12]`. Ren renumrering rör **endast** `[ID]`-byten — bank/Field-2-byte rörs inte.
+
+**Arpeggios.** Arp-referenser ligger i separata (`80 00 …`) element-pitch-block med en egen 0-baserad ID-rymd. Arp-refs sitter efter en serie `80 00`-par (pitch-tabell) och valfri `00`-padding, som ett eller flera `[ARP_ID] 2f`-par (ref kan upprepas upp till 4×); `ARP_ID` är en enda byte < 21. Renumreringsregeln är identisk med waveform men **0-baserad**: sortera de unika refererade arp-ID:n, tilldela `0..N-1`. EARP/DARP byggs om selektivt med de nya ID:n; varje behållen performance-blob får sina arp-`[ID]`-byte ompekade gammalt→nytt.
+
+**Beroende-sektionsstorlek.** Y2L-beroende-sektioner storleksanpassas **exakt** efter payload; MODX avvisar varje storleksfält-/data-slack. Varje dep-sektion (EWFM, DWFM, EWIM, DWIM, EARP, DARP), DPFM-performance-poolen och EPFM-performance-indexet storleksanpassas alla till byten med uniform 8-byte-per-blob-framing ackumulerat, sedan `exactSize(n) = Σ(8 + payload) − 4 + 8` (dra av den enda 4-byte-första-blob/post-överräkningen, lägg till sektionsheadern). Ett minimalt Init/en-posts-golv behålls för tomma urval.
+
+**Containerstruktur.** En giltig library-fil använder ESP:s exakta 12-chunk-layout (`EPFM EWFM EARP ESYS EFVT EWIM DPFM DWFM DARP DSYS DFVT DWIM`, inga ECRV/ELST/DCRV/DLST-stubbar). `u32@0x20` = chunk-antal × 8.
+
+**Per-fil-byggstämpel.** `u32@0x3c` är en per-fil-byggstämpel som också är inbäddad som u16 före varje EPFM/EWFM/EARP-namn. Den måste vara samma familj inom en fil; den syntetiska headerns `0x3c` sätts till källfilens `0x3c`. EPFM-post byte[11] = destinations-slot-index (kompakt `0,1,2,3` för en 4-perf-export).
+
+**DWFM sample-index.** Varje DWFM-blob är `[4-byte header][N × 64-byte sub-poster]`; vid blob-offset `60 + 64·k` finns ett 4-byte little-endian sample-data-index. Det måste vara en ren stigande räknare `value[i] = base + i`, där `base` är första blob-sub-postens ursprungliga 4-byte LE-värde och `i` ökar en gång per sub-post över alla blobbar i ordning (full 32-bit LE).
+
+**Fast directory-region.** En giltig YSFC library-fil har en fast directory-region: poster från `dirOff` (0x40), FF-padding, en enda `0x00`-separator vid `dirOff+0x150` (= 0x190), och första chunk vid `dirOff+0x151` (= 0x191). MODX beräknar varje chunks position utifrån denna fasta region.
+
+**Per-performance beroende-taggar (UI).** Varje performance-rads W/S/Arp-chip villkoras på om just den performancen faktiskt refererar beroendet, via samma binärverifierade scanners som driver den selektiva exporten (`scanWaveformRefPositions` / `scanArpRefPositions`). EWFM/EWIM delar ID-rymd, så waveform-refs villkorar både W och S; arp-refs villkorar Arp. Om en blob inte kan läsas faller koden tillbaka till fil-nivå. Per-performance-infokolumnen visar endast engine-etiketten (`AWM2`/`FM-X`/`AN-X`).
+
+**Hjälpfunktioner:** `scanWaveformRefPositions`, `scanArpRefPositions`, `renumberPerfBlob`, `setRecPayloadId`, `resolveFileWaveformRefs`, `resolveFileArpRefs`, `getDepsForSelection`, `buildSyntheticY2LBuffer`, `buildDepPayload`, `cloneAndPatchOffLen`, `buildDPFMPayload`, `buildEPFMPayload`, `calcSyntheticDimensions`, `exportMergeToY2L`, `createSyntheticBaseFile`. En konservativ kopiera-allt-fallback bevaras vid varje opålitlig upplösning (parsningsavvikelse, blob < 12000 B, noll refs trots pool, eller ett refererat ID som saknas i en sektionskatalog). Om den valda basfilen också är en källa till någon vald performance tvingas en syntetisk container (`baseIsSource`).
+
+---
+
 
 ## Förord — Hur detta dokument läses
 
@@ -111,8 +141,6 @@ DLST  Live Set data         (valfritt)
 ```
 
 `.Y2L` (Library file) och `.Y2U` (User file) är byte-för-byte identiska — bara filändelsen skiljer (ESP-pluginet använder ändelsen för att avgöra vilken import-dialog som ska visas).
-
-`.X7L` och `.X8L` är container-varianter för äldre Montage-hårdvara. De kan användas som input/merge-källor men kan inte exporteras av dessa verktyg.
 
 ## 1.1 File header (64 bytes) ★★★★★
 
@@ -477,7 +505,7 @@ Adresseringen är **redan stödd** av befintlig serializer-kod via:
 - `get_subblob_pointer_pos(part_idx)`
 - `ENGINE_MAGIC_BYTES`
 
-**Implikation för editor:** Multi/GM kräver **inga nya strukturer** eller fält i serializern. Alla tidigare-dokumenterade och binärverifierade Part Common, Engine Pool och Drum Key-fält fungerar identiskt på Multi/GM-filer — bara med 16 parts istället för 1.
+**Implikation för editor:** Multi/GM kräver **inga nya strukturer** eller fält i serializern. Alla dokumenterade och binärverifierade Part Common, Engine Pool och Drum Key-fält fungerar identiskt på Multi/GM-filer — bara med 16 parts istället för 1.
 
 ---
 
@@ -885,7 +913,6 @@ Bekräftat: `AWM2_00_Init_Part1_Volume_127.Y2L` (100→127),
 
 **Per-Part Mixer-block:** Bytes 6831/6833/6835/6837/6839 (stride 2) bildar
 Performance Mixing-vyns 5 fält per Part: Volume / Pan / RevSend / VarSend / DryLevel.
-Verifierat 2026-05-09 med TEST5R3-T2a-e.
 
 **Audio In Insertion-aliasing:** `abs 48, 49` (Common-area) ändras av
 "Common / Audio Routing"-UI-vyn (Performance-level), medan `blob[+6734, +6735]`
@@ -1923,7 +1950,7 @@ Av **537 verkliga single-edit-testfiler** i AN-X-korpusen (filer med ≤3 byten 
 | 13146 | modlfo_delay | u8 | 0 | UI: Modifier > LFO > Delay |
 | 13148 | modlfo_fadein | u8 | 0 | UI: Modifier > LFO > Fade In |
 
-**ANX bild 5 visar definitivt** att Modifier-fliken har **endast EN** "LFO Depth"-knapp (på höger sida av panelen, under Wave/Key On Reset/Speed/Delay/Fade In/Phase). Den tidigare misstanken om en konflikt mellan `modlfo_depth` och `wavefolder_lfo_depth` är bekräftat falsk — det är samma byte med två namn i olika dokumentationskällor.
+Modifier-fliken har **endast EN** "LFO Depth"-knapp (abs 13122) — det finns ingen separat byte för "Wave Folder LFO Depth".
 
 ## 10.4 AN-X Pre-OSC (Part Settings, Pitch LFO, Filter LFO, Amp + Amp LFO) ★★★★★
 
@@ -1946,7 +1973,7 @@ Av **537 verkliga single-edit-testfiler** i AN-X-korpusen (filer med ≤3 byten 
 
 | Abs | Fält | Encoding | Default | Notering |
 |---|---|---|---|---|
-| 12499 | peg_time_vel | u8 | 0 | var feltidigare som feg_time_vel |
+| 12499 | peg_time_vel | u8 | 0 | |
 | 12503 | pitch_lfo_speed_lo | u16le | 208 | |
 | 12507 | pitch_lfo_phase | u8 enum | 0 | **16-step enum** 0..15, ~22.5° per steg |
 | 12509 | pitch_lfo_delay | u8 | 0 | |
@@ -2411,22 +2438,22 @@ Part Common-fält (delas med AN-X):
 - `Part rel +516/520/524` dest1/dest2/dest3 (AWM2: Level=64, Cutoff=66, Pitch=65)
 - `Part rel +518/522/526` dest1/dest2/dest3 depth
 
-## 11.3 Kvarstående okartlagda AWM2 element-bytes
+## 11.3 AWM2 element-byte-detaljer
 
-**5 verifierbara UI-bytes per element återstår** (utöver 42 routing-bitmask-bytes vid rel +3..+42 och +53..+55). 3 tidigare okända byten är nu härledda via cross-mapping mot `AWM2_ELEM_LAYOUT`-strukturen och visuellt bekräftade via UI-bilder.
+AWM2 element-strukturen är **100% kartlagd**.
 
-### Stängda — UI-bekräftade ★★★★★
+### UI-bekräftade fält ★★★★★
 
-Konversionsformel: `AWM2_ELEM_LAYOUT_offset + 51 = AWM2_ELEMENT_FIELDS_rel`. Verifierad genom 7+ kontrollpunkter och nu UI-bekräftad via skärmdumpar från ESP Plugin v3.0.
+Konversionsformel: `AWM2_ELEM_LAYOUT_offset + 51 = AWM2_ELEMENT_FIELDS_rel`. UI-bekräftad via skärmdumpar från ESP Plugin v3.0.
 
 | Rel | Default | Fält | UI-källa | Strukturkälla |
 |---:|---:|---|---|---|
 | 159 | 60 (C3) | `pegKFCenterNote` | AWM2 bild 2: [ELEMENT] Pitch EG > Center Key = C 3 | AWM2_ELEM_LAYOUT off=108 |
 | 289 | 38 | `lfoSpeed` (normal, ej Extended) | AWM2 bild 6: [ELEMENT] LFO > Speed (knapp visad när Extended LFO toggle är AV) | AWM2_ELEM_LAYOUT off=238 |
 
-### Strukturkonflikten på rel +243 — LÖST och binärverifierat ★★★★★
+### FEG-block-strukturen på rel +243 ★★★★★
 
-Tidigare oklar p.g.a. konkurrerande mappningar mellan AWM2_ELEMENT_FIELDS och AWM2_ELEM_LAYOUT. Löst genom kombinationen PEG/FEG-symmetri (där alla 6 PEG-fält är binärverifierade ★★★★★) **och** dedikerad single-edit-testfil Test-AWM2-Filter_FEG_DepthVel_50.Y2L.
+Binärverifierad via PEG/FEG-symmetri (alla 6 PEG-fält är binärverifierade ★★★★★) och dedikerad single-edit-testfil Test-AWM2-Filter_FEG_DepthVel_50.Y2L.
 
 **PEG/FEG-symmetri:** FEG-blocket är PEG-blocket förskjutet +54 bytes:
 
@@ -2456,21 +2483,15 @@ Tidigare oklar p.g.a. konkurrerande mappningar mellan AWM2_ELEMENT_FIELDS och AW
 | +247 | 64 | `filter_time_key` (alias `feg_time_key`) | Time/Key | ★★★★★ |
 | +249 | 24 (C0) | `filter_scaling_center_key` (alias `feg_center_key`) | Center Key | ★★★★★ |
 
-**Korrigering av AWM2_ELEM_LAYOUT-namn:** Tre fält har missvisande namn som bör omdöpas vid serializer-städning:
+**Kanoniska fältnamn (`AWM2_ELEM_LAYOUT`):**
 
-| Off | Felaktigt namn | Korrekt namn |
-|---:|---|---|
-| 192 | `fegTimeVelSegment` | `feg_depth_vel` |
-| 194 | `fegTimeVelSens` | `feg_curve` |
-| 196 | `fegTimeKeyFollowSens` | `feg_time_key` |
+| Off | Namn |
+|---:|---|
+| 192 | `feg_depth_vel` |
+| 194 | `feg_curve` |
+| 196 | `feg_time_key` |
 
-**Status:** ★★★★★ — strukturen är binärverifierad i sin helhet. Alla 7 FEG-block-fält (rel +237 till +249) är nu individuellt bekräftade via single-edit-testfiler.
-
-### Fortfarande okartlagda — INGA UI-FÄLT KVAR ✅
-
-Efter omfattande korpusanalys är AWM2 element-strukturen **100% kartlagd**.
-
-### Stängda som [INTERN] (icke-UI bytes, firmware-konstanter)
+### AWM2 element [INTERN]-bytes (icke-UI, firmware-konstanter)
 
 | Rel | Default | Status |
 |---:|---:|---|
@@ -2489,12 +2510,10 @@ Efter omfattande korpusanalys är AWM2 element-strukturen **100% kartlagd**.
 - ~177 multi-byte split-bytes (u16le hi-bytes etc, redan räknade i UI-fält)
 - = 313 bytes per element ✓
 
-STÄNGD i tidigare session:
-- ✓ rel +245 → `filter_curve` (enum 0..4, default 2)
-
-NYA fält mappade i tidigare session (utöver tidigare 9 UNMAPPED):
+Övriga binärverifierade fält:
 - rel +67 → `xa_control` (enum 0..7)
-- rel +191 → `peg_curve` (enum 1..4, default 2) — binärverifierat (fanns predikterat)
+- rel +191 → `peg_curve` (enum 1..4, default 2)
+- rel +245 → `filter_curve` (enum 0..4, default 2)
 
 UI-täckning per AWM2-element: **100%** (alla bytes redovisade — antingen UI-mappade eller [INTERN])
 
@@ -2513,8 +2532,6 @@ Med `Test-AWM2-ElementLFO-ExtendedLFO_ON.Y2L` vs `_OFF.Y2L` (diff = 1 byte vid a
 - `lfo_extended_speed` (rel +307/+308, u16le 0..415) — UI visar 0..415-skala
 
 Båda lagras alltid simultant i filen. `extended_lfo`-toggle (rel +6) bestämmer endast vilken byte UI:t visar och redigerar. Detta mönster återfinns även i FM-X (`fmxPart2ndLfoSpeedNormal` @ 12511, `fmxPart2ndLfoSpeedExtended` @ 12531).
-
-**Korrigering av serializern:** `AWM2_ELEMENT_FIELDS` rad 1481 dokumenterar `extended_lfo` (rel +6) som `'0 (OFF)'`. Detta är **fel** — binärtest visar att Init Normal AWM2 har default `1 (ON)`. Defaultvärde i kommentaren bör uppdateras till `'1 (ON)'`.
 
 ### Konvention: AWM2-adresseringsbaser (3 olika konventioner)
 
@@ -2543,7 +2560,7 @@ audit_abs  = filoffset - 687
 
 Konstanten 687 är summan av fil-header + alla pre-DPFM-chunks + DPFM sub-blob-header + Performance Name-prefix. Verifierad genom att `waveform_lo = 6` (Init Normal AWM2 Element 1 = CFX v06 St) ligger på filoffset `687 + 12469 + 51 = 13207`.
 
-**KÄND FALLGROP:** Vid räkning av byte-offsets i binärdumps är det lätt att blanda ihop dessa konventioner. Min tidigare slutsats om "rel +18 = extended_lfo" var orsakad av att 51-byte-konversionen mellan `AWM2_ELEM_LAYOUT` och `AWM2_ELEMENT_FIELDS` användes fel. Den korrekta mappningen är **rel +6** (audit-konvention) = **ELEM_LAYOUT off −45**.
+**FALLGROP:** Vid räkning av byte-offsets i binärdumps är det lätt att blanda ihop dessa konventioner. `extended_lfo` är **rel +6** (audit-konvention) = **ELEM_LAYOUT off −45**; använd inte 51-byte-konversionen mellan `AWM2_ELEM_LAYOUT` och `AWM2_ELEMENT_FIELDS` på detta fält.
 
 Fält som finns i `AWM2_ELEM_LAYOUT` men saknas i `AWM2_ELEMENT_FIELDS`: `pegKFCenterNote`, `feg_time_vel`, `lfoSpeed` — alla tre dokumenterade ovan.
 

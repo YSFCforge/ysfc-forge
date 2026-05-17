@@ -1,8 +1,6 @@
 # YSFC Forge — Kompakt referens
 
-> 🇬🇧 **English:** [YSFC_FORGE_REFERENCE.md](YSFC_FORGE_REFERENCE.md)
-
-Patch-editor och reverse-engineering-projekt för Yamaha MODX M / Montage M binärformatet (Y2L/Y2U/X7L/X8L).
+Patch-editor och reverse-engineering-projekt för Yamaha MODX M / Montage M binärformatet (Y2L/Y2U).
 
 **Hårdvara:** MODX M8 firmware 3.0, ESP Plugin v3.0
 **Källa:** Binärverifierade single-edit-testfiler mot Init Voice baselines (AWM2, AN-X, FM-X, Drum)
@@ -22,9 +20,44 @@ Patch-editor och reverse-engineering-projekt för Yamaha MODX M / Montage M bin�
 **Total fält-positioner i serializer:** ~2057
 **Testkorpus:** 2010+ binärverifierade filer
 
-Alla fyra engines är nu binärverifierat 100% kartlagda. Multi/GM 16-part-filer stöds via den befintliga multi-part-arkitekturen (Performance Common + 16 × Part Common stride 5765 + Engine Pool med 15 AWM2 + 1 Drum på Part 10).
+Alla fyra engines är binärverifierat 100% kartlagda. Multi/GM 16-part-filer stöds via multi-part-arkitekturen (Performance Common + 16 × Part Common stride 5765 + Engine Pool med 15 AWM2 + 1 Drum på Part 10).
 
 ---
+
+## Performance ↔ Waveform-koppling & selektiv export
+
+En performance refererar en USER-waveform via fasta DPFM-blob-strukturer:
+`SIG_A` = `00 00 00 28 01 XX YY 00 [ID] 00 01 00 01`, `SIG_B` =
+`01 00 00 00 01 00 0C 00 [ID] 00 40`. Byten efter `0x28` är bank
+(`01`=user → `[ID]` indexerar EWFM/EWIM-katalogen; `00`=preset, ignoreras).
+Katalog-ID = `recPayload[10:12]` (BE u16).
+
+**Renumreringsregel:** sortera unika refererade gamla ID:n → tilldela `1..N`
+(1-baserat). Patcha varje `[ID]`-byte gammalt→nytt i behållna blobbar; skriv
+nya ID:n i ombyggda EWFM/EWIM. Ren renumrering rör bara `[ID]`-byten.
+Arp-refs sitter efter en `80 00`-pitch-serie + valfri `00`-pad som
+`([ARP_ID] 2f)`-par (id<21, kan upprepas ≤4×); renumrering är identisk men
+**0-baserad** (sortera unika refererade arp-ID:n → `0..N-1`). EARP/DARP byggs
+om selektivt; blob-arp-`[ID]`-byte ompekas gammalt→nytt.
+
+**Storlek.** Y2L-beroende-sektioner, DPFM-performance-poolen och
+EPFM-performance-indexet storleksanpassas alla exakt efter payload (MODX
+avvisar varje storleksfält-/data-slack): uniform 8-byte-per-blob-framing,
+`exactSize = Σ(8 + payload) − 4 + 8`. Containern använder ESP:s exakta
+12-chunk-layout (`EPFM EWFM EARP ESYS EFVT EWIM DPFM DWFM DARP DSYS DFVT
+DWIM`); `u32@0x20` = chunk-antal·8. `u32@0x3c` är en per-fil-byggstämpel,
+också inbäddad som u16 före varje EPFM/EWFM/EARP-namn (syntetisk header
+`0x3c` = käll-`0x3c`); EPFM-post byte[11] = kompakt destinations-slot-index.
+DWFM-blob-offset `60 + 64·k` är ett 4-byte LE sample-index = `base + i`
+(base = första blob-sub-postens ursprungliga 4B LE-värde, i per sub-post
+över alla blobbar). En giltig library-fil har en fast directory-region:
+poster från `0x40`, FF-pad, `0x00`-separator @`0x190`, första chunk @`0x191`.
+
+Hjälpfunktioner: `scanWaveformRefPositions`, `scanArpRefPositions`,
+`renumberPerfBlob`, `setRecPayloadId`. Export-vägen renumrerar blobbar +
+kataloger; en konservativ kopiera-allt-fallback bevaras vid opålitlig
+upplösning. Per-performance W/S/Arp UI-chip villkoras av samma scanners.
+
 
 ## Filstruktur (Y2L container)
 

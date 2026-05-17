@@ -11,7 +11,7 @@
 
 Reverse-engineerad från grunden genom binäranalys av Yamahas odokumenterade `.Y2L` / `.Y2U`-filformat. Öppna HTML-filerna i vilken modern webbläsare som helst — ingen installation, ingen molnuppladdning, allt körs lokalt.
 
-![Forge Librarian skärmdump](screenshots/image_ysfc_forge_v1_19.png)
+![Forge Performance Merger skärmdump](screenshots/image_ysfc_forge_performance_merger.png)
 
 ---
 
@@ -41,7 +41,16 @@ Reverse-engineerad från grunden genom binäranalys av Yamahas odokumenterade `.
 
 ### Sammanfoga performances
 
-1. Ladda ner [`tools/ysfc_forge_v1_19.html`](tools/ysfc_forge_v1_19.html)
+1. Ladda ner [`tools/ysfc_forge_performance_merger_v1_19.html`](tools/ysfc_forge_performance_merger_v1_19.html)
+2. Öppna filen i din webbläsare
+3. Dra och släpp `.Y2L`- eller `.Y2U`-filer
+4. Markera de performances du vill ha
+5. Klicka på **Save as Y2L** eller **Save as Y2U**
+6. Importera den exporterade filen i MODX M / ESP plugin / Montage M
+
+### Sammanfoga performances inklusive waveforms, samples och arpeggios
+
+1. Ladda ner [`tools/yysfc_forge_library_builder_v13_13.html`](tools/ysfc_forge_library_builder_v13_13.html)
 2. Öppna filen i din webbläsare
 3. Dra och släpp `.Y2L`- eller `.Y2U`-filer
 4. Markera de performances du vill ha
@@ -50,7 +59,7 @@ Reverse-engineerad från grunden genom binäranalys av Yamahas odokumenterade `.
 
 ### Redigera en performance
 
-1. Ladda ner [`tools/ysfc_performance_editor_v4_1.html`](tools/ysfc_performance_editor_v4_1.html)
+1. Ladda ner [`tools/ysfc_forge_performance_editor_v5_1.html`](tools/ysfc_forge_performance_editor_v5_1.html)
 2. Öppna filen i din webbläsare
 3. Klicka på **Open Y2L** och välj en fil
 4. Justera parametrar med reglage
@@ -64,22 +73,22 @@ Reverse-engineerad från grunden genom binäranalys av Yamahas odokumenterade `.
 
 |Verktyg|Vad det gör|
 |-|-|
-|[**Forge Librarian**](tools/ysfc_forge_v1_19.html)|Sammanfoga performances från flera Y2L/Y2U-filer|
-|[**Performance Editor**](tools/ysfc_performance_editor_v4_1.html)|Redigera FM-X, AWM2 och AN-X-parametrar i webbläsaren|
+|[**Performance Merger**](tools/ysfc_forge_performance_merger_v1_19.html)|Sammanfoga performances från flera Y2L/Y2U-filer|
+|[**Library Builder**](tools/ysfc_forge_library_builder_v13_13.html)|Fristående prototyp för library builder (sammanfoga performances inklusive waveforms, samples and arpeggios från flera Y2L/Y2U filer)|
+|[**Performance Editor**](tools/ysfc_forge_performance_editor_v5_1.html)|Redigera FM-X, AWM2 och AN-X-parametrar i webbläsaren|
 
 ### Översättare
 
 |Verktyg|Vad det gör|
 |-|-|
-|[**DIVA Patch Translator**](translators/ysfc_diva_h2p_converter_v2_16.html)|Konvertera DIVA-patchar till Y2L/Y2U|
-|[**Vital Patch Translator**](translators/ysfc_vital_converter_v4_13.html)|Konvertera Vital-patchar till Y2L/Y2U|
-|[**Synth1 Patch Translator**](translators/ysfc_synth1_converter_v5_13.html)|Konvertera Synth1-patchar till Y2L/Y2U|
+|[**DIVA Patch Translator**](translators/ysfc_diva_h2p_converter_v2_15.html)|Konvertera DIVA-patchar till Y2L/Y2U|
+|[**Vital Patch Translator**](translators/ysfc_vital_converter_v4_12.html)|Konvertera Vital-patchar till Y2L/Y2U|
+|[**Synth1 Patch Translator**](translators/ysfc_synth1_converter_v5_12.html)|Konvertera Synth1-patchar till Y2L/Y2U|
 
 ### Tilläggsverktyg
 
 |Verktyg|Vad det gör|
 |-|-|
-|[**ESP Librarian**](utilities/ysfc_esp_librarian_v7.html)|Fristående prototyp för librarian (sammanfoga performances från flera Y2L/Y2U/X7L/X8L filer)|
 |[**Smart Name Compressor**](utilities/ysfc_smart_name_compressor.html)|Standardiserad namngivning för performances|
 |[**Synth Converter**](utilities/ysfc_synth_converter.html)|Konvertera patchar mellan 8+ format|
 
@@ -87,8 +96,8 @@ Reverse-engineerad från grunden genom binäranalys av Yamahas odokumenterade `.
 
 |||
 |-|-|
-|![Performance Editor](screenshots/image_ysfc_performance_editor_v4.png)|![ESP Librarian](screenshots/image_ysfc_esp_librarian_v7.png)|
-|*Performance Editor — FM-X-operatorredigerare*|*ESP Librarian — performancelista med engine-detektering*|
+|![Performance Editor](screenshots/image_ysfc_forge_performance_editor.png)|![Library Builder](screenshots/image_ysfc_forge_library_builder.png)|![DIVA Patch Translator](screenshots/image_ysfc_diva_h2p_translator.png)|
+|*Performance Editor — FM-X-operatorredigerare*|*Library Builder — performancelista med engine-detektering*|*DIVA Patch Translator — Konvertera DIVA patches to Y2L/Y2U*|
 
 ---
 
@@ -109,7 +118,6 @@ Alla fyra synth-engines är **100% binärverifierat kartlagda** genom systematis
 |-|-|-|
 |`.Y2L`|Bibliotekfil|✅|
 |`.Y2U`|Användarfil (identiskt format som Y2L, bara annan filändelse)|✅|
-|`.X7L` / `.X8L`|Som inläsningskälla (ej export)|✅|
 |**Multi/GM 16-part**|16 parts (15 AWM2 + 1 Drum på Part 10)|✅|
 
 ### Hårdvarukompatibilitet

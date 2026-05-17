@@ -1,7 +1,5 @@
 # Reverse Engineering Status
 
-> 🇬🇧 **English:** [REVERSE_ENGINEERING.md](REVERSE_ENGINEERING.md)
-
 Detta dokument innehåller den detaljerade reverse-engineering-statusen och metodiken för YSFC Forge. För en översikt, se huvuddokumentet [README](../README.md).
 
 ## Innehåll

@@ -1,7 +1,5 @@
 # YSFC Forge — Full Context
 
-> 🇸🇪 **Svenska:** [YSFC_FORGE_FULL_CONTEXT_sv.md](YSFC_FORGE_FULL_CONTEXT_sv.md)
-
 *MODX M8 firmware 3.0 + ESP Plugin v3.0*
 *Foundation: 2010+ binary-verified test files*
 
@@ -20,7 +18,7 @@
 **Total field positions in serializer:** ~2057
 **Test corpus:** 2010+ binary-verified files
 
-All four engines are now binary-verified 100% mapped. Multi/GM 16-part files are also supported (15 AWM2 + 1 Drum on Part 10, using the existing multi-part architecture).
+All four engines are binary-verified 100% mapped. Multi/GM 16-part files are supported (15 AWM2 + 1 Drum on Part 10, using the multi-part architecture).
 
 **Structural insight: Drum engine has its own Part Common layout**
 
@@ -28,11 +26,43 @@ Drum does not share the universal AEG offset block (rel +144..+150) used by AWM2
 - Rel +126..+132 = drum AEG (Attack/Decay/Sustain/Release, c64)
 - Rel +144/+146 = drum filter cutoff/resonance (c64)
 
-The interpretation of Part Common rel +126..+158 is governed by engine_type. The documented "shared AEG block" architecture therefore only applies to three of the four engines.
+The interpretation of Part Common rel +126..+158 is governed by engine_type. The shared AEG block architecture therefore applies to only three of the four engines.
 
 **On AN-X coverage:** The AN-X engine is fundamentally different from AWM2. AWM2 is a sample player where 8 identical elements share structure — each byte tends to be a direct UI parameter. AN-X is an analog model with complex modulation routing: of the engine pool's 684 bytes, 458 are firmware constants ([INTERN]) including routing matrices and stray flags. The 171 UI fields cover all user-editable parameters.
 
 ---
+
+## Performance ↔ Waveform / Sample / Arpeggio linkage
+
+Selective export copies only the dependencies that a chosen set of performances actually uses. A valid Y2L requires catalog IDs to be a **contiguous sequence**, so the export both copies the referenced dependencies and renumbers them, rewriting the in-blob references to match.
+
+**Reference model.** A performance references a USER waveform via a fixed byte structure inside its DPFM blob. Two encodings exist (both byte-verified against ESP ground truth and controlled CFX single-edit pairs):
+
+- `SIG_A`: `00 00 00 28  01(bank)  XX  YY  00  [ID]  00 01 00 01` — element slot
+- `SIG_B`: `01 00 00 00  01 00 0C 00  [ID]  00 40` — element config
+
+The byte after `0x28` is the **bank**: `0x01` = USER waveform (the `[ID]` byte indexes the EWFM/EWIM catalog), `0x00` = preset/ROM (ignored). `XX YY` vary (`00 00` or `00 01`); both are matched. `[ID]` is a single byte. The catalog ID lives at `recPayload[10:12]` (big-endian u16) of each EWFM/EWIM `Entr` record.
+
+**Renumbering rule.** Collect the distinct referenced old IDs, sort them, assign new IDs `1..N` (1-based for waveform/sample). Rewrite every `[ID]` byte in each kept performance blob old→new, and write the new IDs into the rebuilt EWFM/EWIM `recPayload[10:12]`. Pure renumbering touches **only** the `[ID]` byte — the bank/Field-2 bytes are untouched.
+
+**Arpeggios.** Arp references live in separate (`80 00 …`) element-pitch blocks using a distinct 0-based ID space. Arp refs sit after a run of `80 00` pairs (pitch table) and optional `00` padding, as one or more `[ARP_ID] 2f` pairs (the ref may repeat up to 4×); `ARP_ID` is a single byte < 21. The renumber rule is identical to waveforms but **0-based**: sort the distinct referenced arp IDs, assign `0..N-1`. EARP/DARP are rebuilt selectively with the new IDs; every kept performance blob has its arp `[ID]` bytes repointed old→new.
+
+**Dependency-section sizing.** Y2L dependency sections are sized **exactly** to payload; MODX rejects any size-field/data slack. Each dep section (EWFM, DWFM, EWIM, DWIM, EARP, DARP), the DPFM performance pool, and the EPFM performance index are all sized to the byte using uniform 8-byte-per-blob framing accumulated then `exactSize(n) = Σ(8 + payload) − 4 + 8` (subtract the one 4-byte first-blob/record over-count, add the section header). A minimal Init/one-record floor is kept for empty selections.
+
+**Container structure.** A valid library file uses ESP's exact 12-chunk layout (`EPFM EWFM EARP ESYS EFVT EWIM DPFM DWFM DARP DSYS DFVT DWIM`, no ECRV/ELST/DCRV/DLST stubs). `u32@0x20` = chunk-count × 8.
+
+**Per-file build stamp.** `u32@0x3c` is a per-file build stamp that is also embedded as a u16 before every EPFM/EWFM/EARP name. It must be the same family within a file; the synthetic header `0x3c` is set to the source file's `0x3c`. EPFM record byte[11] = destination slot index (compact `0,1,2,3` for a 4-perf export).
+
+**DWFM sample-index.** Each DWFM blob is `[4-byte header][N × 64-byte sub-entries]`; at blob offset `60 + 64·k` there is a 4-byte little-endian sample-data index. It must be a pure ascending counter `value[i] = base + i`, where `base` is the first blob sub-entry's original 4-byte LE value and `i` increments once per sub-entry across all blobs in order (full 32-bit LE).
+
+**Fixed directory region.** A valid YSFC library file has a fixed-size directory region: entries from `dirOff` (0x40), FF-padding, a single `0x00` separator at `dirOff+0x150` (= 0x190), and the first chunk at `dirOff+0x151` (= 0x191). MODX computes every chunk's position from this fixed region.
+
+**Per-performance dependency tags (UI).** Each performance row's W/S/Arp chips are gated on whether that specific performance actually references the dependency, using the same binary-verified scanners that drive the selective export (`scanWaveformRefPositions` / `scanArpRefPositions`). EWFM/EWIM share an id-space, so waveform refs gate both W and S; arp refs gate Arp. If a blob can't be read, the code falls back to file-level behaviour. The per-performance info column shows the engine label only (`AWM2`/`FM-X`/`AN-X`).
+
+**Helpers:** `scanWaveformRefPositions`, `scanArpRefPositions`, `renumberPerfBlob`, `setRecPayloadId`, `resolveFileWaveformRefs`, `resolveFileArpRefs`, `getDepsForSelection`, `buildSyntheticY2LBuffer`, `buildDepPayload`, `cloneAndPatchOffLen`, `buildDPFMPayload`, `buildEPFMPayload`, `calcSyntheticDimensions`, `exportMergeToY2L`, `createSyntheticBaseFile`. A conservative copy-all fallback is preserved for any untrusted resolution (parse anomaly, blob < 12000 B, zero refs while a pool exists, or a referenced ID missing from a section catalog). If the chosen base file is also a source of any selected performance, a synthetic container is forced (`baseIsSource`).
+
+---
+
 
 ## Foreword — How to read this document
 
@@ -111,8 +141,6 @@ DLST  Live Set data         (optional)
 ```
 
 `.Y2L` (Library file) and `.Y2U` (User file) are byte-for-byte identical — only the file extension differs (the ESP plugin uses the extension to decide which import dialog to present).
-
-`.X7L` and `.X8L` are container variants for older Montage hardware. They can be used as input/merge sources but cannot be exported by these tools.
 
 ## 1.1 File header (64 bytes) ★★★★★
 
@@ -477,7 +505,7 @@ The addressing is **already supported** by existing serializer code via:
 - `get_subblob_pointer_pos(part_idx)`
 - `ENGINE_MAGIC_BYTES`
 
-**Implication for editor:** Multi/GM requires **no new structures** or fields in the serializer. All previously documented and binary-verified Part Common, Engine Pool and Drum Key fields work identically on Multi/GM files — just with 16 parts instead of 1.
+**Implication for editor:** Multi/GM requires **no new structures** or fields in the serializer. All documented and binary-verified Part Common, Engine Pool and Drum Key fields work identically on Multi/GM files — just with 16 parts instead of 1.
 
 ---
 

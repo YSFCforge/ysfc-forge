@@ -1,6 +1,6 @@
 # YSFC Forge
 
-> 🇸🇪 **Svenska:** [README_sv.md](README_sv.md)
+> 🇸🇪 **Svenska:** [README_sv.md](README_._sv.md)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Status: Active](https://img.shields.io/badge/Status-Active-brightgreen.svg)]()
@@ -11,7 +11,7 @@
 
 Reverse-engineered from scratch through binary analysis of Yamaha's undocumented `.Y2L` / `.Y2U` file format. Open the HTML files in any modern browser — no installation, no cloud upload, everything runs locally.
 
-![Forge Librarian screenshot](screenshots/image_ysfc_forge_v1_19.png)
+![Forge Performance Merger screenshot](screenshots/image_ysfc_forge_performance_merger.png)
 
 ---
 
@@ -41,7 +41,7 @@ Reverse-engineered from scratch through binary analysis of Yamaha's undocumented
 
 ### Merge performances
 
-1. Download [`tools/ysfc_forge_v1_19.html`](tools/ysfc_forge_v1_19.html)
+1. Download [`tools/ysfc_forge_performance_merger_v1_19.html`](tools/ysfc_forge_performance_merger_v1_19.html)
 2. Open it in your browser
 3. Drag and drop `.Y2L` or `.Y2U` files
 4. Select the performances you want
@@ -50,7 +50,7 @@ Reverse-engineered from scratch through binary analysis of Yamaha's undocumented
 
 ### Edit a performance
 
-1. Download [`tools/ysfc_performance_editor_v4_1.html`](tools/ysfc_performance_editor_v4_1.html)
+1. Download [`tools/ysfc_forge_performance_editor_v5_1.html`](tools/ysfc_forge_performance_editor_v5_1.html)
 2. Open it in your browser
 3. Click **Open Y2L** and choose a file
 4. Adjust parameters with sliders
@@ -64,22 +64,22 @@ Reverse-engineered from scratch through binary analysis of Yamaha's undocumented
 
 |Tool|What it does|
 |-|-|
-|[**Forge Librarian**](tools/ysfc_forge_v1_19.html)|Merge performances from multiple Y2L/Y2U files|
-|[**Performance Editor**](tools/ysfc_performance_editor_v4_1.html)|Edit FM-X, AWM2 and AN-X parameters in the browser|
+|[**Performance Merger**](tools/ysfc_forge_performance_merger_v1_19.html)|Merge performances from multiple Y2L/Y2U files|
+|[**Library Builder**](utilities/ysfc_forge_library_builder_v13_13.html)|Standalone prototype librarian (merge performances from multiple Y2L/Y2U files)|
+|[**Performance Editor**](tools/ysfc_forge_performance_editor_v5_1.html)|Edit FM-X, AWM2 and AN-X parameters in the browser|
 
 ### Translators
 
 |Tool|What it does|
 |-|-|
-|[**DIVA Patch Translator**](translators/ysfc_diva_h2p_converter_v2_16.html)|Convert DIVA patches to Y2L/Y2U|
-|[**Vital Patch Translator**](translators/ysfc_vital_converter_v4_13.html)|Convert Vital patches to Y2L/Y2U|
-|[**Synth1 Patch Translator**](translators/ysfc_synth1_converter_v5_13.html)|Convert Synth1 patches to Y2L/Y2U|
+|[**DIVA Patch Translator**](translators/ysfc_diva_h2p_converter_v2_15.html)|Convert DIVA patches to Y2L/Y2U|
+|[**Vital Patch Translator**](translators/ysfc_vital_converter_v4_12.html)|Convert Vital patches to Y2L/Y2U|
+|[**Synth1 Patch Translator**](translators/ysfc_synth1_converter_v5_12.html)|Convert Synth1 patches to Y2L/Y2U|
 
 ### Utilities
 
 |Tool|What it does|
 |-|-|
-|[**ESP Librarian**](utilities/ysfc_esp_librarian_v7.html)|Standalone prototype librarian (merge performances from multiple Y2L/Y2U/X7L/X8L files)|
 |[**Smart Name Compressor**](utilities/ysfc_smart_name_compressor.html)|Standardized naming for performances|
 |[**Synth Converter**](utilities/ysfc_synth_converter.html)|Convert patches between 8+ formats|
 
@@ -87,8 +87,8 @@ Reverse-engineered from scratch through binary analysis of Yamaha's undocumented
 
 |||
 |-|-|
-|![Performance Editor](screenshots/image_ysfc_performance_editor_v4.png)|![ESP Librarian](screenshots/image_ysfc_esp_librarian_v7.png)|
-|*Performance Editor — FM-X operator editor*|*ESP Librarian — performance list with engine detection*|
+|![Performance Editor](screenshots/image_ysfc_forge_performance_editor.png)|![Library Builder](screenshots/image_ysfc_forge_library_builder.png)|![DIVA Patch Translator](screenshots/image_ysfc_diva_h2p_translator.png)|
+|*Performance Editor — FM-X operator editor*|*Library Builder — performance list with engine detection*|*DIVA Patch Translator — Convert DIVA patches to Y2L/Y2U*|
 
 ---
 
@@ -109,7 +109,6 @@ All four synthesizer engines are **100% binary-verified mapped** through systema
 |-|-|-|
 |`.Y2L`|Library file|✅|
 |`.Y2U`|User file (identical to Y2L, just different extension)|✅|
-|`.X7L` / `.X8L`|As merge source (not export)|✅|
 |**Multi/GM 16-part**|16 parts (15 AWM2 + 1 Drum on Part 10)|✅|
 
 ### Hardware compatibility

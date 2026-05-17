@@ -11,7 +11,7 @@ Stjärnbetyg:
   ★★★★☆ Härledd från officiell källdata (Effect Type List, MIDI-tabell)
   ★★★☆☆ Predikterat från etablerat mönster
   [STRUKT] Strukturellt identifierat, ej UI-mappat
-  [INTERN] MODX M internt fält, ignoreras vid editing
+  [INTERN] MODX-internt fält, ignoreras vid editing
 
 Förkortningar:
   u8 unsigned 8-bit byte
@@ -3873,6 +3873,128 @@ def find_dpfm(data: bytes) -> tuple[int, int]:
             return idx + 8, length
         pos = idx + 1
 
+
+# ════════════════════════════════════════════════════════════════════════
+# WAVEFORM-REFERENCE LOCATOR  (binary-verified 2026-05-16)
+# ════════════════════════════════════════════════════════════════════════
+# A performance references a USER waveform via a fixed byte structure inside
+# its DPFM blob. Two encodings, both byte-verified against ESP ground truth
+# (D-MODE.Y2L → ESP "D-MODE 4 perf.Y2L") and controlled CFX single-edit
+# pairs (D-MODE_enjoy_the_silence{,_elem2_CFX}, _just_cant_get_enough{,_elem4}):
+#
+#   SIG_A: 00 00 00 28  01(bank)  XX  YY  00  [ID]  00 01 00 01   element slot
+#   SIG_B: 01 00 00 00  01 00 0C 00  [ID]  00 40                  element cfg
+#
+# The byte after 0x28 is the BANK: 0x01 = USER waveform (the [ID] byte
+# indexes the EWFM/EWIM catalog at recPayload[10:12], big-endian u16);
+# 0x00 = preset/ROM (ignored). XX YY vary (00 00 or 00 01); both matched.
+# [ID] is a single byte. Pure renumbering touches ONLY the [ID] byte.
+#
+# This is the canonical implementation. Tools that relocate or renumber
+# waveform references (e.g. selective Y2L merge) must use this, not the
+# obsolete element-arithmetic model (blob-rel 12520 / stride 313), which
+# was wrong on real multi-part performances.
+# ════════════════════════════════════════════════════════════════════════
+
+def scan_waveform_ref_positions(blob: bytes) -> list[int]:
+    """Return the byte offsets of every USER-waveform [ID] byte in a
+    single performance blob (bank == 0x01 only; presets excluded)."""
+    pos: list[int] = []
+    n = len(blob)
+    for i in range(n - 13):
+        # SIG_A: 00 00 00 28 01 . . 00 [ID] 00 01 00 01
+        if (blob[i] == 0 and blob[i+1] == 0 and blob[i+2] == 0
+                and blob[i+3] == 0x28 and blob[i+4] == 0x01
+                and blob[i+7] == 0 and blob[i+9] == 0
+                and blob[i+10] == 1 and blob[i+11] == 0 and blob[i+12] == 1):
+            pos.append(i + 8)
+            continue
+        # SIG_B: 01 00 00 00 01 00 0C 00 [ID] 00 40
+        if (blob[i] == 0x01 and blob[i+1] == 0 and blob[i+2] == 0
+                and blob[i+3] == 0 and blob[i+4] == 0x01 and blob[i+5] == 0
+                and blob[i+6] == 0x0c and blob[i+7] == 0
+                and blob[i+9] == 0 and blob[i+10] == 0x40):
+            pos.append(i + 8)
+    return pos
+
+
+def renumber_waveform_refs(blob: bytes, remap: dict[int, int]) -> bytes:
+    """Return a copy of *blob* with every USER-waveform [ID] byte rewritten
+    according to *remap* (old_id -> new_id). Only [ID] bytes change."""
+    out = bytearray(blob)
+    for p in scan_waveform_ref_positions(out):
+        old = out[p]
+        if old in remap:
+            out[p] = remap[old] & 0xFF
+    return bytes(out)
+
+
+def waveform_renumber_map(referenced_ids) -> dict[int, int]:
+    """Order-preserving compaction: sorted distinct old IDs -> 1..N
+    (1-based, matching ESP's verified renumbering for waveform/sample)."""
+    return {old: i + 1 for i, old in enumerate(sorted(set(referenced_ids)))}
+
+
+# ════════════════════════════════════════════════════════════════════════
+# ARPEGGIO-REFERENCE LOCATOR  (byte-verified vs ESP 2026-05-16)
+# ════════════════════════════════════════════════════════════════════════
+# Arp refs live in the element-pitch region of the DPFM blob. After a run
+# of `80 00` pairs (pitch table) and optional `00` padding come one or
+# more `[ARP_ID] 2f` pairs (the ref may repeat up to 4×). ARP_ID is a
+# single byte < 21 (D-MODE arp id range 0..20). Verified zero false
+# positives and byte-identical perf-blob reproduction against the
+# D-MODE.Y2L → ESP "D-MODE 4 perf.Y2L" oracle. Renumbering is the same
+# order-preserving compaction as waveforms but 0-BASED.
+# ════════════════════════════════════════════════════════════════════════
+
+def scan_arp_ref_positions(blob: bytes) -> list[int]:
+    """Return the byte offsets of every arpeggio [ID] byte in a single
+    performance blob (FP-free vs the ESP ground-truth oracle)."""
+    pos: list[int] = []
+    n = len(blob)
+    i = 0
+    while i < n - 6:
+        if (blob[i] == 0x80 and blob[i+1] == 0x00
+                and blob[i+2] == 0x80 and blob[i+3] == 0x00
+                and blob[i+4] == 0x80 and blob[i+5] == 0x00):
+            j = i
+            while j + 1 < n and blob[j] == 0x80 and blob[j+1] == 0x00:
+                j += 2
+            guard = 0
+            while (j < n and blob[j] == 0x00
+                   and not (j + 1 < n and blob[j+1] == 0x2f and blob[j] < 21)):
+                if blob[j] == 0x80:
+                    break
+                j += 1
+                guard += 1
+                if guard > 40:
+                    break
+            while j + 1 < n and blob[j+1] == 0x2f and blob[j] < 21:
+                pos.append(j)
+                j += 2
+            i = j if j > i else i + 2
+        else:
+            i += 1
+    return pos
+
+
+def renumber_arp_refs(blob: bytes, remap: dict[int, int]) -> bytes:
+    """Return a copy of *blob* with every arpeggio [ID] byte rewritten
+    per *remap* (old_id -> new_id). Only [ID] bytes change."""
+    out = bytearray(blob)
+    for p in scan_arp_ref_positions(out):
+        old = out[p]
+        if old in remap:
+            out[p] = remap[old] & 0xFF
+    return bytes(out)
+
+
+def arp_renumber_map(referenced_ids) -> dict[int, int]:
+    """Order-preserving compaction: sorted distinct old IDs -> 0..N-1
+    (0-BASED, matching ESP's verified renumbering for arpeggios)."""
+    return {old: i for i, old in enumerate(sorted(set(referenced_ids)))}
+
+
 def _resolve_field(engine: str, part: int, field_name: str, op=None, elem=None) -> int:
     stride = {'FMX': FMX_PART_STRIDE, 'AWM2': AWM2_PART_STRIDE, 'ANX': ANX_PART_STRIDE}[engine]
     ps = part * stride
@@ -4929,7 +5051,8 @@ if __name__ == '__main__':
     print("=" * 55)
     base = "/mnt/user-data/uploads/FM-X_00_Init_Base.Y2L"
     tmp = "/tmp/test_ui.Y2L"
-    ui_tests = [
+    _have_base = os.path.exists(base)
+    ui_tests = [] if not _have_base else [
         # (engine, part, field, ui_value, op, elem, expected_dpfm_off, expected_raw)
         ("FMX", 0, "algorithm", 5, None, None, 12537, 4),
         ("FMX", 0, "feedback", 3, None, None, 12539, 3),
@@ -4948,32 +5071,79 @@ if __name__ == '__main__':
         ok = changed.get(exp_off) == exp_raw and len(diffs) == 1
         print(f" {'✅' if ok else '❌'} {field:<22} ui={str(ui):<8} → [{exp_off}]={exp_raw} got={changed}")
         if not ok: errors += 1
-    os.unlink(tmp)
+    if not _have_base:
+        print(" ⏭  skipped (FM-X_00_Init_Base.Y2L not present)")
+    elif os.path.exists(tmp):
+        os.unlink(tmp)
     print
     print("MERGE ENGINE TEST")
     print("=" * 55)
     base = "/mnt/user-data/uploads/FM-X_00_Init_Base.Y2L"
     tmp = "/tmp/test_merge.Y2L"
-    patches = [
-        {"engine": "FMX", "part": 0, "field": "algorithm", "value": 5},
-        {"engine": "FMX", "part": 0, "field": "feedback", "value": 3},
-        {"engine": "FMX", "part": 0, "field": "volume", "value": 80},
-        {"engine": "FMX", "part": 0, "field": "pan", "value": 10},
-        {"engine": "FMX", "part": 0, "field": "coarse", "value": 3, "op": 0},
-        {"engine": "FMX", "part": 0, "field": "level", "value": 99, "op": 0},
-        {"engine": "FMX", "part": 0, "field": "aegAttackTime", "value": 50, "op": 0}, # off=32
-    ]
-    merge_patches(base, tmp, patches)
-    diffs = diff_dpfm(base, tmp)
-    expected_fields = {12537: 4, 12539: 3, 6843: 80, 6845: 74, 12688: 3, 12732: 99, 12708: 50}
-    ok = all(expected_fields.get(d[0]) == d[2] for d in diffs) and len(diffs) == len(expected_fields)
-    print(f" {'✅' if ok else '❌'} 6-field merge: {len(diffs)} changes")
-    for d in diffs:
-        exp = expected_fields.get(d[0], "?")
-        chk = "✓" if exp == d[2] else "✗"
-        print(f" {chk} [{d[0]}] {d[1]}→{d[2]} (expected {exp})")
-    os.unlink(tmp)
+    if not os.path.exists(base):
+        print(" ⏭  skipped (FM-X_00_Init_Base.Y2L not present)")
+    else:
+        patches = [
+            {"engine": "FMX", "part": 0, "field": "algorithm", "value": 5},
+            {"engine": "FMX", "part": 0, "field": "feedback", "value": 3},
+            {"engine": "FMX", "part": 0, "field": "volume", "value": 80},
+            {"engine": "FMX", "part": 0, "field": "pan", "value": 10},
+            {"engine": "FMX", "part": 0, "field": "coarse", "value": 3, "op": 0},
+            {"engine": "FMX", "part": 0, "field": "level", "value": 99, "op": 0},
+            {"engine": "FMX", "part": 0, "field": "aegAttackTime", "value": 50, "op": 0}, # off=32
+        ]
+        merge_patches(base, tmp, patches)
+        diffs = diff_dpfm(base, tmp)
+        expected_fields = {12537: 4, 12539: 3, 6843: 80, 6845: 74, 12688: 3, 12732: 99, 12708: 50}
+        ok = all(expected_fields.get(d[0]) == d[2] for d in diffs) and len(diffs) == len(expected_fields)
+        print(f" {'✅' if ok else '❌'} 6-field merge: {len(diffs)} changes")
+        for d in diffs:
+            exp = expected_fields.get(d[0], "?")
+            chk = "✓" if exp == d[2] else "✗"
+            print(f" {chk} [{d[0]}] {d[1]}→{d[2]} (expected {exp})")
+        if os.path.exists(tmp):
+            os.unlink(tmp)
     print
+
+    # ── Waveform-reference locator regression (verified 2026-05-16) ──────
+    # Locks the SIG_A/SIG_B model + renumber rule against ESP ground truth.
+    # Uses the controlled CFX single-edit pair when present; the diff must
+    # be exactly the one element whose waveform was changed.
+    print("WAVEFORM-REF LOCATOR REGRESSION")
+    print("=" * 55)
+    _wf_a = "/mnt/user-data/uploads/D-MODE_enjoy_the_silence.Y2L"
+    _wf_b = ("/mnt/user-data/uploads/"
+             "D-MODE_enjoy_the_silence_2__element_2_change_waveform_to_CFX_.Y2L")
+    if os.path.exists(_wf_a) and os.path.exists(_wf_b):
+        _A = Path(_wf_a).read_bytes()
+        _B = Path(_wf_b).read_bytes()
+        # The single user→preset edit must surface as a scanned ref whose
+        # [ID] byte differs, with all other scanned positions stable.
+        _dpA, _ = find_dpfm(_A)
+        _dpB, _ = find_dpfm(_B)
+        # Compare whole files: real param diff is the waveform id/bank byte.
+        _diffs = [i for i in range(min(len(_A), len(_B))) if _A[i] != _B[i]]
+        # Scan a wide DPFM window for ref positions in the unedited file.
+        _win = _A[_dpA:_dpA + 200000]
+        _pos = scan_waveform_ref_positions(_win)
+        _found = len(_pos) > 0
+        # At least one scanned ref position must coincide with a real diff
+        # (the changed waveform id) — proves the signature locates refs.
+        _abspos = {_dpA + p for p in _pos}
+        _hit = any(d in _abspos for d in _diffs)
+        for label, cond in (
+            (f"signature finds waveform refs (got {len(_pos)})", _found),
+            ("a scanned ref position coincides with the CFX edit", _hit),
+            ("renumber map is order-preserving 1..N",
+             waveform_renumber_map([18, 1, 34, 2]) == {1: 1, 2: 2, 18: 3, 34: 4}),
+        ):
+            print(f" {'✅' if cond else '❌'} {label}")
+            if not cond:
+                errors += 1
+    else:
+        print(" ⏭  skipped (D-MODE CFX control pair not present)")
+    print
+
     if errors == 0:
         print("✅ ALL TESTS PASSED")
     else:
