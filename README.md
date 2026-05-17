@@ -103,7 +103,7 @@ Reverse-engineered from scratch through binary analysis of Yamaha's undocumented
 
 ## Status
 
-All four synthesizer engines are **100% binary-verified mapped** through systematic A/B diff analysis on real MODX M hardware.
+All four synthesizer **engines** are **100% binary-verified mapped** through systematic A/B diff analysis on real MODX M hardware. This covers every user-editable parameter field per engine; file-level structures such as Smart Morph and Scene snapshots are mapped separately — see [Known Limitations](#known-limitations).
 
 |Engine|UI fields|Internal/firmware|Status|
 |-|-:|-:|-|
@@ -111,6 +111,8 @@ All four synthesizer engines are **100% binary-verified mapped** through systema
 |**AN-X**|171|458|✅ 100%|
 |**FM-X**|141|863|✅ 100%|
 |**Drum**|54|4934|✅ 100%|
+
+> *"100%" refers to the user-editable parameter fields of the four synthesis engines. File-level structures outside the engines — Smart Morph interpolation tables and Scene snapshots — are tracked separately under [Known Limitations](#known-limitations).*
 
 ### Supported file types
 

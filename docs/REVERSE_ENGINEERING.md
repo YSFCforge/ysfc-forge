@@ -88,6 +88,18 @@ All four engines are now **100% binary-verified mapped**.
 
 **Drum** — Drum kit engine with 73 drum keys (stride 68 bytes per key). Drum uses a different filoffset convention: `filoffset = audit + 669` (vs +687 for AWM2/AN-X/FM-X). All 27 DRUM_KEY fields binary-verified.
 
+### Beyond the engines
+
+The 100% figure above applies to the four synthesis engines' user-editable parameter fields. File-level structures outside the engines are tracked separately:
+
+| Structure | Status |
+|---|---|
+| Multi/GM 16-part container | ✅ Mapped |
+| Insertion FX / Motion Sequencer / Arp / Control Assign | ✅ Mapped (see [Coverage by Section](#coverage-by-section)) |
+| Scene snapshots | ⚠️ Structure verified, ~10 fields/scene UI-confirmed — see [What is Not Yet Mapped](#what-is-not-yet-mapped) |
+| Smart Morph interpolation tables | ⚠️ Not yet mapped — see [What is Not Yet Mapped](#what-is-not-yet-mapped) |
+| FM-X 2nd LFO depth matrix | ⚠️ Partial mapping — see [What is Not Yet Mapped](#what-is-not-yet-mapped) |
+
 ---
 
 ## Coverage by Section

@@ -97,13 +97,13 @@ Reverse-engineerad från grunden genom binäranalys av Yamahas odokumenterade `.
 ||||
 |-|-|-|
 |![Performance Editor](screenshots/image_ysfc_forge_performance_editor.png)|![Library Builder](screenshots/image_ysfc_forge_library_builder.png)|![DIVA Patch Translator](screenshots/image_ysfc_diva_h2p_translator.png)|
-|*Performance Editor — FM-X-operatorredigerare*|*Library Builder — performancelista med engine-detektering*|*DIVA Patch Translator — Konvertera DIVA patches to Y2L/Y2U*|
+|*Performance Editor — FM-X-operatorredigerare*|*Library Builder — performancelista med engine-detektering*|*DIVA Patch Translator — Konvertera DIVA patches till Y2L/Y2U*|
 
 ---
 
 ## Status
 
-Alla fyra synth-engines är **100% binärverifierat kartlagda** genom systematisk A/B-diffanalys på riktig MODX M-hårdvara.
+Alla fyra synth-**engines** är **100% binärverifierat kartlagda** genom systematisk A/B-diffanalys på riktig MODX M-hårdvara. Detta omfattar varje användarredigerbart parameterfält per engine; filnivåstrukturer som Smart Morph och Scene-snapshots är kartlagda separat — se [Kända begränsningar](#kända-begränsningar).
 
 |Engine|UI-fält|Intern/firmware|Status|
 |-|-:|-:|-|
@@ -111,6 +111,8 @@ Alla fyra synth-engines är **100% binärverifierat kartlagda** genom systematis
 |**AN-X**|171|458|✅ 100%|
 |**FM-X**|141|863|✅ 100%|
 |**Drum**|54|4934|✅ 100%|
+
+> *"100%" avser de användarredigerbara parameterfälten i de fyra synthesengines:arna. Filnivåstrukturer utanför engines — Smart Morph-interpolationstabeller och Scene-snapshots — spåras separat under [Kända begränsningar](#kända-begränsningar).*
 
 ### Filtyper som stöds
 

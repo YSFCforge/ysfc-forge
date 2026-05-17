@@ -88,6 +88,18 @@ Alla fyra engines är nu **100% binärverifierat kartlagda**.
 
 **Drum** — Drum kit-engine med 73 drum keys (stride 68 bytes per key). Drum använder en annan filoffset-konvention: `filoffset = audit + 669` (vs +687 för AWM2/AN-X/FM-X). Alla 27 DRUM_KEY-fält binärverifierade.
 
+### Bortom engines
+
+100%-siffran ovan gäller de fyra synthesengines:arnas användarredigerbara parameterfält. Filnivåstrukturer utanför engines spåras separat:
+
+| Struktur | Status |
+|---|---|
+| Multi/GM 16-part-container | ✅ Kartlagd |
+| Insertion FX / Motion Sequencer / Arp / Control Assign | ✅ Kartlagd (se [Täckning per sektion](#täckning-per-sektion)) |
+| Scene-snapshots | ⚠️ Struktur verifierad, ~10 fält/scen UI-bekräftade — se [Vad som inte är kartlagt ännu](#vad-som-inte-är-kartlagt-ännu) |
+| Smart Morph-interpolationstabeller | ⚠️ Inte kartlagda än — se [Vad som inte är kartlagt ännu](#vad-som-inte-är-kartlagt-ännu) |
+| FM-X 2nd LFO depth-matris | ⚠️ Partiell mappning — se [Vad som inte är kartlagt ännu](#vad-som-inte-är-kartlagt-ännu) |
+
 ---
 
 ## Täckning per sektion
