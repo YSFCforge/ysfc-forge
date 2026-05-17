@@ -11,16 +11,16 @@ Patch editor and reverse engineering project for the Yamaha MODX M / Montage M b
 
 | Engine | Mapped fields | UI coverage |
 |---|---:|---:|
-| AWM2 (per element × 8..128) | 128 fields + 8 [INTERN] | **100%** ✅ |
-| AN-X (engine total) | 171 fields + 458 [INTERN] | **100%** ✅ |
-| FM-X (Pre-OP + 8 × OP) | 141 fields + 863 [INTERN] | **100%** ✅ |
-| Drum (per key × 73) | 27 key fields + 27 Part Common | **100%** ✅ |
-| Part Common | 88 fields (AWM2/FM-X/AN-X) + 6 (Drum) | ~97% |
+| AWM2 (per element × 8..128) | 128 fields + 8 [INTERN] | ✅ **Verified** |
+| AN-X (engine total) | 171 fields + 458 [INTERN] | ✅ **Verified** |
+| FM-X (Pre-OP + 8 × OP) | 141 fields + 863 [INTERN] | ✅ **Verified** |
+| Drum (per key × 73) | 27 key fields + 27 Part Common | ✅ **Verified** |
+| Part Common | 88 fields (AWM2/FM-X/AN-X) + 6 (Drum) | ✅ Core verified |
 
 **Total field positions in serializer:** ~2057
 **Test corpus:** 2010+ binary-verified files
 
-All four engines are binary-verified 100% mapped. Multi/GM 16-part files are supported via the multi-part architecture (Performance Common + 16 × Part Common stride 5765 + Engine Pool with 15 AWM2 + 1 Drum on Part 10).
+All four engines are binary-verified across all known user-editable parameters. Multi/GM 16-part files are supported via the multi-part architecture (Performance Common + 16 × Part Common stride 5765 + Engine Pool with 15 AWM2 + 1 Drum on Part 10).
 
 ---
 

@@ -9,16 +9,16 @@
 
 | Engine | Mappade fält | UI-täckning |
 |---|---:|---:|
-| **AWM2** (per element × 8..128) | 128 fält + 8 [INTERN] | **100%** ✅ |
-| **AN-X** (engine totalt) | 171 fält + 458 [INTERN] | **100%** ✅ |
-| **FM-X** (Pre-OP + 8 × OP) | 141 fält + 863 [INTERN] | **100%** ✅ |
-| **Drum** (per key × 73) | 27 key-fält + 27 Part Common | **100%** ✅ |
-| **Part Common** | 88 fält (AWM2/FM-X/AN-X) + 6 (Drum) | **~97%** |
+| **AWM2** (per element × 8..128) | 128 fält + 8 [INTERN] | ✅ **Verifierad** |
+| **AN-X** (engine totalt) | 171 fält + 458 [INTERN] | ✅ **Verifierad** |
+| **FM-X** (Pre-OP + 8 × OP) | 141 fält + 863 [INTERN] | ✅ **Verifierad** |
+| **Drum** (per key × 73) | 27 key-fält + 27 Part Common | ✅ **Verifierad** |
+| **Part Common** | 88 fält (AWM2/FM-X/AN-X) + 6 (Drum) | ✅ **Kärna verifierad** |
 
 **Total fält-positioner i serializer:** ~2057
 **Testkorpus:** 2010+ binärverifierade filer
 
-Alla fyra engines är binärverifierat 100% kartlagda. Multi/GM 16-part-filer stöds (15 AWM2 + 1 Drum på Part 10, via multi-part-arkitekturen).
+Alla fyra engines är binärverifierade (alla kända parametrar). Multi/GM 16-part-filer stöds (15 AWM2 + 1 Drum på Part 10, via multi-part-arkitekturen).
 
 **Strukturell insikt: Drum-engine har egen Part Common-layout**
 
@@ -937,7 +937,7 @@ men UI visar dem bara när External är aktiverat.
 
 InsA/InsB är **PART-NIVÅ** (inte per-element). Element ROUTAS till InsA/InsB
 via element-fältet `elem_connect` (rel +81 i element). Strukturen är **samma
-över alla engine-typer** (AWM2/AN-X/FM-X verified).
+över alla engine-typer** (AWM2/AN-X/FM-X verifierade).
 
 Layout per Part:
 - rel +282 = InsA Type (u8 enum; 0=Thru default, 18=SPXRoom, 48=Symphonic,
@@ -1874,7 +1874,7 @@ Komplett mappad.
 
 | Abs | Fält | Encoding | Default |
 |---|---|---|---|
-| 13005 | filter1_type | enum | 1 (LPF12=3 verified) |
+| 13005 | filter1_type | enum | 1 (LPF12=3 verifierad) |
 | 13007 | filter1_cutoff_lo | u16le | 255 (max default) |
 | 13008 | filter1_cutoff_hi | u8 | 3 |
 | 13009 | filter1_cutoff_vel | u8 | 0 |
@@ -2440,7 +2440,7 @@ Part Common-fält (delas med AN-X):
 
 ## 11.3 AWM2 element-byte-detaljer
 
-AWM2 element-strukturen är **100% kartlagd**.
+AWM2 element-strukturen är **kartlagd & verifierad**.
 
 ### UI-bekräftade fält ★★★★★
 
@@ -2515,7 +2515,7 @@ Binärverifierad via PEG/FEG-symmetri (alla 6 PEG-fält är binärverifierade �
 - rel +191 → `peg_curve` (enum 1..4, default 2)
 - rel +245 → `filter_curve` (enum 0..4, default 2)
 
-UI-täckning per AWM2-element: **100%** (alla bytes redovisade — antingen UI-mappade eller [INTERN])
+UI-täckning per AWM2-element: **alla bytes redovisade** (alla bytes redovisade — antingen UI-mappade eller [INTERN])
 
 ### Binärverifierat ★★★★★: Extended LFO och Speed-bytes
 
@@ -3152,7 +3152,7 @@ Riktigt okänt:                    ~50      ( 1.3% av nz)
 **Praktisk implikation:** ~98,7% non-zero coverage uppnådd. Återstående 1,3%
 preserveras verbatim — ingen funktionalitetsförlust för editor.
 
-## 18.6 Rekommenderade testfiler för 100% täckning
+## 18.6 Rekommenderade testfiler för full parametertäckning
 
 Fem dedikerade tester skulle eliminera de sista okända bytes:
 
@@ -3587,8 +3587,8 @@ def build_entr_payload(perf_name, part1_name, max_active_part,
 | Audio In + Envelope Follower | KOMPLETT | ★★★★★ |
 | Per-Part 3-band EQ (7 fält) | KOMPLETT | ★★★★★ |
 | Per-Part 2-band EQ (9 fält) | KOMPLETT | ★★★★★ |
-| AN-X engine (684 b) | KOMPLETT | ★★★★★ OSC1 100%, OSC2/3 stride-bekräftade |
-| AWM2 engine (2503 b) | KOMPLETT | ★★★★★ Element 1 100%, 8 elements verifierade |
+| AN-X engine (684 b) | KOMPLETT | ★★★★★ OSC1 verifierad, OSC2/3 stride-bekräftade |
+| AWM2 engine (2503 b) | KOMPLETT | ★★★★★ Element 1 verifierad, 8 elements verifierade |
 | FM-X engine (1143 b) | KOMPLETT | ★★★★★ 8 OPs × 21 fält + LFO matriser |
 | Drum engine (4963 b) | KOMPLETT | ★★★★★ 73 keys × 27 fält + 21 Part Common |
 | Insertion FX (57 typer) | KOMPLETT | 12 × ★★★★★ + 45 × ★★★★☆ |

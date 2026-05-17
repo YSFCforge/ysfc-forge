@@ -28,7 +28,7 @@ The YSFC binary format (`.Y2L`, `.Y2U`) is not officially documented by Yamaha. 
 5. Record the offset, encoding type, and value range
 6. Cross-verify across all engine types to distinguish user fields from firmware constants
 
-This approach has been applied iteratively over **2010+ verified test files** to reach the current 100% engine coverage.
+This approach has been applied iteratively over **2010+ verified test files** to reach the current engine coverage.
 
 ### Corpus analysis (advanced method)
 
@@ -38,7 +38,7 @@ For engines with large test corpora, a more powerful method is applied:
 2. **Identify varying bytes** — these are UI fields; match each one to the specific test file that changed it
 3. **Stride pattern recognition** — when multiple varying bytes share a stride (e.g., 123 bytes for FM-X operators), they are part of a repeating structure
 
-This corpus method enabled the final 100% mapping of AN-X (50 fields identified in two sessions) and FM-X (44 fields + 5-byte per-OP gap).
+This corpus method enabled the final mapping of AN-X (50 fields identified in two sessions) and FM-X (44 fields + 5-byte per-OP gap).
 
 ### Verification levels
 
@@ -69,14 +69,14 @@ The reverse engineering effort is grounded in **2010+ binary-verified test files
 
 ## Engine Coverage
 
-All four engines are now **100% binary-verified mapped**.
+All four engines have **every known user-editable parameter binary-verified** through A/B diff analysis across the 2010+ test exports.
 
 | Engine | UI fields | [INTERN] bytes | Status |
 |---|---:|---:|---|
-| AWM2 | 128 | 8 | 100% ✅ |
-| AN-X | 171 | 458 | 100% ✅ |
-| FM-X | 141 | 863 | 100% ✅ |
-| Drum | 54 | 4934 | 100% ✅ |
+| AWM2 | 128 | 8 | ✅ Verified |
+| AN-X | 171 | 458 | ✅ Verified |
+| FM-X | 141 | 863 | ✅ Verified |
+| Drum | 54 | 4934 | ✅ Verified |
 
 ### Per-engine notes
 
@@ -90,7 +90,7 @@ All four engines are now **100% binary-verified mapped**.
 
 ### Beyond the engines
 
-The 100% figure above applies to the four synthesis engines' user-editable parameter fields. File-level structures outside the engines are tracked separately:
+The verification above applies to the four synthesis engines' user-editable parameter fields. File-level structures outside the engines are tracked separately:
 
 | Structure | Status |
 |---|---|
@@ -108,64 +108,64 @@ The 100% figure above applies to the four synthesis engines' user-editable param
 
 | Section | Fields | Coverage | Notes |
 |---|---:|---|---|
-| Operators (8 × 22 fields) | 176 | 100% | OP1@12676, stride 123 bytes |
-| Pre-OP (PEG, LFO, Algo, Filter) | 23 | 100% | |
-| Part Common | 15 | 100% | Algorithm, Feedback, Filter, FM Color, Volume |
-| Per-OP 2nd LFO modulation | 16 | 100% | rel +58 (PitchMod), rel +60 (AmpMod) per OP |
+| Operators (8 × 22 fields) | 176 | ✅ Verified | OP1@12676, stride 123 bytes |
+| Pre-OP (PEG, LFO, Algo, Filter) | 23 | ✅ Verified | |
+| Part Common | 15 | ✅ Verified | Algorithm, Feedback, Filter, FM Color, Volume |
+| Per-OP 2nd LFO modulation | 16 | ✅ Verified | rel +58 (PitchMod), rel +60 (AmpMod) per OP |
 
 ### AWM2
 
 | Section | Coverage | Notes |
 |---|---|---|
-| Elements (8 × 124 fields = 992 positions) | 100% UI | E1@12469, stride 313 bytes |
-| PEG block (rel +163..+195) | 100% | |
-| FEG block (rel +219..+241) | 100% | |
-| EQ block (rel +271..+281) | 100% | 2-band + P.EQ + Boost modes |
-| LFO + LFO Element Matrix | 100% | Phase Offset + 3 Depth Ratios per element |
-| Level Scaling (AMP + Filter) | 100% | 5 BreakPoints + 4 Offsets each |
+| Elements (8 × 124 fields = 992 positions) | Verified (UI) | E1@12469, stride 313 bytes |
+| PEG block (rel +163..+195) | ✅ Verified | |
+| FEG block (rel +219..+241) | ✅ Verified | |
+| EQ block (rel +271..+281) | ✅ Verified | 2-band + P.EQ + Boost modes |
+| LFO + LFO Element Matrix | ✅ Verified | Phase Offset + 3 Depth Ratios per element |
+| Level Scaling (AMP + Filter) | ✅ Verified | 5 BreakPoints + 4 Offsets each |
 
 ### AN-X
 
 | Section | Coverage | Notes |
 |---|---|---|
-| Oscillators (3 × 26 fields) | 100% | OSC1@12631, OSC2@12756, OSC3@12881 (stride 125) |
-| Part Settings | 100% | Unison, OSC Reset, Voltage Drift, Ageing |
-| Pitch LFO | 100% | Wave, Speed, Phase (16-step enum), Delay, FadeIn |
-| Filter LFO | 100% | Wave, Speed, Phase, Delay, FadeIn, Depth F1/F2 |
-| Amp + Amp LFO | 100% | Level, Vel, Key, Drive + full LFO |
-| Filter 1 + Filter 2 | 100% | 12+13 fields each |
-| WaveFolder + Mod EG + Mod LFO | 100% | Mod LFO has 5 fields |
-| Mod LFO extras | 100% | Tempo Sync, Hold, Fade Out, Random Speed, Loop |
-| AEG Offset block | 100% | Part Common rel +148/150/152/154 |
-| Filter Offset | 100% | Part Common rel +164/166/168 |
-| Mod LFO Destination Matrix | 100% | Shared with AWM2 |
+| Oscillators (3 × 26 fields) | ✅ Verified | OSC1@12631, OSC2@12756, OSC3@12881 (stride 125) |
+| Part Settings | ✅ Verified | Unison, OSC Reset, Voltage Drift, Ageing |
+| Pitch LFO | ✅ Verified | Wave, Speed, Phase (16-step enum), Delay, FadeIn |
+| Filter LFO | ✅ Verified | Wave, Speed, Phase, Delay, FadeIn, Depth F1/F2 |
+| Amp + Amp LFO | ✅ Verified | Level, Vel, Key, Drive + full LFO |
+| Filter 1 + Filter 2 | ✅ Verified | 12+13 fields each |
+| WaveFolder + Mod EG + Mod LFO | ✅ Verified | Mod LFO has 5 fields |
+| Mod LFO extras | ✅ Verified | Tempo Sync, Hold, Fade Out, Random Speed, Loop |
+| AEG Offset block | ✅ Verified | Part Common rel +148/150/152/154 |
+| Filter Offset | ✅ Verified | Part Common rel +164/166/168 |
+| Mod LFO Destination Matrix | ✅ Verified | Shared with AWM2 |
 | Routing matrices (5 × 40 bytes) | [INTERN][STRUKT] | Not UI-editable, preserved as-is |
 
 ### Drum
 
 | Section | Coverage | Notes |
 |---|---|---|
-| Drum Key (per key × 73 keys) | 100% | 27 fields per key, stride 68 |
-| Drum Part Common | 100% | 27 fields including Filter AEG (audit 6849-6855) |
-| Filter AEG (Part-level) | 100% | drumPartFilterAegAttack/Decay/Sustain/Release |
+| Drum Key (per key × 73 keys) | ✅ Verified | 27 fields per key, stride 68 |
+| Drum Part Common | ✅ Verified | 27 fields including Filter AEG (audit 6849-6855) |
+| Filter AEG (Part-level) | ✅ Verified | drumPartFilterAegAttack/Decay/Sustain/Release |
 
 ### Cross-engine sections
 
 | Section | Coverage | Notes |
 |---|---|---|
-| Insertion FX | 100% | 57 verified FX types |
-| Motion Sequencer (4 lanes × 884 bytes) | 100% | 116 fields |
-| Arp Common | 100% | 34 fields |
-| Common Control Assign (32 slots × 22 bytes) | 100% | abs 2452..3155 |
-| Part Control Assign (8 slots × 22 bytes) | 100% | Part rel +1520..+1695 |
-| Part After Touch (4 slots × 16 bytes) | 100% | Part rel +600..+663 |
-| SuperKnob Assign Positions | 100% | 8 knobs × 6 bytes u16le at abs 674 |
-| Assign Knob Names | 100% | 8 × 21 bytes ASCII at abs 8049 |
-| Receive Switch per Part | 100% | Identical across all 4 engines |
-| Master EQ 5-band | 100% | abs 560-592 |
-| Audio In Routing | 100% | incl. Envelope Follower |
-| Performance Common | 100% | Volume, Pan, Tempo, etc. |
-| Part Common (Pitch Bend, Portamento, EQ, FX) | ~95% | |
+| Insertion FX | ✅ Verified | 57 verified FX types |
+| Motion Sequencer (4 lanes × 884 bytes) | ✅ Verified | 116 fields |
+| Arp Common | ✅ Verified | 34 fields |
+| Common Control Assign (32 slots × 22 bytes) | ✅ Verified | abs 2452..3155 |
+| Part Control Assign (8 slots × 22 bytes) | ✅ Verified | Part rel +1520..+1695 |
+| Part After Touch (4 slots × 16 bytes) | ✅ Verified | Part rel +600..+663 |
+| SuperKnob Assign Positions | ✅ Verified | 8 knobs × 6 bytes u16le at abs 674 |
+| Assign Knob Names | ✅ Verified | 8 × 21 bytes ASCII at abs 8049 |
+| Receive Switch per Part | ✅ Verified | Identical across all 4 engines |
+| Master EQ 5-band | ✅ Verified | abs 560-592 |
+| Audio In Routing | ✅ Verified | incl. Envelope Follower |
+| Performance Common | ✅ Verified | Volume, Pan, Tempo, etc. |
+| Part Common (Pitch Bend, Portamento, EQ, FX) | ✅ Core verified | Most fields binary-verified; a few low-traffic fields structurally mapped, not yet A/B-confirmed |
 
 ---
 
@@ -307,7 +307,7 @@ Partial mapping at `abs=12547+`. Needs more test files.
 
 ### Performance Editor tool (UI gap)
 
-While the binary format is 100% mapped, the Performance Editor UI does not yet expose all parameters:
+While the binary format is mapped (all known parameters verified), the Performance Editor UI does not yet expose all parameters:
 
 - Multi-part performances — only Part 1's engine is currently shown
 - Drum parameter editor — structure mapped, UI not yet built

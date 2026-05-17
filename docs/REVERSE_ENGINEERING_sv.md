@@ -28,7 +28,7 @@ YSFC-binärformatet (`.Y2L`, `.Y2U`) är inte officiellt dokumenterat av Yamaha.
 5. Notera offset, encoding-typ och värdeintervall
 6. Kors-verifiera över alla engine-typer för att skilja user-fält från firmware-konstanter
 
-Denna metod har applicerats iterativt över **2010+ verifierade testfiler** för att nå nuvarande 100% engine-täckning.
+Denna metod har applicerats iterativt över **2010+ verifierade testfiler** för att nå nuvarande engine-täckning.
 
 ### Korpus-analys (avancerad metod)
 
@@ -38,7 +38,7 @@ För engines med stora testkorpor används en kraftfullare metod:
 2. **Identifiera varierande bytes** — dessa är UI-fält; matcha varje en mot den specifika testfilen som ändrade den
 3. **Stride-mönsterigenkänning** — när flera varierande bytes delar en stride (t.ex. 123 bytes för FM-X-operatorer) är de del av en repeterande struktur
 
-Denna korpus-metod möjliggjorde den slutliga 100%-kartläggningen av AN-X (50 fält identifierade i två sessioner) och FM-X (44 fält + 5-byte per-OP-gap).
+Denna korpus-metod möjliggjorde den slutliga kartläggningen av AN-X (50 fält identifierade i två sessioner) och FM-X (44 fält + 5-byte per-OP-gap).
 
 ### Verifieringsnivåer
 
@@ -69,14 +69,14 @@ Reverse-engineering-arbetet grundas på **2010+ binärverifierade testfiler** so
 
 ## Engine-täckning
 
-Alla fyra engines är nu **100% binärverifierat kartlagda**.
+Alla fyra engines har **varje känt användarredigerbart parameterfält binärverifierat** genom A/B-diffanalys över de 2010+ testexporterna.
 
 | Engine | UI-fält | [INTERN]-bytes | Status |
 |---|---:|---:|---|
-| AWM2 | 128 | 8 | 100% ✅ |
-| AN-X | 171 | 458 | 100% ✅ |
-| FM-X | 141 | 863 | 100% ✅ |
-| Drum | 54 | 4934 | 100% ✅ |
+| AWM2 | 128 | 8 | ✅ Verifierad |
+| AN-X | 171 | 458 | ✅ Verifierad |
+| FM-X | 141 | 863 | ✅ Verifierad |
+| Drum | 54 | 4934 | ✅ Verifierad |
 
 ### Anmärkningar per engine
 
@@ -90,7 +90,7 @@ Alla fyra engines är nu **100% binärverifierat kartlagda**.
 
 ### Bortom engines
 
-100%-siffran ovan gäller de fyra synthesengines:arnas användarredigerbara parameterfält. Filnivåstrukturer utanför engines spåras separat:
+Verifieringen ovan gäller de fyra synthesengines:arnas användarredigerbara parameterfält. Filnivåstrukturer utanför engines spåras separat:
 
 | Struktur | Status |
 |---|---|
@@ -108,64 +108,64 @@ Alla fyra engines är nu **100% binärverifierat kartlagda**.
 
 | Sektion | Fält | Täckning | Notering |
 |---|---:|---|---|
-| Operatorer (8 × 22 fält) | 176 | 100% | OP1@12676, stride 123 bytes |
-| Pre-OP (PEG, LFO, Algo, Filter) | 23 | 100% | |
-| Part Common | 15 | 100% | Algorithm, Feedback, Filter, FM Color, Volume |
-| Per-OP 2nd LFO-modulation | 16 | 100% | rel +58 (PitchMod), rel +60 (AmpMod) per OP |
+| Operatorer (8 × 22 fält) | 176 | ✅ Verifierad | OP1@12676, stride 123 bytes |
+| Pre-OP (PEG, LFO, Algo, Filter) | 23 | ✅ Verifierad | |
+| Part Common | 15 | ✅ Verifierad | Algorithm, Feedback, Filter, FM Color, Volume |
+| Per-OP 2nd LFO-modulation | 16 | ✅ Verifierad | rel +58 (PitchMod), rel +60 (AmpMod) per OP |
 
 ### AWM2
 
 | Sektion | Täckning | Notering |
 |---|---|---|
-| Element (8 × 124 fält = 992 positioner) | 100% UI | E1@12469, stride 313 bytes |
-| PEG-block (rel +163..+195) | 100% | |
-| FEG-block (rel +219..+241) | 100% | |
-| EQ-block (rel +271..+281) | 100% | 2-band + P.EQ + Boost-lägen |
-| LFO + LFO Element Matrix | 100% | Phase Offset + 3 Depth Ratios per element |
-| Level Scaling (AMP + Filter) | 100% | 5 BreakPoints + 4 Offsets vardera |
+| Element (8 × 124 fält = 992 positioner) | Verifierad (UI) | E1@12469, stride 313 bytes |
+| PEG-block (rel +163..+195) | ✅ Verifierad | |
+| FEG-block (rel +219..+241) | ✅ Verifierad | |
+| EQ-block (rel +271..+281) | ✅ Verifierad | 2-band + P.EQ + Boost-lägen |
+| LFO + LFO Element Matrix | ✅ Verifierad | Phase Offset + 3 Depth Ratios per element |
+| Level Scaling (AMP + Filter) | ✅ Verifierad | 5 BreakPoints + 4 Offsets vardera |
 
 ### AN-X
 
 | Sektion | Täckning | Notering |
 |---|---|---|
-| Oscillatorer (3 × 26 fält) | 100% | OSC1@12631, OSC2@12756, OSC3@12881 (stride 125) |
-| Part Settings | 100% | Unison, OSC Reset, Voltage Drift, Ageing |
-| Pitch LFO | 100% | Wave, Speed, Phase (16-step enum), Delay, FadeIn |
-| Filter LFO | 100% | Wave, Speed, Phase, Delay, FadeIn, Depth F1/F2 |
-| Amp + Amp LFO | 100% | Level, Vel, Key, Drive + full LFO |
-| Filter 1 + Filter 2 | 100% | 12+13 fält vardera |
-| WaveFolder + Mod EG + Mod LFO | 100% | Mod LFO har 5 fält |
-| Mod LFO extras | 100% | Tempo Sync, Hold, Fade Out, Random Speed, Loop |
-| AEG Offset-block | 100% | Part Common rel +148/150/152/154 |
-| Filter Offset | 100% | Part Common rel +164/166/168 |
-| Mod LFO Destination Matrix | 100% | Delas med AWM2 |
+| Oscillatorer (3 × 26 fält) | ✅ Verifierad | OSC1@12631, OSC2@12756, OSC3@12881 (stride 125) |
+| Part Settings | ✅ Verifierad | Unison, OSC Reset, Voltage Drift, Ageing |
+| Pitch LFO | ✅ Verifierad | Wave, Speed, Phase (16-step enum), Delay, FadeIn |
+| Filter LFO | ✅ Verifierad | Wave, Speed, Phase, Delay, FadeIn, Depth F1/F2 |
+| Amp + Amp LFO | ✅ Verifierad | Level, Vel, Key, Drive + full LFO |
+| Filter 1 + Filter 2 | ✅ Verifierad | 12+13 fält vardera |
+| WaveFolder + Mod EG + Mod LFO | ✅ Verifierad | Mod LFO har 5 fält |
+| Mod LFO extras | ✅ Verifierad | Tempo Sync, Hold, Fade Out, Random Speed, Loop |
+| AEG Offset-block | ✅ Verifierad | Part Common rel +148/150/152/154 |
+| Filter Offset | ✅ Verifierad | Part Common rel +164/166/168 |
+| Mod LFO Destination Matrix | ✅ Verifierad | Delas med AWM2 |
 | Routing-matriser (5 × 40 bytes) | [INTERN][STRUKT] | Ej UI-editable, preserveras som-de-är |
 
 ### Drum
 
 | Sektion | Täckning | Notering |
 |---|---|---|
-| Drum Key (per key × 73 keys) | 100% | 27 fält per key, stride 68 |
-| Drum Part Common | 100% | 27 fält inklusive Filter AEG (audit 6849-6855) |
-| Filter AEG (Part-level) | 100% | drumPartFilterAegAttack/Decay/Sustain/Release |
+| Drum Key (per key × 73 keys) | ✅ Verifierad | 27 fält per key, stride 68 |
+| Drum Part Common | ✅ Verifierad | 27 fält inklusive Filter AEG (audit 6849-6855) |
+| Filter AEG (Part-level) | ✅ Verifierad | drumPartFilterAegAttack/Decay/Sustain/Release |
 
 ### Cross-engine-sektioner
 
 | Sektion | Täckning | Notering |
 |---|---|---|
-| Insertion FX | 100% | 57 verifierade FX-typer |
-| Motion Sequencer (4 lanes × 884 bytes) | 100% | 116 fält |
-| Arp Common | 100% | 34 fält |
-| Common Control Assign (32 slots × 22 bytes) | 100% | abs 2452..3155 |
-| Part Control Assign (8 slots × 22 bytes) | 100% | Part rel +1520..+1695 |
-| Part After Touch (4 slots × 16 bytes) | 100% | Part rel +600..+663 |
-| SuperKnob Assign Positions | 100% | 8 knobs × 6 bytes u16le vid abs 674 |
-| Assign Knob Names | 100% | 8 × 21 bytes ASCII vid abs 8049 |
-| Receive Switch per Part | 100% | Identisk över alla 4 engines |
-| Master EQ 5-band | 100% | abs 560-592 |
-| Audio In Routing | 100% | inkl. Envelope Follower |
-| Performance Common | 100% | Volume, Pan, Tempo, etc. |
-| Part Common (Pitch Bend, Portamento, EQ, FX) | ~95% | |
+| Insertion FX | ✅ Verifierad | 57 verifierade FX-typer |
+| Motion Sequencer (4 lanes × 884 bytes) | ✅ Verifierad | 116 fält |
+| Arp Common | ✅ Verifierad | 34 fält |
+| Common Control Assign (32 slots × 22 bytes) | ✅ Verifierad | abs 2452..3155 |
+| Part Control Assign (8 slots × 22 bytes) | ✅ Verifierad | Part rel +1520..+1695 |
+| Part After Touch (4 slots × 16 bytes) | ✅ Verifierad | Part rel +600..+663 |
+| SuperKnob Assign Positions | ✅ Verifierad | 8 knobs × 6 bytes u16le vid abs 674 |
+| Assign Knob Names | ✅ Verifierad | 8 × 21 bytes ASCII vid abs 8049 |
+| Receive Switch per Part | ✅ Verifierad | Identisk över alla 4 engines |
+| Master EQ 5-band | ✅ Verifierad | abs 560-592 |
+| Audio In Routing | ✅ Verifierad | inkl. Envelope Follower |
+| Performance Common | ✅ Verifierad | Volume, Pan, Tempo, etc. |
+| Part Common (Pitch Bend, Portamento, EQ, FX) | ✅ Kärna verifierad | Merparten binärverifierad; ett fåtal sällan använda fält strukturellt kartlagda, ännu ej A/B-bekräftade |
 
 ---
 
@@ -307,7 +307,7 @@ Partiell mappning vid `abs=12547+`. Behöver fler testfiler.
 
 ### Performance Editor-verktyg (UI-lucka)
 
-Medan binärformatet är 100% kartlagt exponerar Performance Editor-UI inte alla parametrar ännu:
+Medan binärformatet är kartlagt (alla kända parametrar verifierade) exponerar Performance Editor-UI inte alla parametrar ännu:
 
 - Multi-part-performances — endast Part 1:s engine visas för närvarande
 - Drum parameter-editor — struktur kartlagd, UI ej byggt ännu

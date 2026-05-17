@@ -11,16 +11,16 @@ Patch-editor och reverse-engineering-projekt för Yamaha MODX M / Montage M bin�
 
 | Engine | Mappade fält | UI-täckning |
 |---|---:|---:|
-| AWM2 (per element × 8..128) | 128 fält + 8 [INTERN] | **100%** ✅ |
-| AN-X (engine totalt) | 171 fält + 458 [INTERN] | **100%** ✅ |
-| FM-X (Pre-OP + 8 × OP) | 141 fält + 863 [INTERN] | **100%** ✅ |
-| Drum (per key × 73) | 27 key-fält + 27 Part Common | **100%** ✅ |
-| Part Common | 88 fält (AWM2/FM-X/AN-X) + 6 (Drum) | ~97% |
+| AWM2 (per element × 8..128) | 128 fält + 8 [INTERN] | ✅ **Verifierad** |
+| AN-X (engine totalt) | 171 fält + 458 [INTERN] | ✅ **Verifierad** |
+| FM-X (Pre-OP + 8 × OP) | 141 fält + 863 [INTERN] | ✅ **Verifierad** |
+| Drum (per key × 73) | 27 key-fält + 27 Part Common | ✅ **Verifierad** |
+| Part Common | 88 fält (AWM2/FM-X/AN-X) + 6 (Drum) | ✅ Kärna verifierad |
 
 **Total fält-positioner i serializer:** ~2057
 **Testkorpus:** 2010+ binärverifierade filer
 
-Alla fyra engines är binärverifierat 100% kartlagda. Multi/GM 16-part-filer stöds via multi-part-arkitekturen (Performance Common + 16 × Part Common stride 5765 + Engine Pool med 15 AWM2 + 1 Drum på Part 10).
+Alla fyra engines är binärverifierade (alla kända parametrar). Multi/GM 16-part-filer stöds via multi-part-arkitekturen (Performance Common + 16 × Part Common stride 5765 + Engine Pool med 15 AWM2 + 1 Drum på Part 10).
 
 ---
 

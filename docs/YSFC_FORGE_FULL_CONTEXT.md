@@ -9,16 +9,16 @@
 
 | Engine | Mapped fields | UI coverage |
 |---|---:|---:|
-| **AWM2** (per element × 8..128) | 128 fields + 8 [INTERN] | **100%** ✅ |
-| **AN-X** (engine total) | 171 fields + 458 [INTERN] | **100%** ✅ |
-| **FM-X** (Pre-OP + 8 × OP) | 141 fields + 863 [INTERN] | **100%** ✅ |
-| **Drum** (per key × 73) | 27 key fields + 27 Part Common | **100%** ✅ |
-| **Part Common** | 88 fields (AWM2/FM-X/AN-X) + 6 (Drum) | **~97%** |
+| **AWM2** (per element × 8..128) | 128 fields + 8 [INTERN] | ✅ **Verified** |
+| **AN-X** (engine total) | 171 fields + 458 [INTERN] | ✅ **Verified** |
+| **FM-X** (Pre-OP + 8 × OP) | 141 fields + 863 [INTERN] | ✅ **Verified** |
+| **Drum** (per key × 73) | 27 key fields + 27 Part Common | ✅ **Verified** |
+| **Part Common** | 88 fields (AWM2/FM-X/AN-X) + 6 (Drum) | ✅ **Core verified** |
 
 **Total field positions in serializer:** ~2057
 **Test corpus:** 2010+ binary-verified files
 
-All four engines are binary-verified 100% mapped. Multi/GM 16-part files are supported (15 AWM2 + 1 Drum on Part 10, using the multi-part architecture).
+All four engines are binary-verified across all known user-editable parameters. Multi/GM 16-part files are supported (15 AWM2 + 1 Drum on Part 10, using the multi-part architecture).
 
 **Structural insight: Drum engine has its own Part Common layout**
 
@@ -1450,7 +1450,7 @@ Through scanning of **799 AN-X test files** against baseline, all 686 bytes in t
 | Unmapped dominant (>95%) | 50 | UI fields varying in one or more test files |
 | Filter trailers | 6 | [INTERN] — confirmed non-UI |
 
-**Final result: 171 UI-mapped fields ★★★★★, 458 [INTERN] bytes, 0 unmapped — UI coverage 100%** ✅
+**Final result: 171 UI-mapped fields ★★★★★, 458 [INTERN] bytes, 0 unmapped — all known UI fields verified** ✅
 
 ## 10.2 OSC1 / OSC2 / OSC3 — stride 125 ★★★★★
 
@@ -2069,7 +2069,7 @@ The ESP UI's "Key" selector only changes navigation, not data. Per-key data is s
 | DRUM_PART_COMMON | ★★★★★ binary-verified | 27 | (rest of Part Common zone is AWM2-shared) |
 | Insertions | Shares AWM2 structure | - | - |
 
-**UI coverage for Drum: 100%** ✅
+**UI coverage for Drum: all known fields verified** ✅
 
 All varying bytes are either UI-mapped or belong to Insertion FX / other universal Part Common fields. 4934 of 4964 drum-key bytes are firmware constants ([INTERN]).
 
@@ -2453,7 +2453,7 @@ Truly unknown:                    ~50      ( 1.3% of nz)
 
 **Practical implication:** ~98.7% non-zero coverage achieved. The remaining 1.3% is preserved verbatim — no functionality loss for the editor.
 
-## 18.6 Recommended test files for 100% coverage
+## 18.6 Recommended test files for full parameter coverage
 
 Five dedicated tests would eliminate the last unknown bytes:
 
@@ -2880,10 +2880,10 @@ def build_entr_payload(perf_name, part1_name, max_active_part,
 | Audio In + Envelope Follower | COMPLETE | ★★★★★ |
 | Per-Part 3-band EQ (7 fields) | COMPLETE | ★★★★★ |
 | Per-Part 2-band EQ (9 fields) | COMPLETE | ★★★★★ |
-| AN-X engine (684 b) | COMPLETE | ★★★★★ 100% mapped (171 fields + 458 [INTERN]) |
-| AWM2 engine (2503 b) | COMPLETE | ★★★★★ 100% mapped (128 fields + 8 [INTERN]) |
-| FM-X engine (1143 b) | COMPLETE | ★★★★★ 100% mapped (141 fields + 863 [INTERN]) |
-| Drum engine (4963 b) | COMPLETE | ★★★★★ 100% mapped (27 fields × 73 keys + 27 Part Common) |
+| AN-X engine (684 b) | COMPLETE | ★★★★★ mapped & verified (171 fields + 458 [INTERN]) |
+| AWM2 engine (2503 b) | COMPLETE | ★★★★★ mapped & verified (128 fields + 8 [INTERN]) |
+| FM-X engine (1143 b) | COMPLETE | ★★★★★ mapped & verified (141 fields + 863 [INTERN]) |
+| Drum engine (4963 b) | COMPLETE | ★★★★★ mapped & verified (27 fields × 73 keys + 27 Part Common) |
 | Multi/GM 16-part files | COMPLETE | ★★★★★ verified DPFM=141536 bytes |
 | Insertion FX (57 types) | COMPLETE | 12 × ★★★★★ + 45 × ★★★★☆ |
 | Smart Morph | DETECTION COMPLETE | ★★★★★ (DSOM payload not mapped) |
@@ -2913,10 +2913,10 @@ Clean 1-byte diff tests:               385
 Multi-byte diff tests (params + side effects):  ~700
 Empty/identical tests:                 ~248
 
-AWM2 corpus:    408 files (100% coverage)
-AN-X corpus:    799 files (100% coverage)
-FM-X corpus:    425 files (100% coverage)
-Drum corpus:     84 files (100% coverage)
+AWM2 corpus:    408 files (full observed coverage)
+AN-X corpus:    799 files (full observed coverage)
+FM-X corpus:    425 files (full observed coverage)
+Drum corpus:     84 files (full observed coverage)
 Multi/GM:         1 file  (baseline verified)
 
 Unique offsets binary-verified with ≥1 clean test:  ~200 (u8) + ~21 (u16le) = 221
