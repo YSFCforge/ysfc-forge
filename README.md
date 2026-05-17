@@ -96,12 +96,12 @@ Reverse-engineered from scratch through binary analysis of Yamaha's undocumented
 
 All four synthesizer engines are **100% binary-verified mapped** through systematic A/B diff analysis on real MODX M hardware.
 
-|Engine|UI fields|Internal/firmware|Status|
-|-|-:|-:|-|
-|**AWM2**|128|8|✅ 100%|
-|**AN-X**|171|458|✅ 100%|
-|**FM-X**|141|863|✅ 100%|
-|**Drum**|54|4934|✅ 100%|
+|Engine|UI fields|Status|
+|-|-:|-|
+|**AWM2**|128|✅ 100%|
+|**AN-X**|171|✅ 100%|
+|**FM-X**|141|✅ 100%|
+|**Drum**|54|✅ 100%|
 
 ### Supported file types
 
