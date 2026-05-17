@@ -81,15 +81,11 @@ Reverse-engineered from scratch through binary analysis of Yamaha's undocumented
 
 ### Experimental / Extra Tools
 
-> ⚠️ These are convenience and approximation tools — **not** held to the same binary-verified standard as the core tools above. The patch translators in particular are approximations: the source synths use fundamentally different synthesis engines, so output is a starting point for sound design, not a literal port. Always keep backups.
+> ⚠️ These are convenience and approximation tools — **not** held to the same binary-verified standard as the core tools above. 
 
 |Tool|What it does|
 |-|-|
-|[**DIVA Patch Translator**](translators/ysfc_diva_h2p_converter_v2_15.html)|Convert DIVA patches to Y2L/Y2U (approximate)|
-|[**Vital Patch Translator**](translators/ysfc_vital_converter_v4_12.html)|Convert Vital patches to Y2L/Y2U (approximate)|
-|[**Synth1 Patch Translator**](translators/ysfc_synth1_converter_v5_12.html)|Convert Synth1 patches to Y2L/Y2U (approximate)|
 |[**Smart Name Compressor**](utilities/ysfc_smart_name_compressor.html)|Standardized naming for performances|
-|[**Synth Converter**](utilities/ysfc_synth_converter.html)|Convert patches between 8+ formats|
 
 ### Screenshots
 
