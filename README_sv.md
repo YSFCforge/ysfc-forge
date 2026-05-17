@@ -76,7 +76,7 @@ Reverse-engineerad från grunden genom binäranalys av Yamahas odokumenterade `.
 |Verktyg|Vad det gör|
 |-|-|
 |[**Performance Merger**](tools/ysfc_forge_performance_merger_v1_19.html)|Sammanfoga performances från flera Y2L/Y2U-filer|
-|[**Library Builder**](tools/ysfc_forge_library_builder_v13_17.html)|Library builder prototyp (sammanfoga performances inklusive beroenden från flera Y2L/Y2U filer)|
+|[**Library Builder**](tools/ysfc_forge_library_builder_v13_17.html)|Sammanfoga performances inklusive beroenden från flera Y2L/Y2U filer)|
 |[**Performance Editor**](tools/ysfc_forge_performance_editor_v5_1.html)|Redigera FM-X, AWM2 och AN-X-parametrar i webbläsaren|
 
 ### Experimentella / extra verktyg
