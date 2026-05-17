@@ -50,7 +50,7 @@ Reverse-engineerad från grunden genom binäranalys av Yamahas odokumenterade `.
 
 ### Sammanfoga performances inklusive beroenden
 
-1. Ladda ner [`tools/yysfc_forge_library_builder_v13_17.html`](tools/ysfc_forge_library_builder_v13_17.html)
+1. Ladda ner [`tools/ysfc_forge_library_builder_v13_17.html`](tools/ysfc_forge_library_builder_v13_17.html)
 2. Öppna filen i din webbläsare
 3. Dra och släpp `.Y2L`- eller `.Y2U`-filer
 4. Markera de performances du vill ha
