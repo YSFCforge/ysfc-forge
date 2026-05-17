@@ -1,7 +1,7 @@
 """
 YSFC Forge — Effect Type Definitions
 
-Officiell lista över alla 103 effekter i Yamaha MODX M / Montage M.
+Officiell lista över alla 103 effekter i Yamaha MODX M / ESP plugin / Montage M.
 Källa: Effect Type List (Yamaha officiell dokumentation)
 
 Varje effekt har:

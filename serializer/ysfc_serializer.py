@@ -1,7 +1,7 @@
 """
 YSFC Forge — Serializer
 
-Parser, validator och encoder för Yamaha MODX/Montage M Y2L-format
+Parser, validator och encoder för Yamaha MODX M / ESP plugin / Montage M Y2L-format
 (Performance container med EPFM/DPFM-chunks och engine-data-pool).
 
 Referensdokument: YSFC_FORGE_FULL_CONTEXT.md
@@ -3584,7 +3584,7 @@ AWM2_ELEM_LAYOUT = dict(
 # lfoFilterModDepth=244 direct d=0 ← NEW
 # lfoExtendedSpeed=256 direct d=60 ← NEW(lfoSpeed in Extended mode)
 #
-# AWM2 ELEMENT IS NOW 100% MAPPED — no unknown fields remaining.
+# AWM2 ELEMENT — all known fields binary-verified; no unmapped fields observed across the AWM2 test corpus.
 ANX_OSC_LAYOUT = dict(waveform=0, octave=2, sync=12, pulse=20, shaper=28, level=48)
 ANX_FILTER_LAYOUT = dict(
     cutoff=0, cutoffVel=2, cutoffKey=10, resonance=12,
