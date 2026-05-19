@@ -2,18 +2,11 @@
 YSFC Forge — Engine-Specific Enum Definitions
 
 Engine-specifika dropdown-värden från MODX M / ESP Plugin UI.
-Källa: ESP Plugin skärmdumpar + binärverifierade tester.
 
-Status efter skärmdump-genomgång (2026-05-10):
-- AN-X OSC Waveforms: ★★★★★ (5 alternativ)
-- AN-X Filter Types (Type1+Type2): ★★★★★ (11 alternativ, samma för båda)
-- AN-X LFO Wave Shape: ★★★★★ (13 alternativ inkl User)
-- AWM2 Element LFO Wave: ★★★★★ (3 alternativ)
-- AWM2 Part LFO Wave: ★★★★★ (13 alternativ inkl User)
-- FM-X Algorithm: ★★★★★ (1-88)
-- FM-X Spectral Form: ★★★★★ (7 alternativ)
-- CA Curve Types: ★★★★★ (20 presets + 32 user)
-- Drum Engine: parametrar per key (ej "elements")
+Källa: Egna observationer av ESP Plugin-gränssnittet (skärmdumpar) samt
+binärverifierade A/B-tester. Detta är observerade UI-värden, inte hämtat
+ur Yamahas dokumentation — samma metod som projektets övriga
+reverse-engineering. Ingen Yamaha-tillgång distribueras.
 """
 
 # ──────────────────────────────────────────────────────────────────────

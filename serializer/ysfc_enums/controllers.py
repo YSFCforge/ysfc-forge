@@ -2,8 +2,11 @@
 YSFC Forge — Controller Source/Destination Lists
 
 Officiell lista över alla controller-source och destination-värden.
-Källa: Control List (Yamaha officiell dokumentation)
-
+Källa: Härlett ur Yamahas publicerade MODX M Data List
+(© Yamaha Corporation). Endast funktionella fakta extraheras, för interoperabilitet med det odokumenterade
+Y2L/Y2U-filformatet. Yamahas dokument återdistribueras inte här —
+originalet finns hos Yamaha: https://download.yamaha.com
+(sök "MODX M Data List").
 Sektioner:
 - Controller Box Source (42): vad styr CA-en (Knob, ModWheel, etc.)
 - Controller Box Destination (414): vad styrs (Volume, Cutoff, etc.)

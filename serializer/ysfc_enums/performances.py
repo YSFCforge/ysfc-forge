@@ -1,8 +1,13 @@
 """
 YSFC Forge — Performance List
 
-Officiell lista över alla 3427 factory performances.
-Källa: Performance List (Yamaha officiell dokumentation)
+Uppslagstabell nummer → namn för factory-performances (3427 st),
+för att tolka performance-referenser i Y2L/Y2U-filer.
+Källa: Härlett ur Yamahas publicerade MODX M Data List
+(© Yamaha Corporation). Endast funktionella fakta extraheras, för interoperabilitet med det odokumenterade
+Y2L/Y2U-filformatet. Yamahas dokument återdistribueras inte här —
+originalet finns hos Yamaha: https://download.yamaha.com
+(sök "MODX M Data List").
 """
 
 # {perf_no: (name, main_cat, sub_cat)}

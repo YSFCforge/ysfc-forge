@@ -81,7 +81,7 @@ Reverse-engineerad från grunden genom binäranalys av Yamahas odokumenterade `.
 
 ### Experimentella / extra verktyg
 
-> ⚠️ Detta är hjälp- och approximationsverktyg — **inte** hållna till samma binärverifierade standard som kärnverktygen ovan. 
+> ⚠️ Detta är hjälp- och approximationsverktyg — **inte** hållna till samma binärverifierade standard som kärnverktygen ovan.
 
 |Verktyg|Vad det gör|
 |-|-|
@@ -168,7 +168,7 @@ I dokumentationen klassificeras varje fält efter evidens:
 
 * **Performance Editor** visar i nuläget bara den första partens engine; redigering av alla 16 parts är på roadmap
 * **Smart Morph**-interpolationstabeller är inte kartlagda än
-* **Scene-snapshots** — strukturen är verifierad, men endast \~10 fält per scen har UI-bekräftade mappningar
+* **Scene-snapshots** — strukturen är verifierad, men endast ~10 fält per scen har UI-bekräftade mappningar
 * **Ingen undo/redo** i Performance Editor än — håll alltid backuper på dina original
 
 Se [`docs/REVERSE_ENGINEERING.md`](docs/REVERSE_ENGINEERING.md) för fullständig lista.
@@ -193,7 +193,14 @@ Detta projekt är inte associerat med, godkänt eller sponsrat av Yamaha Corpora
 
 ---
 
+## Dataattribuering
+
+Vissa referenstabeller i Python-enum-paketet är **härledda från Yamahas publicerade MODX M Data List** (© Yamaha Corporation). Endast funktionella fakta har extraherats, uteslutande för att möjliggöra tolkning av det odokumenterade .Y2L / .Y2U-filformatet för interoperabilitet. Andra referenstabeller i Python-enum-paketet bygger på projektets egna binärverifierade observationer av MODX M och ESP Plugin-gränssnittet.
+
+Yamahas dokument **återdistribueras inte** i detta repo. Originalet finns hos Yamaha (sök efter "MODX M Data List").
+
+---
+
 ## Licens
 
 MIT — se [LICENSE](LICENSE)
-

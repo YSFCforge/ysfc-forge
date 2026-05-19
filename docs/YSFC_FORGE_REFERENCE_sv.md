@@ -4,6 +4,7 @@ Patch-editor och reverse-engineering-projekt för Yamaha MODX M / Montage M bin�
 
 **Hårdvara:** MODX M8 firmware 3.0, ESP Plugin v3.0
 **Källa:** Binärverifierade single-edit-testfiler mot Init Voice baselines (AWM2, AN-X, FM-X, Drum)
+**Dataattribuering:** Referenstabeller för är härledda ur Yamahas publicerade MODX M Data List (© Yamaha Corporation) för interoperabilitet; dokumentet återdistribueras inte. Se huvuddokumentet [README](../README_sv.md#dataattribuering ).
 
 ---
 

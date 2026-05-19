@@ -81,7 +81,7 @@ Reverse-engineered from scratch through binary analysis of Yamaha's undocumented
 
 ### Experimental / Extra Tools
 
-> ⚠️ These are convenience and approximation tools — **not** held to the same binary-verified standard as the core tools above. 
+> ⚠️ These are convenience and approximation tools — **not** held to the same binary-verified standard as the core tools above.
 
 |Tool|What it does|
 |-|-|
@@ -91,8 +91,8 @@ Reverse-engineered from scratch through binary analysis of Yamaha's undocumented
 
 ||||
 |-|-|-|
-|![Performance Editor](screenshots/image_ysfc_forge_performance_editor.png)|![Library Builder](screenshots/image_ysfc_forge_library_builder.png)|
-|*Performance Editor — FM-X operator editor*|*Library Builder — performance list with engine detection*|
+|![Performance Editor](screenshots/image_ysfc_forge_performance_editor.png)|![Library Builder](screenshots/image_ysfc_forge_library_builder.png)||
+|*Performance Editor — FM-X operator editor*|*Library Builder — performance list with engine detection*||
 
 ---
 
@@ -168,7 +168,7 @@ Throughout the documentation, fields are rated by evidence:
 
 * **Performance Editor** currently shows only the first part's engine; full 16-part editing is on the roadmap
 * **Smart Morph** interpolation tables are not yet mapped
-* **Scene snapshots** — structure verified, but only \~10 fields per scene have UI-confirmed mappings
+* **Scene snapshots** — structure verified, but only ~10 fields per scene have UI-confirmed mappings
 * **No undo/redo** in Performance Editor yet — keep backups of your originals
 
 See [`docs/REVERSE_ENGINEERING.md`](docs/REVERSE_ENGINEERING.md) for the full list.
@@ -193,7 +193,14 @@ This project is not affiliated with, endorsed by, or sponsored by Yamaha Corpora
 
 ---
 
+## Data Attribution
+
+Some reference tables in the Python enum package are **derived from Yamaha's publicly published MODX M Data List** (© Yamaha Corporation). Only functional facts have been extracted, solely to enable interpretation of the undocumented `.Y2L` / `.Y2U` file format for interoperability purposes. Other reference tables in the Python enum package are based on the project's own binary-verified observations of the MODX M and ESP Plugin interface.
+
+Yamaha's document is **not redistributed** in this repository. The original is available from Yamaha (search for "MODX M Data List").
+
+---
+
 ## License
 
 MIT — see [LICENSE](LICENSE)
-

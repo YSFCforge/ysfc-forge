@@ -1,9 +1,15 @@
 """
 YSFC Forge — Enum Package v1.1
 
-Komplett paket av Yamaha MODX M / Montage M enum-tabeller och konversioner.
-Källa: Yamaha officiella listor (Effect Type List, Waveform List, etc.) +
-binärverifierade enums från ESP UI.
+Enum-tabeller och konverteringar för Yamaha MODX M / Montage M, härledda
+från Yamahas publicerade listor (MODX M Data List, © Yamaha Corporation)
+och från binärverifierade observationer av ESP Plugin-gränssnittet.
+
+Detta paket återdistribuerar inte Yamahas dokumentation. De härledda
+fakta-tabellerna (performance-namn, kategorier, effekt-listor m.m.) ingår
+enbart för interoperabilitet — för att kunna tolka det odokumenterade
+Y2L/Y2U-filformatet. Originaldokumentet finns hos Yamaha:
+https://download.yamaha.com (sök "MODX M Data List").
 
 Användning:
     from ysfc_enums import FX_TYPES, get_waveform_name, lookup
@@ -24,7 +30,6 @@ from . import controllers
 from . import performance_categories
 from . import arpeggios
 from . import performances
-from . import drum_kits
 from . import fmx
 from . import engine_enums
 
@@ -54,7 +59,6 @@ from .performance_categories import (
 )
 from .arpeggios import ARPEGGIOS, get_arp_name, get_arpeggio
 from .performances import PERFORMANCES, get_performance_name, get_performance
-from .drum_kits import DRUM_KITS, get_kit_names, get_kit_mapping
 from .fmx import FMX_ALGORITHM_COUNT, FMX_ALGORITHMS, get_algorithm_label
 
 # Engine enums — uppdaterat efter skärmdump-genomgång
@@ -89,5 +93,5 @@ __all__ = [
     # Modules
     'fx_types', 'fx_presets', 'fx_parameters', 'fx_tables',
     'waveforms', 'controllers', 'performance_categories',
-    'arpeggios', 'performances', 'drum_kits', 'fmx', 'engine_enums',
+    'arpeggios', 'performances', 'fmx', 'engine_enums',
 ]

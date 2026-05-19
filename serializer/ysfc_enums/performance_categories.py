@@ -2,8 +2,11 @@
 YSFC Forge — Performance Categories
 
 Officiell category-tree för performances.
-Källa: Performance Category List (Yamaha officiell dokumentation)
-
+Källa: Härlett ur Yamahas publicerade MODX M Data List
+(© Yamaha Corporation). Endast funktionella fakta extraheras, för interoperabilitet med det odokumenterade
+Y2L/Y2U-filformatet. Yamahas dokument återdistribueras inte här —
+originalet finns hos Yamaha: https://download.yamaha.com
+(sök "MODX M Data List").
 16 main categories, varje med 8-10 sub categories.
 Detta är category-strukturen som visas i Yamamas Browser.
 """

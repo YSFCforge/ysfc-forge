@@ -2,8 +2,12 @@
 YSFC Forge — Effect Data Conversion Tables
 
 Officiella konversionstabeller (Data → Value) för FX-parametrar.
-Källa: Effect Data Assign Table (Yamaha officiell dokumentation)
-
+Källa: Härlett ur Yamahas publicerade MODX M Data List
+(© Yamaha Corporation). Endast funktionella fakta (namn, nummer,
+kategori) extraheras, för interoperabilitet med det odokumenterade
+Y2L/Y2U-filformatet. Yamahas dokument återdistribueras inte här —
+originalet finns hos Yamaha: https://download.yamaha.com
+(sök "MODX M Data List").
 Används för att översätta råa byte-värden till UI-värden:
   Exempel: LFO Frequency raw 64 → 2.69 Hz
            Reverb Time raw 30 → 5.5 s

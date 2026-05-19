@@ -1,8 +1,14 @@
 """
 YSFC Forge — FM-X Specific Enums
 
-FM-X har 88 algoritmer (1-88). Detta är hård-kodat enligt
-Yamaha Algorithm Chart.
+FM-X har 88 algoritmer (1-88).
+
+Källa: Härlett ur Yamahas publicerade MODX M Data List
+(© Yamaha Corporation). Endast funktionella fakta 
+extraheras, för interoperabilitet med det odokumenterade
+Y2L/Y2U-filformatet. Yamahas dokument återdistribueras inte här —
+originalet finns hos Yamaha: https://download.yamaha.com
+(sök "MODX M Data List").
 """
 
 # Antal FM-X algoritmer

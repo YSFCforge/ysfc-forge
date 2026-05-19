@@ -2,8 +2,12 @@
 YSFC Forge — Waveform List
 
 Officiell lista över alla 7635 AWM2-vågformer.
-Källa: Waveform List (Yamaha officiell dokumentation)
-
+Källa: Härlett ur Yamahas publicerade MODX M Data List
+(© Yamaha Corporation). Endast funktionella fakta (namn, nummer,
+kategori) extraheras, för interoperabilitet med det odokumenterade
+Y2L/Y2U-filformatet. Yamahas dokument återdistribueras inte här —
+originalet finns hos Yamaha: https://download.yamaha.com
+(sök "MODX M Data List").
 Används för att visa wave-namn när användaren väljer wave för AWM2-element.
 """
 
