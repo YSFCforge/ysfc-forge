@@ -2,8 +2,8 @@
 
 Patch editor and reverse engineering project for the Yamaha MODX M / Montage M binary format (Y2L/Y2U).
 
-**Hardware:** MODX M8 firmware 3.0, ESP Plugin v3.0
-**Source:** Binary-verified single-edit test files compared against Init Voice baselines (AWM2, AN-X, FM-X, Drum)
+**Hardware:** MODX M8 firmware 3.0, ESP Plugin v3.0<br>
+**Source:** Binary-verified single-edit test files compared against Init Voice baselines (AWM2, AN-X, FM-X, Drum)<br>
 **Data attribution:** Reference tables are derived from Yamaha's publicly published MODX M Data List (© Yamaha Corporation) for interoperability; the document itself is not redistributed. See the main [README](../README.md#data-attribution).
 
 ---
