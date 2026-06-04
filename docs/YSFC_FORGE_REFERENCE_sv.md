@@ -62,6 +62,32 @@ upplösning. Per-performance W/S/Arp UI-chip villkoras av samma scanners.
 
 ## Filstruktur (Y2L container)
 
+### Fil-header (64 bytes, binärverifierad — se Appendix A.3 i engelska YSFC_FORGE_FULL_CONTEXT.md)
+
+| Offset | Hex | Storlek | Fält | Notering |
+|---:|---:|---:|---|---|
+| 0 | 0x00 | 16 | Magic + null-pad | `YAMAHA-YSFC\x00\x00\x00\x00\x00` |
+| 16 | 0x10 | 16 | Version + null-pad | `5.1.2` (Montage M / MODX M); `5.0.1` (MODX); `4.0.5` (Montage) |
+| 32 | 0x20 | 4 | Katalogstorlek | `u32 BE` = antal_block × 8; katalogen börjar på 0x40 |
+| 36 | 0x24 | 12 | Reserverad | alla `0xFF` |
+| 48 | 0x30 | 4 | Library-info-längd | `u32 BE`; 241 bytes (Montage M / MODX M), 81 bytes (classic) |
+| 52 | 0x34 | 8 | Reserverad | alla `0xFF` |
+| 60 | 0x3C | 4 | Spar-räknare | `u32 BE`; ökar monotont — **inte** Unix-timestamp |
+
+### EPFM Entry-post payload (binärverifierad)
+
+| Rel | Storlek | Fält | Notering |
+|---:|---:|---|---|
+| 0 | 4 | Blob-storlek | `u32 BE` — DPFM-blob-storlek |
+| 4 | 4 | DPFM-offset | `u32 BE` — offset inom DPFM-payload |
+| 9 | 1 | Konstant | `0x40` (MODX validerar) |
+| 11 | 1 | Destinations-slot | kompakt sekventiellt index (0, 1, 2, …) |
+| 15 | 1 | Engine-bitar | `0x01`=AWM2/Drum, `0x02`=FM-X, `0x04`=AN-X; OR-kombinerat |
+| 16 | 1 | Käll-flagga | `0x00`=ESP Plugin, `0x02`=MODX hardware |
+| 27 | var | Namnsträng | `"{idx}:{namn_20_tecken_paddad}:{namn}\0"` NUL-terminerad ASCII |
+
+Namnsträngexempel: `"3:Acid Bass           :Acid Bass\0"` — långt namn paddas med mellanslag till 20 tecken.
+
 ```
 YAMAHA-YSFC header
 ├── EPFM  Performance index

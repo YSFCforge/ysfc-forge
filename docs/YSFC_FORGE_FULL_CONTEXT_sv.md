@@ -144,39 +144,61 @@ DLST  Live Set data         (valfritt)
 
 ## 1.1 File header (64 bytes) ★★★★★
 
-| Offset | Storlek | Fält | Notering |
-|---:|---:|---|---|
-| 0 | 8 | Magic | `YAMAHA-YSFC` (ASCII, null-paddad) |
-| 8 | 8 | Version | ASCII version-sträng |
-| 16 | 4 | Library type | identifierar fil-klass |
-| 20 | 4 | Catalog offset | offset till chunk-katalog |
-| 24 | 4 | Date stamp | spar-timestamp (varierar vid varje spar) |
-| 28 | 4 | Reserved | noll |
-| 32 | 32 | Reserved padding | noll |
+Binärverifierad mot 1930+ filer (Appendix A.3 i engelska versionen). Tidigare versioner av den här tabellen hade fel fältstorlekar och offset — korrekt layout nedan.
 
-Date stamp vid offset 24 är del av noise-setet (filtreras vid diff-analys). Catalog offset vid offset 20 pekar till en chunk-katalog som listar varje chunks position och storlek.
+| Offset | Hex | Storlek | Fält | Notering |
+|---:|---:|---:|---|---|
+| 0 | 0x00 | 16 | Magic + null-pad | `YAMAHA-YSFC\x00\x00\x00\x00\x00` (11 bytes ASCII + 5 noll-bytes) |
+| 16 | 0x10 | 16 | Version + null-pad | `5.1.2\x00…` för Montage M / MODX M; `5.0.1` för MODX classic; `4.0.5` för Montage classic |
+| 32 | 0x20 | 4 | Katalogstorlek | `u32 BE` = antal_block × 8; katalogen börjar alltid på 0x40 |
+| 36 | 0x24 | 12 | Reserverad padding | alla `0xFF` |
+| 48 | 0x30 | 4 | Library-info-längd | `u32 BE`; 241 bytes baseline (Montage M / MODX M), 81 bytes (classic) |
+| 52 | 0x34 | 8 | Reserverad padding | alla `0xFF` |
+| 60 | 0x3C | 4 | Spar-räknare | `u32 BE`; ökar monotont per export — **inte** Unix-timestamp |
+
+Spar-räknaren vid 0x3C är del av noise-setet (filtreras vid diff-analys). Den är också inbäddad som `u16` före varje EPFM/EWFM/EARP-postnamn — båda måste stämma överens annars avvisar MODX filen. Katalogen börjar alltid på absolutoffset `0x40` oavsett katalogstorlek-fältets värde.
 
 ## 1.2 EPFM chunk ★★★★★
 
 EPFM (Entry Performance) är performance-indexet. Den innehåller en fast header följt av en Entry-record per performance i filen.
 
 ```
-EPFM header                       (8 bytes: 'EPFM' + storlek big-endian u32)
-Entries (variabelt antal)         (44 bytes per entry)
+EPFM chunk-header   (8 bytes: 'EPFM' + storlek u32 BE)
+count               (4 bytes u32 BE: antal Entry-poster)
+'Entr'              (4 bytes: global typ-tagg; fungerar också som tagg för första posten)
+rec1_storlek        (4 bytes u32 BE)
+rec1_data           (rec1_storlek bytes)
+'Entr' rec2_storlek rec2_data     ← efterföljande poster har var sin 'Entr'-tagg
+…
 ```
 
-Varje Entry-record:
+Obs: den **första** posten har ingen egen föregående `Entr`-tagg — den globala taggen vid byte [4:8] fyller den rollen. Post 2..N har var sin `Entr`-tagg.
 
-| Rel | Storlek | Fält |
-|---:|---:|---|
-| 0 | 4 | Entry type marker (`Entr`) |
-| 4 | 4 | Reserved |
-| 8 | 4 | Performance offset i DPFM |
-| 12 | 4 | Performance storlek |
-| 16 | 4 | Performance index |
-| 20 | 24 | Reserved/metadata |
+Varje Entry-posts payload (binärverifierad mot MODX M-filer):
 
-För en single-performance-fil (Init Voice, single edit etc.) innehåller EPFM exakt en Entry-record. För library-filer med flera performances finns en Entry per performance.
+| Rel | Storlek | Fält | Notering |
+|---:|---:|---|---|
+| 0 | 4 | Blob-storlek | `u32 BE` — storleken på performance-blobben i DPFM |
+| 4 | 4 | DPFM-offset | `u32 BE` — offset inom DPFM-payload |
+| 8 | 1 | Konstant | `0x00` |
+| 9 | 1 | Konstant | `0x40` (MODX validerar detta fält) |
+| 10 | 1 | Konstant | `0x00` |
+| 11 | 1 | Destinations-slot | kompakt destinations-index (0, 1, 2, … för sekventiell export) |
+| 12 | 1 | Konstant | `0x00` |
+| 13 | 1 | Multi-engine-flagga | `0x00` (förenklat) |
+| 14 | 1 | Konstant | `0x00` |
+| 15 | 1 | Engine-bitar | `0x01`=AWM2/Drum, `0x02`=FM-X, `0x04`=AN-X; OR-kombinerat för multi-engine |
+| 16 | 1 | Käll-flagga | `0x00`=ESP Plugin-export, `0x02`=MODX hardware-export |
+| 17 | 1 | Konstant | `0x00` |
+| 18 | 1 | Kategori | `0x01`=default |
+| 19 | 6 | Padding | alla `0x00` |
+| 25 | 1 | Konstant | `0x30` |
+| 26 | 1 | Slot-flagga | `0x00` (förenklat) |
+| 27 | var | Namnsträng | `"IDX:LångtNamn(20 tecken paddad):KortNamn\0"` — NUL-terminerad ASCII |
+
+Namnsträngens format är `"{slot_index}:{perf_namn_paddad_20_tecken}:{perf_namn}\0"`. Exempel: `"3:Acid Bass           :Acid Bass\0"`. Det långa namnfältet är vänsterjusterat och mellanslags-paddat till exakt 20 tecken; det korta namnfältet är namnet utan padding.
+
+För en single-performance-fil innehåller EPFM exakt en Entry-record. För library-filer med flera performances finns en Entry per performance.
 
 ## 1.3 DPFM chunk ★★★★★
 

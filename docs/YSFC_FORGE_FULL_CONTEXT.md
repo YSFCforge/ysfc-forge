@@ -144,39 +144,61 @@ DLST  Live Set data         (optional)
 
 ## 1.1 File header (64 bytes) ★★★★★
 
-| Offset | Size | Field | Notes |
-|---:|---:|---|---|
-| 0 | 8 | Magic | `YAMAHA-YSFC` (ASCII, null-padded) |
-| 8 | 8 | Version | ASCII version string |
-| 16 | 4 | Library type | identifies file class |
-| 20 | 4 | Catalog offset | offset to chunk catalog |
-| 24 | 4 | Date stamp | save timestamp (varies on every save) |
-| 28 | 4 | Reserved | zero |
-| 32 | 32 | Reserved padding | zero |
+Binary-verified against 1930+ files (Appendix A.3). Earlier versions of this table had wrong field sizes and offsets — the corrected layout is below.
 
-The Date stamp at offset 24 is part of the noise set (filtered during diff analysis). The Catalog offset at offset 20 points to a chunk catalog that lists each chunk's position and size.
+| Offset | Hex | Size | Field | Notes |
+|---:|---:|---:|---|---|
+| 0 | 0x00 | 16 | Magic + null-pad | `YAMAHA-YSFC\x00\x00\x00\x00\x00` (11 bytes ASCII + 5 null bytes) |
+| 16 | 0x10 | 16 | Version + null-pad | `5.1.2\x00…` for Montage M / MODX M; `5.0.1` for MODX classic; `4.0.5` for Montage classic |
+| 32 | 0x20 | 4 | Catalogue size | `u32 BE` = block_count × 8; catalogue always starts at 0x40 |
+| 36 | 0x24 | 12 | Reserved padding | all `0xFF` |
+| 48 | 0x30 | 4 | Library-info length | `u32 BE`; baseline 241 bytes (Montage M / MODX M), 81 bytes (classic) |
+| 52 | 0x34 | 8 | Reserved padding | all `0xFF` |
+| 60 | 0x3C | 4 | Save counter | `u32 BE`; monotonically increasing per export — **not** a Unix timestamp |
+
+The save counter at 0x3C is part of the noise set (filtered during diff analysis). It is also embedded as a `u16` before every EPFM/EWFM/EARP record name; both must agree or MODX rejects the file. The catalogue always begins at absolute offset `0x40` regardless of the catalogue-size field.
 
 ## 1.2 EPFM chunk ★★★★★
 
 EPFM (Entry Performance) is the performance index. It contains a fixed header followed by one Entry record per performance in the file.
 
 ```
-EPFM header                       (8 bytes: 'EPFM' + size big-endian u32)
-Entries (variable count)          (44 bytes per entry)
+EPFM chunk header   (8 bytes: 'EPFM' + size u32 BE)
+count               (4 bytes u32 BE: number of Entry records)
+'Entr'              (4 bytes: global type tag; also serves as the first record's tag)
+rec1_size           (4 bytes u32 BE)
+rec1_data           (rec1_size bytes)
+'Entr' rec2_size rec2_data     ← subsequent records each preceded by their own 'Entr' tag
+…
 ```
 
-Each Entry record:
+Note: the first record has **no** preceding `Entr` tag of its own — the global tag at bytes [4:8] serves that role. Records 2..N each have their own `Entr` tag.
 
-| Rel | Size | Field |
-|---:|---:|---|
-| 0 | 4 | Entry type marker (`Entr`) |
-| 4 | 4 | Reserved |
-| 8 | 4 | Performance offset in DPFM |
-| 12 | 4 | Performance size |
-| 16 | 4 | Performance index |
-| 20 | 24 | Reserved/metadata |
+Each Entry record payload (binary-verified against MODX M files):
 
-For a single-performance file (Init Voice, single edit, etc.) the EPFM contains exactly one Entry record. For library files with multiple performances, there is one Entry per performance.
+| Rel | Size | Field | Notes |
+|---:|---:|---|---|
+| 0 | 4 | Blob size | `u32 BE` — size of this performance's DPFM blob |
+| 4 | 4 | DPFM offset | `u32 BE` — offset of blob within DPFM payload |
+| 8 | 1 | Constant | `0x00` |
+| 9 | 1 | Constant | `0x40` (MODX validates this field) |
+| 10 | 1 | Constant | `0x00` |
+| 11 | 1 | Dest slot index | compact destination slot (0, 1, 2, … for sequential export) |
+| 12 | 1 | Constant | `0x00` |
+| 13 | 1 | Multi-engine flag | `0x00` (simplified) |
+| 14 | 1 | Constant | `0x00` |
+| 15 | 1 | Engine bits | `0x01`=AWM2, `0x02`=FM-X, `0x04`=AN-X; OR-combined for multi-engine parts |
+| 16 | 1 | Source flag | `0x00`=ESP Plugin export, `0x02`=MODX hardware export |
+| 17 | 1 | Constant | `0x00` |
+| 18 | 1 | Category | `0x01`=default |
+| 19 | 6 | Padding | all `0x00` |
+| 25 | 1 | Constant | `0x30` |
+| 26 | 1 | Slot flag | `0x00` (simplified) |
+| 27 | var | Name string | `"IDX:LongName(20 ch padded):ShortName\0"` — NUL-terminated ASCII |
+
+The name string format is `"{slot_index}:{perf_name_padded_to_20ch}:{perf_name}\0"`. Example: `"3:Acid Bass           :Acid Bass\0"`. The long-name field is left-justified and space-padded to exactly 20 characters; the short-name field is the raw name without padding.
+
+For a single-performance file the EPFM contains exactly one Entry record. For library files with multiple performances there is one Entry per performance.
 
 ## 1.3 DPFM chunk ★★★★★
 

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>YSFC Forge Library Builder v13.17 — Y2L/Y2U Merge för MODX M / Montage M</title>
+  <title>YSFC Forge Library Builder v13.18 — Y2L/Y2U Merge för MODX M / Montage M</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
 
@@ -437,7 +437,7 @@
 <h1>
   YSFC Forge Library Builder
   <span class="sep">│</span>
-  <span class="ver">v13.17</span>
+  <span class="ver">v13.18</span>
   <span class="sep">│</span>
   Y2L · Y2U → Y2L merge
   <span class="spacer"></span>
@@ -626,7 +626,7 @@
 
 <script>
 /* ============================================================
-   YSFC Forge Library Builder v13.17 — Y2L/Y2U → Y2L merge
+   YSFC Forge Library Builder v13.18 — Y2L/Y2U → Y2L merge
    MODX M / ESP plugin / Montage M
 
    FOKUS: Detta verktyg hanterar uteslutande Y2L/Y2U-filer
@@ -663,6 +663,15 @@
    käll-klonad container, Samples-checkbox och sample-taggar —
    eftersom dessa kräver blob-transkodning som ESP Plugin redan
    gör korrekt.
+
+   === v13.18 ===
+   Buggfix: detectPerfEngine() läste engine-typ via blob-storlek
+   (storleksbaserad heuristik) istället för den auktoritativa
+   engine-type-byten blob[6700]. Konsekvens: AN-X-performances
+   visades som AWM2 eller FM-X i engine-kolumnen. Nu läses
+   blob[6700] direkt (0=AWM2, 1=Drum, 2=FM-X, 3=AN-X), identiskt
+   med hur Performance Editor v5.1 gör det. Storleksheuristiken
+   finns kvar som fallback för trunkerade/okända blobbar.
    ============================================================ */
 
 // ── I18N ─────────────────────────────────────────────────────
@@ -1035,20 +1044,31 @@ function applyI18n() {
     1672:'PRESENCE',1704:'WAVE FOLDER'
   };
 
-  // Detect engine from perf byte array. ★★★★★ identical to ysfc_forge_v1.16
-  // Tight ranges (binary-verified Steg 1-69): AN-X:6430-6465, FM-X:6890-6930, AWM2:8240-8295
+  // Detect engine from perf byte array.
+  // v13.18: Reads blob[6700] directly — the authoritative engine-type byte
+  // (0=AWM2, 1=Drum, 2=FM-X, 3=AN-X), matching Performance Editor detectEngine().
+  // The old size-based heuristic mislabelled AN-X as AWM2/FM-X and used FM-X
+  // as a catch-all fallback. Drum maps to 'Drum' label (Entr bits use 0x01
+  // same as AWM2, but we show 'Drum' in the UI for clarity).
   function detectPerfEngine(p) {
+    if (p.length > 6700) {
+      const eb = p[6700];
+      if (eb === 0) return 'AWM2';
+      if (eb === 1) return 'Drum';
+      if (eb === 2) return 'FM-X';
+      if (eb === 3) return 'AN-X';
+    }
+    // Fallback for truncated/unknown blobs: size heuristic (PART_BASE=6701)
     const plen = p.length;
-    if (plen <= PART_BASE) return 'FM-X';
-    const pds = plen - PART_BASE;
+    if (plen <= 6701) return 'FM-X';
+    const pds = plen - 6701;
     const numParts = (plen > SCENE_COUNT_OFF && p[SCENE_COUNT_OFF] > 0 && p[SCENE_COUNT_OFF] <= 16)
       ? p[SCENE_COUNT_OFF] : 1;
     const eq = pds / numParts;
     if (eq >= 6430 && eq <= 6465) return 'AN-X';
     if (eq >= 6890 && eq <= 6930) return 'FM-X';
     if (eq >= 8240 && eq <= 8295) return 'AWM2';
-    if (eq >= 6000 && eq <= 13500) return 'AWM2';
-    return 'FM-X';
+    return 'AWM2';
   }
 
   // Extract perf metadata from raw bytes (engine, sceneCount, InsA FX, algo/wave)

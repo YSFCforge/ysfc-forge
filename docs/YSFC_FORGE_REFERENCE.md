@@ -62,6 +62,32 @@ resolution. Per-performance W/S/Arp UI chips are gated by the same scanners.
 
 ## File structure (Y2L container)
 
+### File header (64 bytes, binary-verified — see Appendix A.3 in YSFC_FORGE_FULL_CONTEXT.md)
+
+| Offset | Hex | Size | Field | Notes |
+|---:|---:|---:|---|---|
+| 0 | 0x00 | 16 | Magic + null-pad | `YAMAHA-YSFC\x00\x00\x00\x00\x00` |
+| 16 | 0x10 | 16 | Version + null-pad | `5.1.2` (Montage M / MODX M); `5.0.1` (MODX); `4.0.5` (Montage) |
+| 32 | 0x20 | 4 | Catalogue size | `u32 BE` = block_count × 8; catalogue starts at 0x40 |
+| 36 | 0x24 | 12 | Reserved | all `0xFF` |
+| 48 | 0x30 | 4 | Library-info length | `u32 BE`; 241 b (Montage M / MODX M), 81 b (classic) |
+| 52 | 0x34 | 8 | Reserved | all `0xFF` |
+| 60 | 0x3C | 4 | Save counter | `u32 BE`; monotonically increasing — **not** Unix timestamp |
+
+### EPFM Entry record payload (binary-verified)
+
+| Rel | Size | Field | Notes |
+|---:|---:|---|---|
+| 0 | 4 | Blob size | `u32 BE` — DPFM blob size |
+| 4 | 4 | DPFM offset | `u32 BE` — offset within DPFM payload |
+| 9 | 1 | Constant | `0x40` (MODX validates) |
+| 11 | 1 | Dest slot | compact sequential index (0, 1, 2, …) |
+| 15 | 1 | Engine bits | `0x01`=AWM2/Drum, `0x02`=FM-X, `0x04`=AN-X; OR-combined |
+| 16 | 1 | Source flag | `0x00`=ESP Plugin, `0x02`=MODX hardware |
+| 27 | var | Name string | `"{idx}:{name_20ch_padded}:{name}\0"` NUL-terminated ASCII |
+
+Name string example: `"3:Acid Bass           :Acid Bass\0"` — long-name padded with spaces to 20 chars.
+
 ```
 YAMAHA-YSFC header
 ├── EPFM  Performance index

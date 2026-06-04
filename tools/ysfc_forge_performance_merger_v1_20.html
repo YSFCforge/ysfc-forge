@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>YSFC Forge Performance Merger v1.19</title>
+<title>YSFC Forge Performance Merger v1.20</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ═══════════════════════════════════════════════════
-   DESIGN SYSTEM — YSFC Forge Performance Merger v1.19
+   DESIGN SYSTEM — YSFC Forge Performance Merger v1.20
    Font: DM Mono + DM Sans
    Motiv: Synthlab Dark / Clean Light
 ═══════════════════════════════════════════════════ */
@@ -837,7 +837,7 @@ main { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
 
 <!-- ── HEADER ────────────────────────────────────── -->
 <header>
-  <div class="logo">YSFC<span class="logo-dot">.</span>FORGE Performance Merger <span class="logo-ver">v1.19</span></div>
+  <div class="logo">YSFC<span class="logo-dot">.</span>FORGE Performance Merger <span class="logo-ver">v1.20</span></div>
   <div class="header-sub" data-i18n="subtitle">Yamaha MODX M / Montage M / ESP Plugin</div>
   <div class="header-spacer"></div>
   <div class="header-controls">
@@ -1048,6 +1048,15 @@ main { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
       <div class="modal-section-label" data-i18n="changelog">Versionshistorik</div>
       <div class="changelog">
         <div class="cl-version">
+          <div class="cl-head"><span class="cl-ver">v1.20</span><span class="cl-date">2026-06-04</span></div>
+          <ul>
+            <li>Buggfix: engine-etikett visades fel för AN-X-performances (visades som AWM2 eller FM-X)</li>
+            <li>detectEngines() ersatt med detectEnginesFromBlob() som läser blob[6700] direkt — samma auktoritativa byte som entrEngineFlags() redan använde korrekt</li>
+            <li>Storleksheuristiken (detectEnginesSizeHeuristic) behålls som fallback för trunkerade blobbar</li>
+            <li>partDataSize-bas rättad från 6708 till 6701 (Performance Common = 6701 bytes)</li>
+          </ul>
+        </div>
+        <div class="cl-version">
           <div class="cl-head"><span class="cl-ver">v1.19</span><span class="cl-date">2026-05-04</span></div>
           <ul>
             <li>KRITISK FIX: makeEntrData genererar nu korrekt EPFM Entr-record metadata (rot-orsak till "Storage read/write error")</li>
@@ -1111,7 +1120,7 @@ main { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
       </div>
       <p class="modal-footer-note">
         Yamaha MODX M8 och ESP plugin — referensenhet. Ej officiellt dokumenterat av Yamaha.<br>
-        Serializer v5.10 | Steg 1–69max | ~99% täckning | Container-fix v6.0 | Entr-metadata-fix v1.19
+        Serializer v5.10 | Steg 1–69max | ~99% täckning | Container-fix v6.0 | Entr-metadata-fix v1.19 | Engine-detection-fix v1.20
       </p>
     </div>
   </div>
@@ -1340,7 +1349,45 @@ function readString(u8, offset) {
   return s || t('no_name');
 }
 
-function detectEngines(partDataSize, numParts) {
+// Detect engines from perf blob using the authoritative engine-type byte at
+// blob[6700] (0=AWM2, 1=Drum, 2=FM-X, 3=AN-X).
+// For multi-part performances, subsequent parts are detected via the sub-blob
+// pointer scan in entrEngineFlags() — we reuse the same logic here for the
+// display label. Falls back to detectEnginesSizeHeuristic() for blobs that
+// are too short to contain blob[6700] (should never happen in practice).
+// v1.20: replaces the old size-heuristic as primary detection path.
+function detectEnginesFromBlob(perfBytes) {
+  const ENG_NAME = ['AWM2', 'Drum', 'FM-X', 'AN-X'];
+  if (!perfBytes || perfBytes.length <= 6700) return null; // trigger fallback
+
+  // Part 1: read blob[6700] directly
+  const e0 = perfBytes[6700];
+  const firstName = ENG_NAME[e0];
+  if (!firstName) return null;
+
+  const partCount = (perfBytes[6695] > 0 && perfBytes[6695] <= 16) ? perfBytes[6695] : 1;
+  if (partCount === 1) return [firstName];
+
+  // Multi-part: scan for sub-blob separators (0x00 0x00 0x00 0x15 pattern)
+  // Engine byte sits 1 byte before this marker.
+  // This mirrors the logic in entrEngineFlags().
+  const found = new Set([firstName]);
+  let scanned = 0;
+  for (let i = 7000; i < perfBytes.length - 4 && scanned < partCount - 1; i++) {
+    if (perfBytes[i]===0 && perfBytes[i+1]===0 && perfBytes[i+2]===0 && perfBytes[i+3]===0x15) {
+      const eb = perfBytes[i - 1];
+      const name = ENG_NAME[eb];
+      if (name) found.add(name);
+      scanned++;
+      i += 3;
+    }
+  }
+  return [...found].sort();
+}
+
+// Size-heuristic fallback — used only when blob[6700] is unavailable.
+// Retained for robustness; primary detection is now detectEnginesFromBlob().
+function detectEnginesSizeHeuristic(partDataSize, numParts) {
   if (numParts <= 0 || partDataSize <= 0) return [t('unknown_eng')];
   const eq = partDataSize / numParts;
 
@@ -1497,11 +1544,14 @@ function parseYSFC(arrayBuffer) {
     const srcDpOff = pos + 8; // payload-relative offset of this blob in SOURCE DPFM (= Entr.dp_off)
     const perfBytes = dpfmData.slice(pos+8, pos+8+plen);
     const name = readString(perfBytes, 4);
-    const partDataSize = plen - 6708;
+    const partDataSize = plen - 6701;  // Performance Common = 6701 bytes
     const rawByte6695 = plen > 6695 ? perfBytes[6695] : 1;
     const numParts = rawByte6695 || 1;
     const sceneCount = rawByte6695 || 1;
-    const engines = detectEngines(partDataSize, numParts);
+    // v1.20: read blob[6700] (authoritative engine-type byte) as primary detection;
+    // fall back to size heuristic only for blobs too short to contain that byte.
+    const engines = detectEnginesFromBlob(perfBytes)
+                 || detectEnginesSizeHeuristic(partDataSize, numParts);
     const category = plen > 62 ? perfBytes[62] : 255;
     performances.push({ name, engines, numParts, sceneCount, category, rawBytes: perfBytes, plen, dpfmIndex: i, srcDpOff });
     pos += 8 + plen;
