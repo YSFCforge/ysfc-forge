@@ -1143,15 +1143,36 @@ function applyI18n() {
     return runs;
   }
 
-  // Search for "N:Name" or "NN:Name" or "NNN:Name" pattern in the rec payload.
-  // This is the universal Yamaha perf-name format ("category:name").
-  // Returns just the "Name" part (stopping at next ':' or NUL), or null if not found.
+  // Yamaha EPFM Entr name field (NUL-terminated), common shapes:
+  //   "66:Performance Name"
+  //   "<0:SHORT:Full Performance Name"  (library prefix + shorthand + full title)
+  // Scan printable colon-separated strings; use the segment after the *last* colon.
   function findCatNamePattern(recPayload) {
-    const s = encA.decode(recPayload);
-    // Pattern: 1-3 digits, ':', then run of non-':', non-NUL characters
-    const re = /(\d{1,3}):([^\x00:]+)/;
-    const m = re.exec(s);
-    if (m) return m[2].trim();
+    const candidates = [];
+    let pos = 0;
+    while (pos < recPayload.length) {
+      let end = pos;
+      while (end < recPayload.length && recPayload[end] !== 0) end++;
+      if (end > pos) {
+        const str = encA.decode(recPayload.slice(pos, end)).trim();
+        if (str.length >= 3 && str.includes(":") && /^[\x20-\x7E]+$/.test(str)) {
+          candidates.push(str);
+        }
+      }
+      pos = end + 1;
+    }
+    if (!candidates.length) return null;
+
+    // Prefer "cat:short:full" over accidental digit-colon matches in binary padding.
+    candidates.sort((a, b) => {
+      const ac = (a.match(/:/g) || []).length;
+      const bc = (b.match(/:/g) || []).length;
+      if (bc !== ac) return bc - ac;
+      return b.length - a.length;
+    });
+
+    const parts = candidates[0].split(":");
+    if (parts.length >= 2) return parts[parts.length - 1].trim();
     return null;
   }
 
