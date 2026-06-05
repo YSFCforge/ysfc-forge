@@ -200,6 +200,16 @@ The name string format is `"{slot_index}:{perf_name_padded_to_20ch}:{perf_name}\
 
 For a single-performance file the EPFM contains exactly one Entry record. For library files with multiple performances there is one Entry per performance.
 
+## 1.2a v4.x file format differences (Montage classic / MODX classic) ★★★★☆
+
+Files with version string `4.0.5` (Montage classic) or `5.0.1` (MODX classic) differ from the v5.x layout in two important ways:
+
+**EPFM directory structure:** In v4.x files the EPFM chunk at `d[64]` is the directory structure itself — its payload contains chunk pointers (EARP, ESYS, EFVT, DPFM, …), not Entr records. The actual EPFM chunk containing Entr records is embedded further into the file (typically around offset `0x171`) and is not listed in the directory. To find it, scan forward from offset ~200 for the next `'EPFM'` tag with a valid `count + 'Entr'` payload.
+
+**Engine-type byte offset:** In v4.x blobs the engine-type byte sits at `blob[6698]`, not `blob[6700]` as in v5.x. The sub-blob separator `0x00000015` follows immediately at `blob[6699:6703]`.
+
+**Recommendation:** Always use EPFM `rec[15]` (engine bits: `0x01`=AWM2/Drum, `0x02`=FM-X, `0x04`=AN-X) as the primary engine source when reading files of unknown version — it is correct in both v4.x and v5.x. Use `blob[6700]` only as a fallback for confirmed v5.x files.
+
 ## 1.3 DPFM chunk ★★★★★
 
 DPFM (Data Performance) contains the actual performance data. The chunk header is followed by a sequence of sub-blobs (one per performance).

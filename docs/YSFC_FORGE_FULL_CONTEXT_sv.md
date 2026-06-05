@@ -200,6 +200,16 @@ Namnsträngens format är `"{slot_index}:{perf_namn_paddad_20_tecken}:{perf_namn
 
 För en single-performance-fil innehåller EPFM exakt en Entry-record. För library-filer med flera performances finns en Entry per performance.
 
+## 1.2a v4.x-filformatsskillnader (Montage classic / MODX classic) ★★★★☆
+
+Filer med versionssträng `4.0.5` (Montage classic) eller `5.0.1` (MODX classic) skiljer sig från v5.x-layouten på två viktiga sätt:
+
+**EPFM directory-struktur:** I v4.x-filer är EPFM-chunken på `d[64]` själva directory-strukturen — dess payload innehåller chunk-pekare (EARP, ESYS, EFVT, DPFM, …), inte Entr-poster. Den faktiska EPFM-chunken med Entr-poster är inbäddad längre in i filen (typiskt runt offset `0x171`) och finns inte listad i directory. För att hitta den: skanna framåt från offset ~200 efter nästa `'EPFM'`-tag med giltig `count + 'Entr'`-payload.
+
+**Engine-type-bytens offset:** I v4.x-blobbar sitter engine-type-byten på `blob[6698]`, inte `blob[6700]` som i v5.x. Sub-blob-separatorn `0x00000015` följer direkt på `blob[6699:6703]`.
+
+**Rekommendation:** Använd alltid EPFM `rec[15]` (engine bits: `0x01`=AWM2/Drum, `0x02`=FM-X, `0x04`=AN-X) som primärkälla för engine-typ vid läsning av filer med okänd version — det är korrekt i både v4.x och v5.x. Använd `blob[6700]` bara som fallback för bekräftade v5.x-filer.
+
 ## 1.3 DPFM chunk ★★★★★
 
 DPFM (Data Performance) innehåller den faktiska performance-datan. Chunk-headern följs av en sekvens av sub-blobs (en per performance).

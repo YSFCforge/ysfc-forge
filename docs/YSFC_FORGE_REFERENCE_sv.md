@@ -88,6 +88,8 @@ upplösning. Per-performance W/S/Arp UI-chip villkoras av samma scanners.
 
 Namnsträngexempel: `"3:Acid Bass           :Acid Bass\0"` — långt namn paddas med mellanslag till 20 tecken.
 
+**v4.x-formatnotering (Montage classic `4.0.5` / MODX classic `5.0.1`):** Engine-type-byten sitter på `blob[6698]`, inte `blob[6700]`. EPFM directory-struktur skiljer sig — se avsnitt 1.2a i YSFC_FORGE_FULL_CONTEXT_sv.md. Använd alltid EPFM `rec[15]` som engine-källa före `blob[6700]` när filversion är okänd.
+
 ```
 YAMAHA-YSFC header
 ├── EPFM  Performance index

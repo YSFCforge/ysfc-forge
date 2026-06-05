@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>YSFC Forge Performance Editor v5.1</title>
+<title>YSFC Forge Performance Editor v5.3</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -815,7 +815,7 @@ main > * { min-width: 0; min-height: 0; }
 <body>
 
 <header>
-  <div class="logo">YSFC<span class="logo-dot">.</span>FORGE<span class="logo-sub">Performance Editor v5.1</span></div>
+  <div class="logo">YSFC<span class="logo-dot">.</span>FORGE<span class="logo-sub">Performance Editor v5.3</span></div>
   <span id="enginePill" class="engine-pill hidden"></span>
   <div class="h-gap"></div>
 
@@ -888,9 +888,16 @@ main > * { min-width: 0; min-height: 0; }
 <div class="toast" id="toast"></div>
 <script>
 // ═══════════════════════════════════════════════════════════════════
-// YSFC Forge Performance Editor v5.1
+// YSFC Forge Performance Editor v5.3
 // Engines: AWM2 · FM-X · AN-X · Drum
 // Based on serializer v5.10+ — all binary-verified offsets
+//
+// v5.3: Buggfix — performance-namn klipptes vid 18 tecken (blob[4..21]).
+// Yamaha-namn kan vara upp till 20 tecken. Gränsen höjd till k<26
+// (läser till NUL, max 22 tecken med marginal).
+// Exempel: "Italian XL Ethereal" (19 ch) klipptes till "Italian XL Etherea".
+// (Engine-buggarna från v5.2 ingår — EPFM rec[15] som primärkälla,
+//  v4.x EPFM-scan-fallback, blob[6700] sekundär.)
 // ═══════════════════════════════════════════════════════════════════
 
 // ─── THEME ────────────────────────────────────────────────────────
@@ -1306,6 +1313,78 @@ function parseAllPerfs(buf) {
     dpfmAbsOff = best;
   }
 
+  // Read EPFM engine bits (rec[15]) per performance.
+  // v5.3: EPFM is the authoritative engine source and works for both
+  // v4.x (Montage/MODX classic) and v5.x (Montage M/MODX M) files.
+  // blob[6700] sits at different offsets in the two formats, so reading
+  // from EPFM rec[15] is the safe cross-format approach.
+  //   rec[15]: 0x01=AWM2/Drum, 0x02=FM-X, 0x04=AN-X
+  //
+  // v4.x layout: EPFM chunk at d[64] IS the directory (contains chunk pointers).
+  // The actual Entr records are in a second EPFM chunk pointed to by the catalog
+  // embedded inside the first. We find them by scanning for 'Entr' records directly.
+  // v5.x layout: dirChunkPos('EPFM') returns the chunk with Entr records directly.
+  const epfmEngineBits = [];
+  {
+    // Strategy: find the EPFM chunk that contains 'Entr' records.
+    // Try dirChunkPos first (v5.x). If that fails or yields no Entr,
+    // scan the inline EPFM payload at d[64] for a nested EPFM with Entr records.
+    function readEntrBits(ep) {
+      // ep = EPFM payload (after tag+size). Returns array of rec[15] values.
+      const bits = [];
+      const count = (ep[0]<<24)|(ep[1]<<16)|(ep[2]<<8)|ep[3];
+      if (count < 1 || count > 256) return bits;
+      const mark = [0x45,0x6e,0x74,0x72]; // 'Entr'
+      if (ep[4]!==mark[0]||ep[5]!==mark[1]||ep[6]!==mark[2]||ep[7]!==mark[3]) return bits;
+      let epos = 8; // skip count(4) + global 'Entr' tag(4)
+      for (let i = 0; i < count && epos + 4 <= ep.length; i++) {
+        const rlen = (ep[epos]<<24)|(ep[epos+1]<<16)|(ep[epos+2]<<8)|ep[epos+3];
+        if (rlen < 8 || rlen > 300) break;
+        epos += 4;
+        bits.push(ep.length > epos + 15 ? ep[epos + 15] : 0);
+        epos += rlen;
+        if (i < count - 1 && epos + 4 <= ep.length &&
+            ep[epos]===mark[0] && ep[epos+1]===mark[1] &&
+            ep[epos+2]===mark[2] && ep[epos+3]===mark[3]) {
+          epos += 4;
+        }
+      }
+      return bits;
+    }
+
+    // Try v5.x path: EPFM pointed to by directory
+    const epfmAbsOff = dirChunkPos(d, 'EPFM');
+    if (epfmAbsOff >= 0) {
+      const bits = readEntrBits(d.subarray(epfmAbsOff + 8));
+      if (bits.length > 0) epfmEngineBits.push(...bits);
+    }
+
+    // Try v4.x path: EPFM at d[64] contains a catalog; scan its payload for
+    // a nested EPFM chunk that holds the actual Entr records.
+    if (epfmEngineBits.length === 0 &&
+        d[64]===0x45&&d[65]===0x50&&d[66]===0x46&&d[67]===0x4D) {
+      const epfmSz = (d[68]<<24)|(d[69]<<16)|(d[70]<<8)|d[71];
+      // Scan the EPFM payload for a nested 'EPFM' chunk
+      const limit = Math.min(72 + epfmSz, d.length - 8);
+      for (let i = 72; i < limit; i++) {
+        if (d[i]===0x45&&d[i+1]===0x50&&d[i+2]===0x46&&d[i+3]===0x4D) {
+          const bits = readEntrBits(d.subarray(i + 8));
+          if (bits.length > 0) { epfmEngineBits.push(...bits); break; }
+        }
+      }
+      // v4.x fallback: the actual EPFM Entr chunk is at the address stored in
+      // the catalog. Scan from the start of the non-directory file area.
+      if (epfmEngineBits.length === 0) {
+        for (let i = 200; i < Math.min(d.length - 8, 2000); i++) {
+          if (d[i]===0x45&&d[i+1]===0x50&&d[i+2]===0x46&&d[i+3]===0x4D) {
+            const bits = readEntrBits(d.subarray(i + 8));
+            if (bits.length > 0) { epfmEngineBits.push(...bits); break; }
+          }
+        }
+      }
+    }
+  }
+
   // DPFM layout: tag(4) + size(4) + count(4) + ['Data'(4) + plen(4) + data(plen)] × N
   const dpfm = d.subarray(dpfmAbsOff + 8);
   const n = (dpfm[0]<<24)|(dpfm[1]<<16)|(dpfm[2]<<8)|dpfm[3];
@@ -1322,13 +1401,16 @@ function parseAllPerfs(buf) {
     // Create a slice (COPY) into raw — we'll write back at absStart on export
     const absStart = dpfmAbsOff + 8 + dataStart;
     const bytes = new Uint8Array(d.buffer, d.byteOffset + absStart, plen).slice();
+    // Read name from blob[4] until NUL — up to 20 chars (Yamaha max perf name length).
+    // Previously capped at k<22 (18 chars) which truncated 19-20 char names.
     let name = '';
-    for (let k = 4; k < 22 && bytes[k] !== 0; k++) {
+    for (let k = 4; k < 26 && bytes[k] !== 0; k++) {
       name += String.fromCharCode(bytes[k]);
     }
     name = name.trim() || `(perf ${i+1})`;
     perfs.push({
       name, bytes, plen,
+      epfmBits: epfmEngineBits[i] ?? null,  // rec[15] from EPFM, null if unavailable
       dpfmBufOffset: dataStart,
       absStart,  // absolute offset in raw file
     });
@@ -1339,13 +1421,26 @@ function parseAllPerfs(buf) {
 }
 
 function detectEngine(perf) {
+  // v5.3: EPFM rec[15] is the authoritative engine source — it is correct
+  // in both v4.x (Montage/MODX classic) and v5.x (Montage M/MODX M) files.
+  // blob[6700] sits at a different offset in v4.x vs v5.x, making it
+  // unreliable as a cross-format primary. EPFM bits: 0x01=AWM2, 0x02=FM-X, 0x04=AN-X.
+  if (perf.epfmBits != null) {
+    const eb = perf.epfmBits;
+    if (eb & 0x04) return 'ANX';
+    if (eb & 0x02) return 'FMX';
+    if (eb & 0x01) return 'AWM2';  // includes Drum (Drum uses 0x01)
+  }
+  // Fallback: blob[6700] — correct for v5.x files, wrong for v4.x
   const b = perf.bytes;
-  const eb = b[6700];
-  if (eb === 0) return 'AWM2';
-  if (eb === 1) return 'Drum';
-  if (eb === 2) return 'FMX';
-  if (eb === 3) return 'ANX';
-  // Fallback: check name
+  if (b.length > 6700) {
+    const eb = b[6700];
+    if (eb === 0) return 'AWM2';
+    if (eb === 1) return 'Drum';
+    if (eb === 2) return 'FMX';
+    if (eb === 3) return 'ANX';
+  }
+  // Last resort: name heuristic
   const n = perf.name;
   if (n.includes('(AN-X)')) return 'ANX';
   if (n.includes('(FM-X)')) return 'FMX';

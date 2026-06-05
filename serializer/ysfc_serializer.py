@@ -2789,25 +2789,58 @@ NOISE_BLOB_COMMON = ANX_PERF_NOISE  # samma set, alla engines
 NOISE_FILE = {63, 399}  # file-level save counters (LSB of u32be at +60 and +396)
 
 # ── FILE-LEVEL STRUCTURE ★★★★★ ────────────────────────────────────────────
-# YSFC Y2L file layout (header always 13150 bytes worth of structure before chunks):
-#   [0:11]    'YAMAHA-YSFC' magic
-#   [11:60]   version + padding
-#   [60:64]   u32be save counter (monotoniskt ökande)
-#   [64:108]  Chunk catalog: 6 entries × 8 bytes (tag + u32be offset)
-#   [108:353] 0xFF padding
-#   [353:430] EPFM chunk
-#   [430:484] ESYS chunk
-#   [484:655] EFVT chunk
-#   [655:?]   DPFM chunk (contains blob-data)
-#   [?:?]     DSYS chunk
-#   [?:end]   DFVT chunk
+# YSFC Y2L/Y2U file header (64 bytes, abs offsets) — Steg 1-verifierad mot
+# 1930 testfiler (2026-05). Identisk layout för Y2L och Y2U; ärver from
+# YSFC 4.0.5 / 5.0.1 men med utökad library-info-area.
+#
+#   abs    fält                                  värde / not
+#   ────────────────────────────────────────────────────────────────────────
+#   0x00   magic + null-pad (16 b)              b'YAMAHA-YSFC\x00\x00\x00\x00\x00'
+#   0x10   version-sträng + null-pad (16 b)     b'5.1.2' för Montage M / MODX M
+#                                               (4.0.5 = Montage classic,
+#                                                5.0.1 = MODX classic)
+#   0x20   catalogue size  (u32 BE)             = antal_block × 8
+#   0x24   reserved padding (12 b)              alla 0xff
+#   0x30   library-info length (u32 BE)         baseline 241 b (tom),
+#                                               4230 b observerad med
+#                                               populerade library-slots
+#   0x34   reserved padding (8 b)               alla 0xff
+#   0x3C   timestamp / save counter (u32 BE)    monotont ökande counter,
+#                                               INTE Unix-epoch
+#   0x40   katalog-poster                       N × (4-byte ID + u32 BE offset)
+#   0x40 + catalogue_size
+#          library-info-area                    240 × 0xff + 1 × 0x00 = 241 b
+#                                               i baseline (24 library-slots
+#                                               × 10 reserverade bytes + 1
+#                                               separator-byte)
+#   0x40 + catalogue_size + libinfo_length
+#          första block-chunk (EPFM)
 #
 # Bekräftat: INGEN kryptografisk checksum eller CRC i formatet.
-# Endast save counters vid file[60:64] och file[396:400] (= counter-1) varierar.
-FILE_SAVE_COUNTER_POS = 60       # u32be, 4 bytes
+# Save counter vid file[0x3c:0x40] (= file[60:64]) ökar för varje export;
+# en inner counter vid file[396:400] följer (= huvudcounter - 1).
+# Se "Appendix A: Steg 1 – Header-verifiering" i YSFC_FORGE_FULL_CONTEXT.md
+# för full hypotes-genomgång och korpus-statistik.
+#
+# Observerade block-ID:n i korpus (1930 filer):
+#   ALLTID: EPFM/DPFM, ESYS/DSYS, EFVT/DFVT  (6 block, cat_size=48)
+#   SmartMorph-filer: + ESPG/DSPG, ESOM/DSOM (10 block, cat_size=80)
+#   Live Set: + ELST/DLST                    (8 block, cat_size=64)
+#   Analysis_Set_v1: + ESON/DSON             (12 block, cat_size=96)
+FILE_SAVE_COUNTER_POS = 60       # u32be @ 0x3C, 4 bytes — Steg 1 verifierad
 FILE_INNER_SAVE_COUNTER_POS = 396  # u32be, 4 bytes (= file[60:64] - 1)
-CHUNK_CATALOG_POS = 64           # 6 × 8 bytes
+CHUNK_CATALOG_POS = 64           # 0x40, 6×8 bytes för baseline (EPFM..DFVT)
 CHUNK_NAMES = ['EPFM', 'ESYS', 'EFVT', 'DPFM', 'DSYS', 'DFVT']
+
+# Header-fält-offsets (Steg 1 verifierade konstanter)
+YSFC_MAGIC_POS         = 0x00    # 16 bytes magic + null-pad
+YSFC_VERSION_POS       = 0x10    # 16 bytes version + null-pad
+YSFC_CAT_SIZE_POS      = 0x20    # u32be: catalogue size (= entries × 8)
+YSFC_LIBINFO_LEN_POS   = 0x30    # u32be: library-info area length
+YSFC_TIMESTAMP_POS     = 0x3C    # u32be: save counter (alias FILE_SAVE_COUNTER_POS)
+YSFC_CATALOG_POS       = 0x40    # första katalogposten
+YSFC_VERSION_M_SERIES  = b'5.1.2'  # förväntad version för Y2L/Y2U
+YSFC_LIBINFO_EMPTY_LEN = 241     # tom library-info: 240 × 0xff + 1 × 0x00
 
 def read_save_counter(file_data: bytes) -> int:
     """Läs save counter från file[60:64] (u32be)."""
@@ -2998,6 +3031,12 @@ def read_assign_knob_name(blob: bytes, knob_idx: int) -> str:
 # ── KRITISKA METADATA-BYTES (måste sättas korrekt vid skrivning) ──────────
 # Engine Type per Part 1, indikerar vilken engine sub-blob 2 innehåller:
 ENGINE_TYPE_BYTE = 6700  # u8 enum: 0=AWM2, 1=Drum, 2=FMX, 3=ANX  ★★★★★
+                         # GÄLLER ENDAST v5.x (MODX M / Montage M, version 5.1.2).
+                         # I v4.x-filer (MODX classic 5.0.1 / Montage classic 4.0.5)
+                         # sitter engine-type-byten på offset 6698, inte 6700.
+                         # Använd EPFM rec[15] (engine bits) som primärkälla vid läsning
+                         # av okänd filversion — det är korrekt i båda formaten.
+                         # EPFM bits: 0x01=AWM2/Drum, 0x02=FM-X, 0x04=AN-X.
 ENGINE_TYPE_VALUES = {0: 'AWM2', 1: 'Drum', 2: 'FMX', 3: 'ANX'}
 ENGINE_TYPE_BY_NAME = {v: k for k, v in ENGINE_TYPE_VALUES.items()}
 

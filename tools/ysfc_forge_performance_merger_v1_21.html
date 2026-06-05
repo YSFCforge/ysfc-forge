@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>YSFC Forge Performance Merger v1.20</title>
+<title>YSFC Forge Performance Merger v1.21</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ═══════════════════════════════════════════════════
-   DESIGN SYSTEM — YSFC Forge Performance Merger v1.20
+   DESIGN SYSTEM — YSFC Forge Performance Merger v1.21
    Font: DM Mono + DM Sans
    Motiv: Synthlab Dark / Clean Light
 ═══════════════════════════════════════════════════ */
@@ -837,7 +837,7 @@ main { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
 
 <!-- ── HEADER ────────────────────────────────────── -->
 <header>
-  <div class="logo">YSFC<span class="logo-dot">.</span>FORGE Performance Merger <span class="logo-ver">v1.20</span></div>
+  <div class="logo">YSFC<span class="logo-dot">.</span>FORGE Performance Merger <span class="logo-ver">v1.21</span></div>
   <div class="header-sub" data-i18n="subtitle">Yamaha MODX M / Montage M / ESP Plugin</div>
   <div class="header-spacer"></div>
   <div class="header-controls">
@@ -1048,6 +1048,15 @@ main { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
       <div class="modal-section-label" data-i18n="changelog">Versionshistorik</div>
       <div class="changelog">
         <div class="cl-version">
+          <div class="cl-head"><span class="cl-ver">v1.21</span><span class="cl-date">2026-06-04</span></div>
+          <ul>
+            <li>Buggfix: v4.x-filer (Montage/MODX classic) visade AN-X som AWM2 — blob[6700] sitter på offset 6698 i v4.x-format, inte 6700</li>
+            <li>detectEnginesFromBlob() tar nu emot epfmBits (EPFM rec[15]) som primärkälla — korrekt för både v4.x och v5.x</li>
+            <li>parseYSFC() slår upp rätt EPFM-post via byDpOff-map och skickar med epfmBits till engine-detektionen</li>
+            <li>blob[6700] och storleksheuristiken behålls som fallback</li>
+          </ul>
+        </div>
+        <div class="cl-version">
           <div class="cl-head"><span class="cl-ver">v1.20</span><span class="cl-date">2026-06-04</span></div>
           <ul>
             <li>Buggfix: engine-etikett visades fel för AN-X-performances (visades som AWM2 eller FM-X)</li>
@@ -1120,7 +1129,7 @@ main { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
       </div>
       <p class="modal-footer-note">
         Yamaha MODX M8 och ESP plugin — referensenhet. Ej officiellt dokumenterat av Yamaha.<br>
-        Serializer v5.10 | Steg 1–69max | ~99% täckning | Container-fix v6.0 | Entr-metadata-fix v1.19 | Engine-detection-fix v1.20
+        Serializer v5.10 | Steg 1–69max | ~99% täckning | Container-fix v6.0 | Entr-metadata-fix v1.19 | Engine-detection-fix v1.21
       </p>
     </div>
   </div>
@@ -1349,18 +1358,26 @@ function readString(u8, offset) {
   return s || t('no_name');
 }
 
-// Detect engines from perf blob using the authoritative engine-type byte at
-// blob[6700] (0=AWM2, 1=Drum, 2=FM-X, 3=AN-X).
-// For multi-part performances, subsequent parts are detected via the sub-blob
-// pointer scan in entrEngineFlags() — we reuse the same logic here for the
-// display label. Falls back to detectEnginesSizeHeuristic() for blobs that
-// are too short to contain blob[6700] (should never happen in practice).
-// v1.20: replaces the old size-heuristic as primary detection path.
-function detectEnginesFromBlob(perfBytes) {
+// Detect engines from perf blob.
+// v1.21: EPFM rec[15] (epfmBits) used as primary engine source — correct for
+// both v4.x (Montage/MODX classic) and v5.x (Montage M/MODX M) files.
+// blob[6700] sits at a different offset in v4.x, making it unreliable as primary.
+// Falls back to detectEnginesSizeHeuristic() for blobs too short to contain blob[6700].
+//   epfmBits: 0x01=AWM2/Drum, 0x02=FM-X, 0x04=AN-X (OR-combined for multi-engine)
+function detectEnginesFromBlob(perfBytes, epfmBits) {
   const ENG_NAME = ['AWM2', 'Drum', 'FM-X', 'AN-X'];
-  if (!perfBytes || perfBytes.length <= 6700) return null; // trigger fallback
 
-  // Part 1: read blob[6700] directly
+  // Primary: EPFM rec[15]
+  if (epfmBits != null) {
+    const found = [];
+    if (epfmBits & 0x04) found.push('AN-X');
+    if (epfmBits & 0x02) found.push('FM-X');
+    if (epfmBits & 0x01) found.push('AWM2');
+    if (found.length) return found.sort();
+  }
+
+  // Secondary: blob[6700] — correct for v5.x files only
+  if (!perfBytes || perfBytes.length <= 6700) return null;
   const e0 = perfBytes[6700];
   const firstName = ENG_NAME[e0];
   if (!firstName) return null;
@@ -1369,8 +1386,6 @@ function detectEnginesFromBlob(perfBytes) {
   if (partCount === 1) return [firstName];
 
   // Multi-part: scan for sub-blob separators (0x00 0x00 0x00 0x15 pattern)
-  // Engine byte sits 1 byte before this marker.
-  // This mirrors the logic in entrEngineFlags().
   const found = new Set([firstName]);
   let scanned = 0;
   for (let i = 7000; i < perfBytes.length - 4 && scanned < partCount - 1; i++) {
@@ -1531,6 +1546,8 @@ function parseYSFC(arrayBuffer) {
   if (!dpfmRef) throw new Error(t('err_dpfm'));
   const best = dpfmRef.len !== undefined ? dpfmRef : { pos: dpfmRef.pos, len: dpfmRef.size };
 
+  const { entries: epfmEntries, byDpOff } = getEpfmEntries(u8);
+
   const dpfmData = u8.slice(best.pos+8, best.pos+8+best.len);
   const dpfmDV = new DataView(dpfmData.buffer, dpfmData.byteOffset, dpfmData.byteLength);
   const count = dpfmDV.getUint32(0, false);
@@ -1548,9 +1565,13 @@ function parseYSFC(arrayBuffer) {
     const rawByte6695 = plen > 6695 ? perfBytes[6695] : 1;
     const numParts = rawByte6695 || 1;
     const sceneCount = rawByte6695 || 1;
-    // v1.20: read blob[6700] (authoritative engine-type byte) as primary detection;
-    // fall back to size heuristic only for blobs too short to contain that byte.
-    const engines = detectEnginesFromBlob(perfBytes)
+
+    // v1.21: EPFM rec[15] (epfmBits) used as primary engine source — correct for
+    // both v4.x (Montage/MODX classic) and v5.x (Montage M/MODX M). blob[6700]
+    // sits at a different offset in v4.x, making it unreliable as primary.
+    const epfmEd = byDpOff?.get(srcDpOff) ?? epfmEntries[i];
+    const epfmBits = epfmEd && epfmEd.length > 15 ? epfmEd[15] : null;
+    const engines = detectEnginesFromBlob(perfBytes, epfmBits)
                  || detectEnginesSizeHeuristic(partDataSize, numParts);
     const category = plen > 62 ? perfBytes[62] : 255;
     performances.push({ name, engines, numParts, sceneCount, category, rawBytes: perfBytes, plen, dpfmIndex: i, srcDpOff });
