@@ -61,7 +61,7 @@ Reverse-engineered from scratch through binary analysis of Yamaha's undocumented
 
 ### Edit a performance
 
-1. Download [`tools/ysfc_forge_performance_editor_v5_3.html`](tools/ysfc_forge_performance_editor_v5_3.html)
+1. Download [`tools/ysfc_forge_performance_editor_v5_5.html`](tools/ysfc_forge_performance_editor_v5_5.html)
 2. Open it in your browser
 3. Click **Open Y2L** and choose a file
 4. Adjust parameters with sliders
@@ -77,7 +77,7 @@ Reverse-engineered from scratch through binary analysis of Yamaha's undocumented
 |-|-|
 |[**Performance Merger**](tools/ysfc_forge_performance_merger_v1_21.html)|Merge performances from multiple Y2L/Y2U files|
 |[**Library Builder**](tools/ysfc_forge_library_builder_v13_20.html)|Merge performances from multiple Y2L/Y2U files including dependencies|
-|[**Performance Editor**](tools/ysfc_forge_performance_editor_v5_3.html)|Edit FM-X, AWM2 and AN-X parameters in the browser|
+|[**Performance Editor**](tools/ysfc_forge_performance_editor_v5_5.html)|Edit FM-X, AWM2 and AN-X parameters in the browser|
 
 ### Experimental / Extra Tools
 
