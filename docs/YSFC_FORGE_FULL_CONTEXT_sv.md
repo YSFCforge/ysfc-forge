@@ -194,9 +194,11 @@ Varje Entry-posts payload (binärverifierad mot MODX M-filer):
 | 19 | 6 | Padding | alla `0x00` |
 | 25 | 1 | Konstant | `0x30` |
 | 26 | 1 | Slot-flagga | `0x00` (förenklat) |
-| 27 | var | Namnsträng | `"IDX:LångtNamn(20 tecken paddad):KortNamn\0"` — NUL-terminerad ASCII |
+| 27 | var | Namnsträng | `"IDX:KortNamn:VisningsNamn\0"` — NUL-terminerad ASCII |
 
-Namnsträngens format är `"{slot_index}:{perf_namn_paddad_20_tecken}:{perf_namn}\0"`. Exempel: `"3:Acid Bass           :Acid Bass\0"`. Det långa namnfältet är vänsterjusterat och mellanslags-paddat till exakt 20 tecken; det korta namnfältet är namnet utan padding.
+Namnsträngens format är `"{slot_index}:{kort_namn}:{visnings_namn}\0"`. **Visningsnamnet** (tredje fältet) är det namn som MODX och ESP Plugin visar — det matchar `blob[4:]` exakt. **Kortnamnet** (andra/mellersta fältet) är en förkortad kategorietikett för internt bruk och är INTE visningsnamnet. Exempel: `"0:Italian XL:Italian Grand XL\0"` — kortnamn `"Italian XL"`, visningsnamn `"Italian Grand XL"`.
+
+Obs: tidigare versioner av denna dokumentation hade fältordningen omvänd (beskrevs som `"IDX:LångtNamn_paddat:KortNamn\0"`). Den beskrivningen var felaktig.
 
 För en single-performance-fil innehåller EPFM exakt en Entry-record. För library-filer med flera performances finns en Entry per performance.
 

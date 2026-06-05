@@ -4774,12 +4774,20 @@ def _build_catalog_entry(name: str, perf_size: int, dpfm_data_offset: int,
         [20:25] 0x00 padding
         [25] 0x30 constant
         [26] 0x00 slot flag (förenklat)
-        [27:] 'IDX:LongName(20ch padded):ShortName\0' name string
+        [27:] 'IDX:ShortName:LongName\0' name string
+              ShortName = truncated category/display label (no padding)
+              LongName  = full performance name = blob[4:] (up to 20 chars)
+              NOTE: earlier versions had this reversed. Binary-verified against
+              real ESP Plugin exports: short/category name is always second field,
+              full display name is always third field.
     """
     engine = _detect_engine_bits(blob) if blob else 0x01
-    long_name = name[:20].ljust(20)
-    short_name = name[:20]
-    text = f"{perf_index}:{long_name}:{short_name}\x00"
+    # Real format (binary-verified): "IDX:ShortName:LongName\0"
+    # ShortName = truncated category label (NOT padded)
+    # LongName  = full display name (matches blob[4:])
+    short_name = name[:20]   # category/short label
+    long_name  = name[:20]   # full display name (same here since we only have one name)
+    text = f"{perf_index}:{short_name}:{long_name}\x00"
     data = bytearray(27)
     struct.pack_into('>I', data, 0, perf_size)
     struct.pack_into('>I', data, 4, dpfm_data_offset)

@@ -84,9 +84,11 @@ upplösning. Per-performance W/S/Arp UI-chip villkoras av samma scanners.
 | 11 | 1 | Destinations-slot | kompakt sekventiellt index (0, 1, 2, …) |
 | 15 | 1 | Engine-bitar | `0x01`=AWM2/Drum, `0x02`=FM-X, `0x04`=AN-X; OR-kombinerat |
 | 16 | 1 | Käll-flagga | `0x00`=ESP Plugin, `0x02`=MODX hardware |
-| 27 | var | Namnsträng | `"{idx}:{namn_20_tecken_paddad}:{namn}\0"` NUL-terminerad ASCII |
+| 27 | var | Namnsträng | `"{idx}:{kort_namn}:{visnings_namn}\0"` NUL-terminerad ASCII |
 
-Namnsträngexempel: `"3:Acid Bass           :Acid Bass\0"` — långt namn paddas med mellanslag till 20 tecken.
+Namnsträngsformat: `"{slot_index}:{kort_namn}:{visnings_namn}\0"`. **Tredje fältet** är det faktiska visningsnamnet som visas i MODX/ESP Plugin (matchar `blob[4:]`). Andra fältet är ett kort kategorinamn. Exempel: `"0:Italian XL:Italian Grand XL\0"`.
+
+Obs: tidigare dokumentation beskrev detta som `"IDX:LångtNamn_paddat:KortNamn\0"` — fältordningen var omvänd och felaktig.
 
 **v4.x-formatnotering (Montage classic `4.0.5` / MODX classic `5.0.1`):** Engine-type-byten sitter på `blob[6698]`, inte `blob[6700]`. EPFM directory-struktur skiljer sig — se avsnitt 1.2a i YSFC_FORGE_FULL_CONTEXT_sv.md. Använd alltid EPFM `rec[15]` som engine-källa före `blob[6700]` när filversion är okänd.
 

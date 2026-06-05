@@ -3054,4 +3054,196 @@ When implementing an editor, dispatch on engine_type before interpreting these r
 
 ---
 
+# Appendix A: Step 1 — Header verification ★★★★★
+
+*Added 2026-05-20. This appendix is the result of an isolated verification
+pass of the Y2L/Y2U header against arachsys/montage-documented
+YSFC 4.0.5 (Montage classic) and 5.0.1 (MODX classic). Sections 1.1–1.7
+in the main document were written prior to this verification; this
+appendix takes precedence in case of any conflicts.*
+
+## A.1 Corpus and methodology
+
+**Corpus:** 1930 test files (1928 .Y2L + 2 .Y2U) exported from MODX M
+across test steps 1–113, plus the baseline pair
+`AWM2_00_Init_Normal.Y2L/.Y2U` and `SmartMorph.Y2L/.Y2U`.
+
+**Methodology:** Isolate one hypothesis per field. Read expected value via
+big-endian unpack from specific abs offset, compare against expected
+pattern from X7/X8/YSFC 5.0.1, aggregate across corpus.
+
+**Tools:** `test_step1_header.py` (per-file report) + `step1_aggregate.py`
+(corpus statistics) + `investigate_libinfo.py` (libinfo detail).
+
+## A.2 Per-hypothesis results
+
+| ID | Hypothesis | Status | Result |
+|----|------------|:------:|--------|
+| H1.1 | Magic = "YAMAHA-YSFC" @ 0x00..0x0F | 🟢 | 1930/1930 pass |
+| H1.2 | Version string @ 0x10..0x1F | 🟢 | All `5.1.2` |
+| H1.3 | Catalogue size (BE32) @ 0x20 | 🟢 | All divisible by 8 |
+| H1.4 | Padding 0x24..0x2F = 12 × 0xff | 🟢 | 1930/1930 |
+| H1.5 | Library-info length (BE32) @ 0x30 | 🟢 | Fits-in-file, but new baseline |
+| H1.6 | Padding 0x34..0x3B = 8 × 0xff | 🟢 | 1930/1930 |
+| H1.7 | Timestamp (BE32) @ 0x3C | 🟢 | Counter model, not Unix epoch |
+| H1.8 | Catalogue @ 0x40 starts with 'E'/'D' ID | 🟢 | All EPFM |
+| H1.9 | Catalogue = {4-byte ID, BE32 offset} entries | 🟢 | All offsets valid + sorted |
+| H1.10 | Library-info follows directly after catalogue | 🟢 | 1930/1930 |
+| H1.11 | Empty library-info = 80×0xff + 0x00 = 81 b | 🔴 | **241 b** (240×0xff + 1×0x00) |
+
+**Overall outcome: 🟢 Green with one calibration.** 10 of 11 hypotheses
+confirmed word-for-word. The H1.11 deviation is a *parameter* change
+within the same structure, not a structural change — the test plan
+explicitly predicted this as a possible outcome ("Montage M has probably
+extended this for 16 libraries or similar").
+
+## A.3 Verified header layout
+
+```
+abs    field                                value / note
+─────────────────────────────────────────────────────────────────
+0x00   magic + null-pad (16 b)              b'YAMAHA-YSFC\x00\x00\x00\x00\x00'
+0x10   version string + null-pad (16 b)     b'5.1.2'
+0x20   catalogue size  (u32 BE)             = block_count × 8
+0x24   reserved padding (12 b)              all 0xff
+0x30   library-info length (u32 BE)         baseline 241 b
+0x34   reserved padding (8 b)               all 0xff
+0x3C   timestamp / save counter (u32 BE)    monotonically increasing counter
+0x40   catalogue entries                    N × (4-byte ID + u32 BE offset)
+0x40 + cat_size
+       library-info area
+0x40 + cat_size + libinfo_len
+       first block chunk (always EPFM)
+```
+
+## A.4 Central findings
+
+### A.4.1 Version string: `5.1.2`
+
+All 1930 files report the exact same version string:
+```
+b"5.1.2\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+```
+
+This is **not 6.0.0** — Yamaha has bumped YSFC from 5.0.1 (MODX) to 5.1.2
+for Montage M / MODX M, a minor version step. The structure is
+fundamentally backward-compatible.
+
+### A.4.2 Library-info baseline went from 81 to 241 bytes
+
+| Platform | Empty library-info area |
+|----------|-------------------------|
+| Montage classic (X7L) / MODX (Y2L 5.0.1) | 80×0xff + 1×0x00 = **81 b** |
+| Montage M / MODX M (Y2L/Y2U 5.1.2) | 240×0xff + 1×0x00 = **241 b** |
+
+Interpretation: Yamaha has extended the library slot count from **8 to 24**
+(240/10 = 24 reserved 10-byte slots), consistent with Montage M's
+expanded hardware capacity. Cook's slot-block structure is confirmed in
+files with populated library-info (see A.4.5).
+
+### A.4.3 Timestamp is a counter, not RTC
+
+Values lie in the range `0x00003e00 – 0x00003e1d` (15872–15901) across
+the test corpus — too small for Unix epoch. Values increase monotonically
+per export operation. Y2L and Y2U exports of "the same" performance
+produce close but not identical counter values (typically differing by
+1–2). Montage M has **not** added an RTC timestamp.
+
+### A.4.4 Block-ID universe
+
+Distinct block IDs across all 1930 files:
+
+| ID | File count | Interpretation |
+|----|-----------:|----------------|
+| `EPFM` / `DPFM` | 1930 | Performance — standard, always present |
+| `ESYS` / `DSYS` | 1930 | System settings |
+| `EFVT` / `DFVT` | 1930 | Favorites |
+| `ESPG` / `DSPG` | 4 | SmartMorph Performance Grid + 32×32 PNG |
+| `ESOM` / `DSOM` | 4 | SmartMorph Original Morph (1024×876) |
+| `ELST` / `DLST` | 2 | Live Set (matches section 1.6) |
+| `ESON` / `DSON` | 1 | **NOT previously documented** — only in Analysis_Set_v1.Y2L |
+
+### A.4.5 Catalogue size distribution
+
+| Catalogue size | Block count | File count | Note |
+|---------------:|------------:|-----------:|------|
+| 48 b | 6 | 1924 | Baseline (EPFM/DPFM, ESYS/DSYS, EFVT/DFVT) |
+| 64 b | 8 | 2 | Step 72 — contains ELST/DLST |
+| 80 b | 10 | 3 | SmartMorph (adds 4 SM blocks) |
+| 96 b | 12 | 1 | Analysis_Set_v1.Y2L — SmartMorph + ESON/DSON |
+
+### A.4.6 Y2L vs Y2U — header identical, payload differs minimally
+
+The header structure is identical between file extensions. Raw byte
+comparison:
+
+| Pair | Bytes differing | Detail |
+|------|----------------:|--------|
+| `AWM2_00_Init_Normal.Y2L/.Y2U` | 6 | 1 in timestamp + 5 in payload (separate export) |
+| `SmartMorph.Y2L/.Y2U` | 2 | Only timestamp LSB + one counter |
+
+The SmartMorph pair confirms that Y2L and Y2U *can* be near-identical
+byte-for-byte copies; the AWM2 pair shows that two separate exports of
+"the same performance" produce more differences (separate save-counter
+states). The relevant conclusion is that **a parser for Y2L can read Y2U
+unchanged**.
+
+## A.5 Implications for parser and serializer
+
+### A.5.1 New constants in serializer
+
+Added to `ysfc_serializer.py` (Step 1 verified):
+
+```python
+YSFC_MAGIC_POS         = 0x00    # 16 bytes magic + null-pad
+YSFC_VERSION_POS       = 0x10    # 16 bytes version + null-pad
+YSFC_CAT_SIZE_POS      = 0x20    # u32be: catalogue size (= entries × 8)
+YSFC_LIBINFO_LEN_POS   = 0x30    # u32be: library-info area length
+YSFC_TIMESTAMP_POS     = 0x3C    # u32be: save counter
+YSFC_CATALOG_POS       = 0x40    # first catalogue entry
+YSFC_VERSION_M_SERIES  = b'5.1.2'
+YSFC_LIBINFO_EMPTY_LEN = 241     # empty library-info: 240 × 0xff + 1 × 0x00
+```
+
+Existing `FILE_SAVE_COUNTER_POS = 60` (= 0x3C) and `CHUNK_CATALOG_POS = 64`
+(= 0x40) are unchanged — Step 1 confirmed these were already correct.
+
+### A.5.2 Differences from documented layout in section 1.1
+
+**Section 1.1 has been corrected** (as of this revision) to match the verified layout in A.3. The original table was written before Step 1 verification and contained the following errors — listed here for historical reference:
+
+- Magic described as 8 bytes, version as 8 bytes at offset 8 — correct is 16+16 bytes
+- "Library type @ offset 16" — that field is the version string
+- "Catalog offset @ offset 20" — that field is `catalogue size`; the catalogue is always at 0x40
+- "Date stamp @ offset 24" — timestamp / save counter is at offset 0x3C
+- Library-info area (offset 0x30) was not mentioned
+
+The constants in the serializer were always correct (right offsets 0x3C/0x40). Only the documentation comments were wrong.
+
+### A.5.3 Header reading can be shared between generations
+
+Our parser's header reading only needs two parameterizations:
+1. Add `"5.1.2"` to acceptable version strings (in addition to `"4.0.5"`,
+   `"5.0.1"`).
+2. Remove the hardcoded `EMPTY_LIBINFO_SIZE = 81`; always read from
+   offset 0x30 without pre-validation (`YSFC_LIBINFO_LEN_POS`).
+
+No other changes are needed for catalogue parsing, magic validation, or
+timestamp reading.
+
+## A.6 Questions left for Step 4 and 5
+
+- **MAX_LIBRARY_SLOTS = 24?** — Preliminary, based on 240/10. To be
+  confirmed in Step 4 against the two Step 72 files with populated
+  library-info area (4230 bytes).
+- **ESON/DSON block semantics** — Only one file (Analysis_Set_v1.Y2L)
+  contains these. To be mapped in Step 5.
+- **The 5 payload byte differences between the AWM2 pair Y2L/Y2U** — at
+  offsets 0x18e–0x18f, 0x2c6, 0x1cf3–0x1cf4. Section 1.7 mentions similar
+  noise bytes in the range 6715..6725 and 7167–7168, 7419. 0x1cf3–0x1cf4
+  (=7411–7412) lies close to the 7419 noise position and is likely the
+  same phenomenon.
+
+---
+
 **End of YSFC Forge Full Context.**

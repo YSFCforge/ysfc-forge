@@ -84,9 +84,11 @@ resolution. Per-performance W/S/Arp UI chips are gated by the same scanners.
 | 11 | 1 | Dest slot | compact sequential index (0, 1, 2, …) |
 | 15 | 1 | Engine bits | `0x01`=AWM2/Drum, `0x02`=FM-X, `0x04`=AN-X; OR-combined |
 | 16 | 1 | Source flag | `0x00`=ESP Plugin, `0x02`=MODX hardware |
-| 27 | var | Name string | `"{idx}:{name_20ch_padded}:{name}\0"` NUL-terminated ASCII |
+| 27 | var | Name string | `"{idx}:{short_name}:{display_name}\0"` NUL-terminated ASCII |
 
-Name string example: `"3:Acid Bass           :Acid Bass\0"` — long-name padded with spaces to 20 chars.
+Name string format: `"{slot_index}:{short_name}:{display_name}\0"`. The **third field** is the actual display name shown in MODX/ESP Plugin (matches `blob[4:]`). The second field is a short/category label. Example: `"0:Italian XL:Italian Grand XL\0"`.
+
+Note: earlier documentation described this as `"IDX:LongName_padded:ShortName\0"` — that had the field order reversed and was incorrect.
 
 **v4.x format note (Montage classic `4.0.5` / MODX classic `5.0.1`):** Engine-type byte sits at `blob[6698]`, not `blob[6700]`. EPFM directory structure differs — see section 1.2a in YSFC_FORGE_FULL_CONTEXT.md. Always prefer EPFM `rec[15]` as engine source over `blob[6700]` when file version is unknown.
 
