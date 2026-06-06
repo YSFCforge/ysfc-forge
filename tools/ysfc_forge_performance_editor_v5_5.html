@@ -280,6 +280,23 @@ main > * { min-width: 0; min-height: 0; }
   border-radius: 50%;
   background: var(--org);
 }
+.perf-eng-tag {
+  font-size: 9px;
+  font-weight: 600;
+  padding: 1px 5px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  opacity: 0.85;
+  letter-spacing: 0.02em;
+  margin-left: auto;
+}
+.engine-pill.pill-inline {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  vertical-align: middle;
+  display: inline-block;
+}
 .list-resize-handle {
   position: absolute;
   left: 0; right: 0; bottom: -3px;
@@ -327,9 +344,9 @@ main > * { min-width: 0; min-height: 0; }
   white-space: nowrap;
 }
 .inline-elem-btn:hover { background: var(--sur-hover); color: var(--txt); }
-.inline-elem-btn.active.engine-FMX { background: var(--fmx-soft); color: var(--fmx); border-color: var(--fmx); }
-.inline-elem-btn.active.engine-AWM2 { background: var(--awm2-soft); color: var(--awm2); border-color: var(--awm2); }
-.inline-elem-btn.active.engine-ANX { background: var(--anx-soft); color: var(--anx); border-color: var(--anx); }
+.inline-elem-btn.active.engine-FMX,
+.inline-elem-btn.active.engine-AWM2,
+.inline-elem-btn.active.engine-ANX { background: var(--awm2-soft); color: var(--awm2); border-color: var(--awm2); }
 
 /* Operator / Element / OSC overview table */
 .op-overview { margin-bottom: 12px; }
@@ -464,9 +481,9 @@ main > * { min-width: 0; min-height: 0; }
   color: white;
 }
 .sub-btn.engine-AWM2.active { background: var(--awm2); border-color: var(--awm2); }
-.sub-btn.engine-FMX.active  { background: var(--fmx);  border-color: var(--fmx); }
-.sub-btn.engine-ANX.active  { background: var(--anx);  border-color: var(--anx); }
-.sub-btn.engine-Drum.active { background: var(--drum); border-color: var(--drum); }
+.sub-btn.engine-FMX.active  { background: var(--awm2); border-color: var(--awm2); }
+.sub-btn.engine-ANX.active  { background: var(--awm2); border-color: var(--awm2); }
+.sub-btn.engine-Drum.active { background: var(--awm2); border-color: var(--awm2); }
 
 /* Drum key list — vertical with note names */
 .drum-key-list {
@@ -487,8 +504,8 @@ main > * { min-width: 0; min-height: 0; }
 .drum-key-item:last-child { border-bottom: none; }
 .drum-key-item:hover { background: var(--sur-2); }
 .drum-key-item.active {
-  background: var(--drum-soft);
-  color: var(--drum);
+  background: var(--awm2-soft);
+  color: var(--awm2);
   font-weight: 500;
 }
 .drum-key-item .key-num {
@@ -550,10 +567,10 @@ main > * { min-width: 0; min-height: 0; }
   color: var(--acc);
   border-bottom-color: var(--acc);
 }
-.tab.active.engine-AWM2 { color: var(--awm2); border-bottom-color: var(--awm2); }
-.tab.active.engine-FMX  { color: var(--fmx);  border-bottom-color: var(--fmx); }
-.tab.active.engine-ANX  { color: var(--anx);  border-bottom-color: var(--anx); }
-.tab.active.engine-Drum { color: var(--drum); border-bottom-color: var(--drum); }
+.tab.active.engine-AWM2,
+.tab.active.engine-FMX,
+.tab.active.engine-ANX,
+.tab.active.engine-Drum { color: var(--awm2); border-bottom-color: var(--awm2); }
 .tab-badge {
   display: inline-block;
   font-family: var(--mono); font-size: 9px;
@@ -773,25 +790,25 @@ main > * { min-width: 0; min-height: 0; }
   transition: all var(--tr-fast);
 }
 .algo-btn:hover {
-  border-color: var(--fmx);
-  color: var(--fmx);
+  border-color: var(--awm2);
+  color: var(--awm2);
 }
 .algo-btn.active {
-  background: var(--fmx);
-  border-color: var(--fmx);
+  background: var(--awm2);
+  border-color: var(--awm2);
   color: white;
   font-weight: 600;
 }
 
 /* Engine-colored sections */
-.section.engine-AWM2 .sec-header { background: var(--awm2-soft); }
-.section.engine-AWM2 .sec-title { color: var(--awm2); }
-.section.engine-FMX  .sec-header { background: var(--fmx-soft); }
-.section.engine-FMX  .sec-title { color: var(--fmx); }
-.section.engine-ANX  .sec-header { background: var(--anx-soft); }
-.section.engine-ANX  .sec-title { color: var(--anx); }
-.section.engine-Drum .sec-header { background: var(--drum-soft); }
-.section.engine-Drum .sec-title { color: var(--drum); }
+.section.engine-AWM2 .sec-header,
+.section.engine-FMX  .sec-header,
+.section.engine-ANX  .sec-header,
+.section.engine-Drum .sec-header { background: var(--awm2-soft); }
+.section.engine-AWM2 .sec-title,
+.section.engine-FMX  .sec-title,
+.section.engine-ANX  .sec-title,
+.section.engine-Drum .sec-title { color: var(--awm2); }
 
 /* ─── RIGHT SIDEBAR (Pending Changes) ─── */
 .right {
@@ -1555,15 +1572,18 @@ function parseAllPerfs(buf) {
 }
 
 function detectEngine(perf) {
-  // v5.3: EPFM rec[15] is the authoritative engine source — it is correct
-  // in both v4.x (Montage/MODX classic) and v5.x (Montage M/MODX M) files.
-  // blob[6700] sits at a different offset in v4.x vs v5.x, making it
-  // unreliable as a cross-format primary. EPFM bits: 0x01=AWM2, 0x02=FM-X, 0x04=AN-X.
+  // EPFM rec[15] is the primary engine source, correct for both v4.x and v5.x.
+  // Exception: 0x01 is shared by AWM2 AND Drum — use blob[6700] to disambiguate.
   if (perf.epfmBits != null) {
     const eb = perf.epfmBits;
     if (eb & 0x04) return 'ANX';
     if (eb & 0x02) return 'FMX';
-    if (eb & 0x01) return 'AWM2';  // includes Drum (Drum uses 0x01)
+    if (eb & 0x01) {
+      // Drum and AWM2 both use 0x01 — check blob[6700] to tell them apart
+      const b = perf.bytes;
+      if (b.length > 6700 && b[6700] === 1) return 'Drum';
+      return 'AWM2';
+    }
   }
   // Fallback: blob[6700] — correct for v5.x files, wrong for v4.x
   const b = perf.bytes;
@@ -1627,12 +1647,15 @@ function detectPartEngines(blob, numParts, epfmBits) {
   const EPFM_MAP = { 0x01: 'AWM2', 0x02: 'FMX', 0x04: 'ANX' };
   const result = [null]; // 1-indexed
 
-  // Part 1: use EPFM bits as primary, blob[6700] as fallback
+  // Part 1: use EPFM bits as primary, blob[6700] to disambiguate Drum vs AWM2
   let e1 = null;
   if (epfmBits != null) {
     if (epfmBits & 0x04) e1 = 'ANX';
     else if (epfmBits & 0x02) e1 = 'FMX';
-    else if (epfmBits & 0x01) e1 = 'AWM2';
+    else if (epfmBits & 0x01) {
+      // Drum and AWM2 share 0x01 — use blob[6700] to tell them apart
+      e1 = (blob.length > 6700 && blob[6700] === 1) ? 'Drum' : 'AWM2';
+    }
   }
   if (!e1 && blob.length > 6700) e1 = ENG_MAP[blob[6700]] || 'AWM2';
   result.push(e1 || 'AWM2');
@@ -1949,7 +1972,11 @@ function selectPart(n) {
 function renderCommon() {
   const headline = `<div class="content-headline">
     <h2>Performance Common</h2>
-    <div class="sub">Engine: ${S.engine} · ${S.perfs.length} performance${S.perfs.length!==1?'s':''} loaded</div>
+    <div class="sub">Engine: ${(() => {
+      const ENG_LABEL = { AWM2: 'AWM2', FMX: 'FM-X', ANX: 'AN-X', Drum: 'Drum' };
+      const e = S.partEngines[S.currentPart] || 'AWM2';
+      return `<span class="engine-pill pill-${e} pill-inline">${ENG_LABEL[e]||e}</span>`;
+    })()}</div>
   </div>`;
 
   // Volume/Pan/Tempo
@@ -2881,12 +2908,9 @@ function selectPerf(idx) {
 
   // Update UI elements
   document.getElementById('perfNameInput').value = S.perfName;
+  // Engine pill hidden — engine shown per-performance in the list
   const pill = document.getElementById('enginePill');
-  pill.textContent = S.engine === 'FMX' ? 'FM-X'
-                   : S.engine === 'ANX' ? 'AN-X'
-                   : S.engine;
-  pill.className = 'engine-pill pill-' + S.engine;
-  pill.classList.remove('hidden');
+  pill.classList.add('hidden');
 
   renderPerfList();
   renderPartSelector();
