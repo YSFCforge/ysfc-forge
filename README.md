@@ -2,14 +2,16 @@
 
 > 🇸🇪 **Svenska:** [README_sv.md](README_sv.md)
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![License: MIT + LGPL-3.0 components](https://img.shields.io/badge/License-MIT%20%2B%20LGPL--3.0%20components-blue.svg)](#license)
 [![Status: Active](https://img.shields.io/badge/Status-Active-brightgreen.svg)]()
 [![Engines: 4/4](https://img.shields.io/badge/Engines-4%2F4%20mapped-blue.svg)]()
 [![Test files: 2010+](https://img.shields.io/badge/Test%20files-2010%2B-blue.svg)]()
 
-**Open-source browser-based tools for Yamaha MODX M / ESP Plugin / Montage M performance files.**
+**Open-source browser-based tools for Yamaha MODX M / ESP Plugin / MONTAGE M performance files.**
 
-Reverse-engineered from scratch through binary analysis of Yamaha's undocumented `.Y2L` / `.Y2U` file format. Open the HTML files in any modern browser — no installation, no cloud upload, everything runs locally.
+The MODX M / MONTAGE M `.Y2L` / `.Y2U` tooling is reverse-engineered from scratch through binary analysis of Yamaha's undocumented file format. The Library Builder also includes experimental import/conversion support for selected legacy MONTAGE/MODX `.X7L` / `.X8L` Performances and MONTAGE M `.X2L`-style short-layout libraries.
+
+Open the HTML files in any modern browser — no installation, no cloud upload, everything runs locally.
 
 > A hobby project that started as a way to merge .Y2L libraries without endless clicking on the hardware, and grew into an in-depth mapping of the format.
 
@@ -23,6 +25,7 @@ Reverse-engineered from scratch through binary analysis of Yamaha's undocumented
 * [Quick Start](#quick-start)
 * [Tools](#tools)
 * [Status](#status)
+* [Known Limitations](#known-limitations)
 * [Documentation](#documentation)
 * [Contributing](#contributing)
 * [License](#license)
@@ -32,6 +35,8 @@ Reverse-engineered from scratch through binary analysis of Yamaha's undocumented
 ## Features
 
 * **Merge** performances from multiple `.Y2L` / `.Y2U` files
+* **Build** new libraries from selected Performances and their required dependencies
+* **Experimentally import** selected legacy `.X7L` / `.X8L` and `.X2L`-style Performances
 * **Edit** FM-X, AWM2 and AN-X parameters in the browser
 * **No installation** — works in Chrome, Firefox and Safari
 * **No telemetry** — everything runs locally
@@ -52,7 +57,7 @@ Reverse-engineered from scratch through binary analysis of Yamaha's undocumented
 
 ### Merge performances including dependencies
 
-1. Download [`tools/ysfc_forge_library_builder_v13_20.html`](tools/ysfc_forge_library_builder_v13_20.html)
+1. Download [`tools/ysfc_forge_library_builder_v14_0.html`](tools/ysfc_forge_library_builder_v14_0.html)
 2. Open it in your browser
 3. Drag and drop `.Y2L` or `.Y2U` files
 4. Select the performances you want
@@ -61,7 +66,7 @@ Reverse-engineered from scratch through binary analysis of Yamaha's undocumented
 
 ### Edit a performance
 
-1. Download [`tools/ysfc_forge_performance_editor_v5_5.html`](tools/ysfc_forge_performance_editor_v5_5.html)
+1. Download [`tools/ysfc_forge_performance_editor_v5_3.html`](tools/ysfc_forge_performance_editor_v5_3.html)
 2. Open it in your browser
 3. Click **Open Y2L** and choose a file
 4. Adjust parameters with sliders
@@ -76,8 +81,8 @@ Reverse-engineered from scratch through binary analysis of Yamaha's undocumented
 |Tool|What it does|
 |-|-|
 |[**Performance Merger**](tools/ysfc_forge_performance_merger_v1_21.html)|Merge performances from multiple Y2L/Y2U files|
-|[**Library Builder**](tools/ysfc_forge_library_builder_v13_20.html)|Merge performances from multiple Y2L/Y2U files including dependencies|
-|[**Performance Editor**](tools/ysfc_forge_performance_editor_v5_5.html)|Edit FM-X, AWM2 and AN-X parameters in the browser|
+|[**Library Builder**](tools/ysfc_forge_library_builder_v14_0.html)|Merge selected Performances and dependencies from Y2L/Y2U, with experimental legacy X7L/X8L and X2L-style import support|
+|[**Performance Editor**](tools/ysfc_forge_performance_editor_v5_3.html)|Edit FM-X, AWM2 and AN-X parameters in the browser|
 
 ### Experimental / Extra Tools
 
@@ -115,8 +120,11 @@ All four synthesizer **engines** have **every known user-editable parameter bina
 
 |Type|Description|Support|
 |-|-|-|
-|`.Y2L`|Library file|✅|
-|`.Y2U`|User file (identical to Y2L, just different extension)|✅|
+|`.Y2L`|MODX M / MONTAGE M library file|✅|
+|`.Y2U`|MODX M / MONTAGE M user file (same format as Y2L, different extension)|✅|
+|`.X7L` / `.X7U`|Legacy MONTAGE library/user files|🧪 Experimental import/conversion|
+|`.X8L` / `.X8U`|Legacy MODX / MODX+ library/user files|🧪 Experimental import/conversion|
+|`.X2L`-style layout|MONTAGE M short-layout library variant|🧪 Experimental Performance conversion|
 |**Multi/GM 16-part**|16 parts (15 AWM2 + 1 Drum on Part 10)|✅|
 
 ### Hardware compatibility
@@ -125,8 +133,8 @@ All four synthesizer **engines** have **every known user-editable parameter bina
 |-|-|
 |MODX M|✅ Primary target|
 |ESP plugin|✅|
-|Montage M|⚠️ Likely compatible — not fully tested|
-|MODX (non-M)|❌ Different format|
+|MONTAGE M|⚠️ Supported in ESP/plugin tests; hardware coverage still expanding|
+|MONTAGE / MODX / MODX+|🧪 Experimental import only via legacy Library Builder conversion|
 
 ### Test corpus
 
@@ -166,6 +174,21 @@ Throughout the documentation, fields are rated by evidence:
 
 ## Known Limitations
 
+### Library Builder
+
+The Library Builder is designed to export selected Performances and their required dependencies. It is not intended to clone every part of a complete library.
+
+Currently not preserved:
+
+* Live Sets
+* Patterns
+* Favorites and some device-side library metadata
+* Guaranteed byte-identical exports for every third-party library
+
+Legacy `.X7L` / `.X8L` and `.X2L`-style support is experimental. Always keep backups of your original files and test exported libraries carefully in ESP or on hardware before using them in production.
+
+### Performance Editor
+
 * **Performance Editor** currently shows only the first part's engine; full 16-part editing is on the roadmap
 * **Smart Morph** interpolation tables are not yet mapped
 * **Scene snapshots** — structure verified, but only ~10 fields per scene have UI-confirmed mappings
@@ -201,6 +224,21 @@ Yamaha's document is **not redistributed** in this repository. The original is a
 
 ---
 
+## ConvertWithMoss Attribution
+
+The legacy MONTAGE/MODX `.X7L` / `.X8L` support is partly informed by, and in some areas derived from, the open-source **ConvertWithMoss** project by Jürgen Moßgraber.
+
+ConvertWithMoss:
+https://github.com/git-moss/ConvertWithMoss
+
+ConvertWithMoss is licensed under the GNU Lesser General Public License v3.0. Any YSFC Forge code, structure or logic derived from ConvertWithMoss is used and distributed under the terms of the LGPL-3.0. See [`licenses/LGPL-3.0.txt`](licenses/LGPL-3.0.txt).
+
+The `.Y2L` / `.Y2U` format research, MODX M / MONTAGE M engine mapping, browser UI and non-legacy conversion logic in YSFC Forge are based on independent reverse engineering, testing and binary comparison against Yamaha hardware and ESP plugin exports.
+
+---
+
 ## License
 
-MIT — see [LICENSE](LICENSE)
+The main YSFC Forge project is released under the MIT License — see [LICENSE](LICENSE).
+
+Some legacy MONTAGE/MODX `.X7L` / `.X8L` support components are based on or derived from ConvertWithMoss and are distributed under the GNU Lesser General Public License v3.0. See [`licenses/LGPL-3.0.txt`](licenses/LGPL-3.0.txt) and the relevant source file headers.

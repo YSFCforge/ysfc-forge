@@ -18,6 +18,30 @@
 **Total field positions in serializer:** ~2057
 **Test corpus:** 2010+ binary-verified files
 
+## Current format support model
+
+YSFC Forge currently treats the supported Yamaha file families as separate but related layouts:
+
+| Family | Typical versions | File extensions | Current role in YSFC Forge |
+|---|---|---|---|
+| MODX M / MONTAGE M long layout | `5.1.x` / modern `.Y2L`/`.Y2U` exports | `.Y2L`, `.Y2U` | Primary native export target |
+| MONTAGE M short layout | `4.1.x` / `.X2L`-style library layout | often seen as `.Y2L` or `.X2L` depending on source | Experimental Performance import; converted to the long Y2L layout for export |
+| Legacy MONTAGE | `4.0.x` | `.X7L`, `.X7U` | Experimental Performance import/conversion |
+| Legacy MODX / MODX+ | `5.0.x` | `.X8L`, `.X8U` | Experimental Performance import/conversion |
+
+The Library Builder's current goal is to export selected Performances and required dependencies. It does not attempt to clone full library state. Live Sets, Patterns, Favorites and some device-side library metadata are intentionally outside the current export scope.
+
+### Current Library Builder conversion scope
+
+| Source type | Engines | Dependencies | Notes |
+|---|---|---|---|
+| Native long `.Y2L`/`.Y2U` | AWM2, FM-X, AN-X, Drum | Selective waveforms, samples, arpeggios | Primary supported path |
+| Legacy `.X7L`/`.X8L` | AWM2, FM-X, Drum | Selective waveforms, samples, arpeggios | Converted to modern Y2L DPFM layout; classic AN-X is not expected in normal X7L/X8L sources |
+| MONTAGE M short-layout `.X2L`-style files | AWM2, FM-X, AN-X, Drum | Performance export; dependencies are handled when referenced through supported sections | Short common/part/engine regions are expanded to the long Y2L layout |
+
+AN-X is fully supported in the Y2L/Y2U target format. AN-X is not expected to occur in original legacy MONTAGE/MODX `.X7L`/`.X8L` libraries; if a classic source exposes an unknown part type, it should be treated as an unknown classic engine rather than assumed to be a valid classic AN-X source.
+
+
 All four engines are binary-verified across all known user-editable parameters. Multi/GM 16-part files are supported (15 AWM2 + 1 Drum on Part 10, using the multi-part architecture).
 
 **Structural insight: Drum engine has its own Part Common layout**
