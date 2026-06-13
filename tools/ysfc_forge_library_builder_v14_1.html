@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>YSFC Forge Library Builder v14.0 — Y2L/Y2U Merge (+ X7L/X8L transcode) för MODX M / Montage M</title>
+  <title>YSFC Forge Library Builder v14.1 — Y2L/Y2U Merge (+ X7L/X8L transcode) för MODX M / Montage M</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
 
@@ -541,6 +541,26 @@
     button.danger { border-color: var(--err); color: var(--err); }
     button.danger:hover:not(:disabled) { background: var(--err-dim); }
 
+    /* Export spinner */
+    @keyframes _lb_spin { to { transform: rotate(360deg); } }
+    #exportBtn.exporting {
+      cursor: wait;
+      pointer-events: none;
+      opacity: 0.75;
+    }
+    #exportBtn.exporting::before {
+      content: "";
+      display: inline-block;
+      width: 0.85em;
+      height: 0.85em;
+      border: 2px solid currentColor;
+      border-top-color: transparent;
+      border-radius: 50%;
+      vertical-align: -0.15em;
+      margin-right: 0.45em;
+      animation: _lb_spin 0.7s linear infinite;
+    }
+
     /* Badges */
     .badge {
       display: inline-block;
@@ -676,7 +696,7 @@
 <h1>
   YSFC Forge Library Builder
   <span class="sep">│</span>
-  <span class="ver">v14.0</span>
+  <span class="ver">v14.1</span>
   <span class="sep">│</span>
   Y2L · Y2U · X7L · X8L → Y2L merge
   <span class="spacer"></span>
@@ -1079,6 +1099,7 @@ const LANG = {
     mode_keep_slots: 'Bank (behåll slot-nr)',
     include_deps: 'Inkludera beroenden',
     export_btn: 'Exportera',
+    exporting:  'Exporterar…',
     export_hint_html:
       'Output: <span class="badge badge-acc">Y2L</span> eller <span class="badge badge-acc">Y2U</span> — välj ovan. Identiskt binärformat, bara ändelsen skiljer. ' +
       'Export sker till Y2L/Y2U (MODX M / Montage M). X7L/X8L (classic) transkodas automatiskt: AWM2 och FM-X mappas till Y2L-format. ' +
@@ -1248,6 +1269,7 @@ const LANG = {
     mode_keep_slots: 'Bank (keep slot numbers)',
     include_deps: 'Include dependencies',
     export_btn: 'Export',
+    exporting:  'Exporting…',
     export_hint_html:
       'Output: <span class="badge badge-acc">Y2L</span> or <span class="badge badge-acc">Y2U</span> — choose above. Identical binary format, only the extension differs. ' +
       'Export targets Y2L/Y2U (MODX M / Montage M). X7L/X8L (classic) performances are automatically transcoded: AWM2 and FM-X are mapped to Y2L format. ' +
@@ -3523,7 +3545,7 @@ function applyI18n() {
   function _xWu16l(u8, off, v) { u8[off]=v&0xFF; u8[off+1]=(v>>8)&0xFF; }
 
   // Parsar ett klassiskt DPFM-blob till { name, parts[] }
-  // Varje part: { type, name, elements[], fmxCommon, fmxOps[] }
+  // Varje part: { type, name, elements[], fmxCommon, fmxOps[], header, manyParams }
   function parseClassicBlob(u8, version) {
     // Klassisk blob (X7L/X8L) = CWM DataBlock-format:
     //   DataBlock: common sub-block
@@ -3539,6 +3561,10 @@ function applyI18n() {
     }
     function rU32() { const v = _xRu32(u8, off); off += 4; return v; }
 
+    // MODX/MODX+ (5.0.x = X8L) har 275 bytes many_params; Montage (4.0.x = X7L) 274 bytes.
+    const isModx = version >= 500;
+    const manyParamSize = isModx ? 275 : 274;
+
     // 1. Common
     const cmn = rDB();
     const ne  = cmn.indexOf(0);
@@ -3546,7 +3572,7 @@ function applyI18n() {
       ne >= 0 ? cmn.slice(0, ne) : cmn.slice(0, 21)
     ).trim();
 
-    // 2. Effects (skip)
+    // 2. Effects (skip — reverb/variation/master_eq/master_effect)
     rDB(); rDB(); rDB(); rDB();
 
     // 3. Parts
@@ -3564,6 +3590,52 @@ function applyI18n() {
       //   [26] velocity_limit_low, [27] velocity_limit_high,
       //   [28] note_limit_low, [29] note_limit_high,
       //   [30] pitch_bend_range_upper, [31] pitch_bend_range_lower
+      //   [32..32+manyParamSize-1] many_parameters (274 Montage / 275 MODX)
+      //
+      // many_parameters byte-exact mappning (verifierad mot 4 matchade par,
+      // 811 part-instanser, Juno-106_3 + SH-101_06 + MONTAGE_Expanded):
+      //   [0]   → Y2L PSB[126]  part pan (0-127, 64=center)
+      //   [1]   → Y2L PSB[128]  part dry level
+      //   [2]   → Y2L PSB[130]  part volume (0-127, default=100)
+      //   [3]   → Y2L PSB[132]  part output level / send-related
+      //   [4]   → Y2L PSB[216]  velocity cross-fade / upper-range param
+      //   [5]   → Y2L PSB[134]  reverb send (0-127)
+      //   [6]   → Y2L PSB[136]  variation send (0-127)
+      //   [8]   → Y2L PSB[218]  note-range / dry-wet related
+      //   [9]   → Y2L PSB[39]   part-level flag
+      //   [10]  → Y2L PSB[220]  insertion connect / output
+      //   [11]  → Y2L PSB[222]  flag
+      //   [12]  → Y2L PSB[224]  flag
+      //   [13]  → Y2L PSB[38]   flag
+      //   [15]  → Y2L PSB[40]   flag
+      //   [16]  → Y2L PSB[41]   flag
+      //   [17]  → Y2L PSB[43]   flag
+      //   [18]  → Y2L PSB[44]   flag
+      //   [19]  → Y2L PSB[45]   flag
+      //   [20]  → Y2L PSB[46]   flag
+      //   [21]  → Y2L PSB[47]   flag
+      //   [22]  → Y2L PSB[48/49/51/52/53/59] (binary, multiple targets)
+      //   [42]  → Y2L PSB[148]  AEG / part-EG param
+      //   [43]  → Y2L PSB[150]  AEG param
+      //   [44]  → Y2L PSB[152]  AEG param
+      //   [45]  → Y2L PSB[154]  AEG param
+      //   [46]  → Y2L PSB[156]  AEG param
+      //   [47]  → Y2L PSB[158]  AEG param
+      //   [48]  → Y2L PSB[160]  AEG param
+      //   [49]  → Y2L PSB[162]  AEG param
+      //   [53]  → Y2L PSB[238]  EQ 3-band low freq ★
+      //   [54]  → Y2L PSB[240]  EQ 3-band low gain ★
+      //   [55]  → Y2L PSB[242]  EQ 3-band lowmid freq ★
+      //   [56]  → Y2L PSB[244]  EQ 3-band mid gain ★
+      //   [57]  → Y2L PSB[246]  EQ 3-band mid Q ★
+      //   [58]  → Y2L PSB[248]  EQ 3-band himid freq ★
+      //   [59]  → Y2L PSB[250]  EQ 3-band high gain ★
+      //   [139] → Y2L PSB[283]  InsA subtype ★
+      //   [141] → Y2L PSB[282]  InsA type ★
+      //   [149] → Y2L PSB[286]  InsA param1 ★ (u16le lo-byte, stride 2 → [151]=p2 … [177]=p15)
+      //   [197] → Y2L PSB[339]  InsB subtype ★
+      //   [199] → Y2L PSB[338]  InsB type ★
+      //   [207] → Y2L PSB[342]  InsB param1 ★ (u16le lo-byte, stride 2 → [209]=p2 … [235]=p15)
       const header = (ph.length >= 32) ? {
         partSwitch:   ph[24],
         velLimitLow:  ph[26],
@@ -3573,7 +3645,11 @@ function applyI18n() {
         pbUpper:      ph[30],
         pbLower:      ph[31],
       } : null;
-      hdrs.push({ name: pname, header });
+      // Extrahera many_params-blocket (274/275 bytes efter de 32 fasta bytes).
+      const manyParams = (ph.length >= 32 + manyParamSize)
+        ? ph.slice(32, 32 + manyParamSize)
+        : (ph.length > 32 ? ph.slice(32) : new Uint8Array(0));
+      hdrs.push({ name: pname, header, manyParams });
     }
     rDB(); rDB();           // ad_part, digital_input_part
 
@@ -3592,7 +3668,7 @@ function applyI18n() {
         rDB();
       }
       parts.push({ type: ptype, name: hdrs[i].name, header: hdrs[i].header,
-                   elements, fmxCommon, fmxOps });
+                   manyParams: hdrs[i].manyParams, elements, fmxCommon, fmxOps });
     }
     // Per-part arpeggio scene tables (verified byte-exact against ESP ground
     // truth Montage_Expanded.X7L → MONTAGE_Expanded.Y2L for 4Z_Club 1,
@@ -4213,11 +4289,83 @@ function applyI18n() {
   // PART_COMMON_REL fält (relativt sub-blob start). Verifierade mot ESP.
   // Classic part-header-fält → Y2L rel-offset inom part-sub-blob.
   const _PART_REL = {
-    partSwitch: 36,        // classic part_switch
-    velLimitLow: 118,      // classic velocity_limit_low
-    velLimitHigh: 120,     // classic velocity_limit_high
-    pbRangeUpper: 212,     // classic pitch_bend_range_upper
-    pbRangeLower: 214,     // classic pitch_bend_range_lower
+    partSwitch:   36,        // classic part_switch
+    velLimitLow: 118,        // classic velocity_limit_low
+    velLimitHigh: 120,       // classic velocity_limit_high
+    pbRangeUpper: 212,       // classic pitch_bend_range_upper
+    pbRangeLower: 214,       // classic pitch_bend_range_lower
+    // many_params-mappning (verifierad byte-exact, 811 part-instanser, 4 matchade par):
+    pan:          126,       // many[0]  part pan (0-127, 64=center)
+    dryLevel:     128,       // many[1]  part dry level
+    volume:       130,       // many[2]  part volume (0-127, default=100)
+    outputLevel:  132,       // many[3]  part output/send-related
+    velXfade:     216,       // many[4]  velocity cross-fade / upper-range
+    reverbSend:   134,       // many[5]  reverb send (0-127)
+    variSend:     136,       // many[6]  variation send (0-127)
+    dryWet:       218,       // many[8]  dry/wet range param
+    flag39:        39,       // many[9]
+    insConnect:   220,       // many[10] insertion connect / output select
+    flag222:      222,       // many[11]
+    flag224:      224,       // many[12]
+    flag38:        38,       // many[13]
+    flag40:        40,       // many[15]
+    flag41:        41,       // many[16]
+    flag43:        43,       // many[17]
+    flag44:        44,       // many[18]
+    flag45:        45,       // many[19]
+    flag46:        46,       // many[20]
+    flag47:        47,       // many[21]
+    aegParam148:  148,       // many[42]
+    aegParam150:  150,       // many[43]
+    aegParam152:  152,       // many[44]
+    aegParam154:  154,       // many[45]
+    aegParam156:  156,       // many[46]
+    aegParam158:  158,       // many[47]
+    aegParam160:  160,       // many[48]
+    aegParam162:  162,       // many[49]
+    eq3LowFreq:   238,       // many[53] EQ 3-band low freq ★
+    eq3LowGain:   240,       // many[54] EQ 3-band low gain ★
+    eq3LowMidFreq:242,       // many[55] EQ 3-band lowmid freq ★
+    eq3MidGain:   244,       // many[56] EQ 3-band mid gain ★
+    eq3MidQ:      246,       // many[57] EQ 3-band mid Q ★
+    eq3HiMidFreq: 248,       // many[58] EQ 3-band himid freq ★
+    eq3HighGain:  250,       // many[59] EQ 3-band high gain ★
+    insASubtype:  283,       // many[139] InsA subtype ★
+    insAType:     282,       // many[141] InsA type ★
+    // InsA params: many[149,151,153..177] → Y2L[286,288,290..314] (u16le, lo-byte)
+    insAParam1:   286,       // many[149]
+    insAParam2:   288,       // many[151]
+    insAParam3:   290,       // many[153]
+    insAParam4:   292,       // many[155]
+    insAParam5:   294,       // many[157]
+    insAParam6:   296,       // many[159]
+    insAParam7:   298,       // many[161]
+    insAParam8:   300,       // many[163]
+    insAParam9:   302,       // many[165]
+    insAParam10:  304,       // many[167]
+    insAParam11:  306,       // many[169]
+    insAParam12:  308,       // many[171]
+    insAParam13:  310,       // many[173]
+    insAParam14:  312,       // many[175]
+    insAParam15:  314,       // many[177]
+    insBSubtype:  339,       // many[197] InsB subtype ★
+    insBType:     338,       // many[199] InsB type ★
+    // InsB params: many[207,209,211..235] → Y2L[342,344,346..370] (u16le, lo-byte)
+    insBParam1:   342,       // many[207]
+    insBParam2:   344,       // many[209]
+    insBParam3:   346,       // many[211]
+    insBParam4:   348,       // many[213]
+    insBParam5:   350,       // many[215]
+    insBParam6:   352,       // many[217]
+    insBParam7:   354,       // many[219]
+    insBParam8:   356,       // many[221]
+    insBParam9:   358,       // many[223]
+    insBParam10:  360,       // many[225]
+    insBParam11:  362,       // many[227]
+    insBParam12:  364,       // many[229]
+    insBParam13:  366,       // many[231]
+    insBParam14:  368,       // many[233]
+    insBParam15:  370,       // many[235]
   };
 
 
@@ -4368,6 +4516,74 @@ function applyI18n() {
         if (h.velLimitHigh != null) psb[_PART_REL.velLimitHigh] = h.velLimitHigh & 0xFF;
         if (h.pbUpper != null)      psb[_PART_REL.pbRangeUpper] = h.pbUpper & 0xFF;
         if (h.pbLower != null)      psb[_PART_REL.pbRangeLower] = h.pbLower & 0xFF;
+      }
+      // Override many_params-fält (verifierade byte-exact mot 811 part-instanser).
+      // Hjälpfunktion: sätt PSB-byte om many_params-index finns.
+      const mp = part.manyParams;
+      if (mp && mp.length > 0) {
+        const mw = (mpIdx, psbRel) => {
+          if (mpIdx < mp.length && psbRel < _Y2L_PSB) psb[psbRel] = mp[mpIdx] & 0xFF;
+        };
+        // ── Prio 1: Part volume / pan ──
+        mw(0,   _PART_REL.pan);           // part pan (64=center)
+        mw(1,   _PART_REL.dryLevel);      // part dry level
+        mw(2,   _PART_REL.volume);        // part volume (0-127, default=100)
+        mw(3,   _PART_REL.outputLevel);   // part output level
+        mw(4,   _PART_REL.velXfade);      // velocity cross-fade
+        mw(5,   _PART_REL.reverbSend);    // reverb send (0-127)
+        mw(6,   _PART_REL.variSend);      // variation send (0-127)
+        mw(8,   _PART_REL.dryWet);        // dry/wet range param
+        mw(9,   _PART_REL.flag39);
+        mw(10,  _PART_REL.insConnect);    // insertion connect / output select
+        mw(11,  _PART_REL.flag222);
+        mw(12,  _PART_REL.flag224);
+        mw(13,  _PART_REL.flag38);
+        mw(15,  _PART_REL.flag40);
+        mw(16,  _PART_REL.flag41);
+        mw(17,  _PART_REL.flag43);
+        mw(18,  _PART_REL.flag44);
+        mw(19,  _PART_REL.flag45);
+        mw(20,  _PART_REL.flag46);
+        mw(21,  _PART_REL.flag47);
+        // AEG params
+        mw(42,  _PART_REL.aegParam148);
+        mw(43,  _PART_REL.aegParam150);
+        mw(44,  _PART_REL.aegParam152);
+        mw(45,  _PART_REL.aegParam154);
+        mw(46,  _PART_REL.aegParam156);
+        mw(47,  _PART_REL.aegParam158);
+        mw(48,  _PART_REL.aegParam160);
+        mw(49,  _PART_REL.aegParam162);
+        // ── Prio 1: Part EQ 3-band ──
+        mw(53,  _PART_REL.eq3LowFreq);
+        mw(54,  _PART_REL.eq3LowGain);
+        mw(55,  _PART_REL.eq3LowMidFreq);
+        mw(56,  _PART_REL.eq3MidGain);
+        mw(57,  _PART_REL.eq3MidQ);
+        mw(58,  _PART_REL.eq3HiMidFreq);
+        mw(59,  _PART_REL.eq3HighGain);
+        // ── Prio 3: InsA type + subtype + 15 params ──
+        mw(141, _PART_REL.insAType);
+        mw(139, _PART_REL.insASubtype);
+        mw(149, _PART_REL.insAParam1);  mw(151, _PART_REL.insAParam2);
+        mw(153, _PART_REL.insAParam3);  mw(155, _PART_REL.insAParam4);
+        mw(157, _PART_REL.insAParam5);  mw(159, _PART_REL.insAParam6);
+        mw(161, _PART_REL.insAParam7);  mw(163, _PART_REL.insAParam8);
+        mw(165, _PART_REL.insAParam9);  mw(167, _PART_REL.insAParam10);
+        mw(169, _PART_REL.insAParam11); mw(171, _PART_REL.insAParam12);
+        mw(173, _PART_REL.insAParam13); mw(175, _PART_REL.insAParam14);
+        mw(177, _PART_REL.insAParam15);
+        // ── Prio 3: InsB type + subtype + 15 params ──
+        mw(199, _PART_REL.insBType);
+        mw(197, _PART_REL.insBSubtype);
+        mw(207, _PART_REL.insBParam1);  mw(209, _PART_REL.insBParam2);
+        mw(211, _PART_REL.insBParam3);  mw(213, _PART_REL.insBParam4);
+        mw(215, _PART_REL.insBParam5);  mw(217, _PART_REL.insBParam6);
+        mw(219, _PART_REL.insBParam7);  mw(221, _PART_REL.insBParam8);
+        mw(223, _PART_REL.insBParam9);  mw(225, _PART_REL.insBParam10);
+        mw(227, _PART_REL.insBParam11); mw(229, _PART_REL.insBParam12);
+        mw(231, _PART_REL.insBParam13); mw(233, _PART_REL.insBParam14);
+        mw(235, _PART_REL.insBParam15);
       }
       // Arpeggio scene references. The classic per-part scene table
       // (perf.arpScenes[i]) gives the arp ids for this part's scenes. In Y2L
@@ -6119,7 +6335,13 @@ function applyI18n() {
   $("dropZone").addEventListener("dragleave", () => $("dropZone").classList.remove("drag-over"));
   $("dropZone").addEventListener("drop", e => { e.preventDefault(); $("dropZone").classList.remove("drag-over"); loadFiles(e.dataTransfer.files); });
 
-  $("fileList").addEventListener("change", () => { updatePerfEnabled(); refreshPerfList(); });
+  $("fileList").addEventListener("change", () => {
+    // Clear the "Performances in Selected File" filter when switching files,
+    // so a leftover query can't hide all performances of the newly picked file.
+    const fi = $("filterInput");
+    if (fi) fi.value = "";
+    updatePerfEnabled(); refreshPerfList();
+  });
   $("filterInput").addEventListener("input", () => refreshPerfList());
 
   // Custom perf-list interaktion (ersätter native <select multiple>)
@@ -6285,25 +6507,39 @@ function applyI18n() {
     selection.length = 0; refreshSelectionList(); updateBars(); updateDepSummary();
   });
 
+  // Clear all selected state on the hidden <select> so a re-render can't
+  // resurrect stale index-based selections (refreshSelectionList preserves
+  // selection by index).
+  function clearSelListSelection() {
+    const sl = $("selectionList");
+    for (let i = 0; i < sl.options.length; i++) sl.options[i].selected = false;
+  }
+
   $("moveUpBtn").addEventListener("click", () => {
-    const idxs = Array.from($("selectionList").selectedOptions).map(o => parseInt(o.value, 10))
+    const sl = $("selectionList");
+    const idxs = Array.from(sl.selectedOptions).map(o => parseInt(o.value, 10))
       .filter(Number.isInteger).sort((a,b) => a - b);
     if (!idxs.length || idxs[0] === 0) return;
     for (const i of idxs) { const t = selection[i]; selection[i] = selection[i-1]; selection[i-1] = t; }
+    // Compute new positions BEFORE re-render, then wipe stale selection so the
+    // re-render starts clean and only the moved items end up selected.
+    const newIdxs = idxs.map(i => i - 1);
+    clearSelListSelection();
     refreshSelectionList(); updateBars();
-    const sl = $("selectionList");
-    for (const i of idxs) { if (sl.options[i-1]) sl.options[i-1].selected = true; }
+    for (const i of newIdxs) { if (sl.options[i]) sl.options[i].selected = true; }
     syncSelTableFromSelect();
   });
 
   $("moveDownBtn").addEventListener("click", () => {
-    const idxs = Array.from($("selectionList").selectedOptions).map(o => parseInt(o.value, 10))
+    const sl = $("selectionList");
+    const idxs = Array.from(sl.selectedOptions).map(o => parseInt(o.value, 10))
       .filter(Number.isInteger).sort((a,b) => b - a);
     if (!idxs.length || idxs[0] === selection.length - 1) return;
     for (const i of idxs) { const t = selection[i]; selection[i] = selection[i+1]; selection[i+1] = t; }
+    const newIdxs = idxs.map(i => i + 1);
+    clearSelListSelection();
     refreshSelectionList(); updateBars();
-    const sl = $("selectionList");
-    for (const i of idxs) { if (sl.options[i+1]) sl.options[i+1].selected = true; }
+    for (const i of newIdxs) { if (sl.options[i]) sl.options[i].selected = true; }
     syncSelTableFromSelect();
   });
 
@@ -6313,14 +6549,24 @@ function applyI18n() {
   $("depArps").addEventListener("change", () => { updateDepSummary(); updateExportReadiness(); });
 
   $("exportBtn").addEventListener("click", () => {
-    try {
-      if (hasPartialClassicTranscodeWarnings() && !confirm(t('confirm_partial'))) return;
-      exportMergeToY2L();
-    }
-    catch (err) {
-      console.error(err);
-      setStatus(t('status_export_failed',{msg: (err?.message || err)}), "", "err");
-    }
+    if (hasPartialClassicTranscodeWarnings() && !confirm(t('confirm_partial'))) return;
+    const btn = $("exportBtn");
+    const origText = btn.textContent;
+    btn.classList.add("exporting");
+    btn.textContent = btn.dataset.i18n === "export_btn" ? t("exporting") : origText;
+    // Yield one frame so the browser paints the spinner before the
+    // synchronous (potentially multi-second) export pipeline runs.
+    setTimeout(() => {
+      try {
+        exportMergeToY2L();
+      } catch (err) {
+        console.error(err);
+        setStatus(t('status_export_failed',{msg: (err?.message || err)}), "", "err");
+      } finally {
+        btn.classList.remove("exporting");
+        btn.textContent = origText;
+      }
+    }, 0);
   });
 
   // Expose refresh for language toggle (re-renders dynamic content
