@@ -231,7 +231,7 @@ The legacy MONTAGE/MODX `.X7L` / `.X8L` support is partly informed by, and in so
 ConvertWithMoss:
 https://github.com/git-moss/ConvertWithMoss
 
-ConvertWithMoss is licensed under the GNU Lesser General Public License v3.0. Any YSFC Forge code, structure or logic derived from ConvertWithMoss is used and distributed under the terms of the LGPL-3.0. See [`licenses/LGPL-3.0.txt`](licenses/LGPL-3.0.txt).
+ConvertWithMoss is licensed under the GNU Lesser General Public License v3.0. Any YSFC Forge code, structure or logic derived from ConvertWithMoss is used and distributed under the terms of the LGPL-3.0. See [`LGPL-3.0.txt`](LGPL-3.0.txt).
 
 The `.Y2L` / `.Y2U` format research, MODX M / MONTAGE M engine mapping, browser UI and non-legacy conversion logic in YSFC Forge are based on independent reverse engineering, testing and binary comparison against Yamaha hardware and ESP plugin exports.
 
@@ -241,4 +241,4 @@ The `.Y2L` / `.Y2U` format research, MODX M / MONTAGE M engine mapping, browser 
 
 The main YSFC Forge project is released under the MIT License — see [LICENSE](LICENSE).
 
-Some legacy MONTAGE/MODX `.X7L` / `.X8L` support components are based on or derived from ConvertWithMoss and are distributed under the GNU Lesser General Public License v3.0. See [`licenses/LGPL-3.0.txt`](licenses/LGPL-3.0.txt) and the relevant source file headers.
+Some legacy MONTAGE/MODX `.X7L` / `.X8L` support components are based on or derived from ConvertWithMoss and are distributed under the GNU Lesser General Public License v3.0. See [`LGPL-3.0.txt`](LGPL-3.0.txt) and the relevant source file headers.
