@@ -57,7 +57,7 @@ MODX M / MONTAGE M-verktygen för `.Y2L` / `.Y2U` är reverse-engineerade från 
 
 ### Sammanfoga performances inklusive beroenden
 
-1. Ladda ner [`tools/ysfc_forge_library_builder_v14_0.html`](tools/ysfc_forge_library_builder_v14_0.html)
+1. Ladda ner [`tools/ysfc_forge_library_builder_v14_1.html`](tools/ysfc_forge_library_builder_v14_1.html)
 2. Öppna filen i din webbläsare
 3. Dra och släpp `.Y2L`- eller `.Y2U`-filer
 4. Markera de performances du vill ha
@@ -81,7 +81,7 @@ MODX M / MONTAGE M-verktygen för `.Y2L` / `.Y2U` är reverse-engineerade från 
 |Verktyg|Vad det gör|
 |-|-|
 |[**Performance Merger**](tools/ysfc_forge_performance_merger_v1_21.html)|Sammanfoga performances från flera Y2L/Y2U-filer|
-|[**Library Builder**](tools/ysfc_forge_library_builder_v14_0.html)|Sammanfoga valda performances och beroenden från Y2L/Y2U, med experimentellt stöd för legacy X7L/X8L och X2L-liknande import|
+|[**Library Builder**](tools/ysfc_forge_library_builder_v14_1.html)|Sammanfoga valda performances och beroenden från Y2L/Y2U, med experimentellt stöd för legacy X7L/X8L och X2L-liknande import|
 |[**Performance Editor**](tools/ysfc_forge_performance_editor_v5_3.html)|Redigera FM-X, AWM2 och AN-X-parametrar i webbläsaren|
 
 ### Experimentella / extra verktyg
