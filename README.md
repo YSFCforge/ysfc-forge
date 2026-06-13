@@ -57,7 +57,7 @@ Open the HTML files in any modern browser — no installation, no cloud upload, 
 
 ### Merge performances including dependencies
 
-1. Download [`tools/ysfc_forge_library_builder_v14_0.html`](tools/ysfc_forge_library_builder_v14_0.html)
+1. Download [`tools/ysfc_forge_library_builder_v14_1.html`](tools/ysfc_forge_library_builder_v14_1.html)
 2. Open it in your browser
 3. Drag and drop `.Y2L` or `.Y2U` files
 4. Select the performances you want
@@ -81,7 +81,7 @@ Open the HTML files in any modern browser — no installation, no cloud upload, 
 |Tool|What it does|
 |-|-|
 |[**Performance Merger**](tools/ysfc_forge_performance_merger_v1_21.html)|Merge performances from multiple Y2L/Y2U files|
-|[**Library Builder**](tools/ysfc_forge_library_builder_v14_0.html)|Merge selected Performances and dependencies from Y2L/Y2U, with experimental legacy X7L/X8L and X2L-style import support|
+|[**Library Builder**](tools/ysfc_forge_library_builder_v14_1.html)|Merge selected Performances and dependencies from Y2L/Y2U, with experimental legacy X7L/X8L and X2L-style import support|
 |[**Performance Editor**](tools/ysfc_forge_performance_editor_v5_3.html)|Edit FM-X, AWM2 and AN-X parameters in the browser|
 
 ### Experimental / Extra Tools
