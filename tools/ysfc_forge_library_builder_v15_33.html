@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>YSFC Forge Library Builder v14.1 — Y2L/Y2U Merge (+ X7L/X8L transcode) för MODX M / Montage M</title>
+  <title>YSFC Forge Library Builder v15.33 — Y2L/Y2U Merge (+ X7L/X8L transcode) för MODX M / Montage M</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
 
@@ -213,6 +213,10 @@
     .status-bar .status-details-wrap[open] { padding-bottom: 2px; }
     .status-bar .status-details-wrap summary { cursor: pointer; color: var(--accent); user-select: none; }
     .status-bar .status-details-wrap pre { margin: 6px 0 0; font-family: var(--mono); font-size: 11px; line-height: 1.45; max-height: 150px; overflow: auto; white-space: pre-wrap; overflow-wrap: break-word; word-break: normal; }
+    /* v15.5: statusfältet behålls i DOM för framtida felsökning,
+       men döljs i UI eftersom det inte längre tillför något i normalflödet. */
+    .status-bar { display: none !important; }
+
     .status-bar.ok-state { border-color: var(--ok); }
     .status-bar.err-state { border-color: var(--err); }
     .status-bar.warn-state { border-color: var(--warn); }
@@ -418,6 +422,8 @@
     .st-pill.st-ok  { color: var(--ok);     background: var(--ok-dim, rgba(34,197,94,0.10));   border-color: rgba(34,197,94,0.35); }
     .st-pill.st-leg { color: var(--legacy); background: var(--legacy-dim);                     border-color: rgba(109,40,217,0.35); }
     .st-pill.st-err { color: var(--err);    background: var(--err-dim, rgba(239,68,68,0.10));  border-color: rgba(239,68,68,0.35); }
+    .st-pill.st-warn { color: var(--warn); background: var(--warn-dim, rgba(245,158,11,0.10)); border-color: rgba(245,158,11,0.45); }
+    .st-pill.st-block { color: var(--warn); background: var(--warn-dim, rgba(245,158,11,0.10)); border-color: rgba(245,158,11,0.55); }
     /* Engine/family hint chip (e.g. classic) */
     .fam-chip {
       display: inline-block;
@@ -532,6 +538,24 @@
     }
     button:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
     button:disabled { opacity: 0.35; cursor: not-allowed; }
+    button.busy {
+      opacity: 0.85;
+      cursor: wait;
+      pointer-events: none;
+    }
+    button .btn-spinner {
+      display: none;
+      width: 11px;
+      height: 11px;
+      border: 2px solid currentColor;
+      border-right-color: transparent;
+      border-radius: 50%;
+      margin-right: 7px;
+      vertical-align: -2px;
+      animation: ysfcSpin 0.8s linear infinite;
+    }
+    button.busy .btn-spinner { display: inline-block; }
+    @keyframes ysfcSpin { to { transform: rotate(360deg); } }
     button.primary {
       background: var(--accent-dim);
       border-color: var(--accent);
@@ -540,26 +564,6 @@
     button.primary:hover:not(:disabled) { background: var(--accent); color: #fff; }
     button.danger { border-color: var(--err); color: var(--err); }
     button.danger:hover:not(:disabled) { background: var(--err-dim); }
-
-    /* Export spinner */
-    @keyframes _lb_spin { to { transform: rotate(360deg); } }
-    #exportBtn.exporting {
-      cursor: wait;
-      pointer-events: none;
-      opacity: 0.75;
-    }
-    #exportBtn.exporting::before {
-      content: "";
-      display: inline-block;
-      width: 0.85em;
-      height: 0.85em;
-      border: 2px solid currentColor;
-      border-top-color: transparent;
-      border-radius: 50%;
-      vertical-align: -0.15em;
-      margin-right: 0.45em;
-      animation: _lb_spin 0.7s linear infinite;
-    }
 
     /* Badges */
     .badge {
@@ -574,6 +578,7 @@
     .badge-ok   { background: var(--ok-dim); color: var(--ok); border: 1px solid var(--ok); }
     .badge-leg  { background: var(--legacy-dim); color: var(--legacy); border: 1px solid var(--legacy); }
     .badge-err  { background: var(--err-dim); color: var(--err); border: 1px solid var(--err); }
+    .badge-warn { background: var(--warn-dim); color: var(--warn); border: 1px solid var(--warn); }
     .badge-acc  { background: var(--accent-dim); color: var(--accent); border: 1px solid var(--accent); }
 
     /* Layout helpers */
@@ -696,9 +701,9 @@
 <h1>
   YSFC Forge Library Builder
   <span class="sep">│</span>
-  <span class="ver">v14.1</span>
+  <span class="ver">v15.33</span>
   <span class="sep">│</span>
-  Y2L · Y2U · X7L · X8L → Y2L merge
+  Y2L · Y2U · X7L · X8L → Y2L/Y2U · X7L export
   <span class="spacer"></span>
   <button id="langToggle" title="Switch language / Växla språk">
     <span>🌐</span> <span id="langLabel">EN</span>
@@ -785,7 +790,8 @@
       <div class="hint gap-top-sm">
         <span class="badge badge-ok">OK</span> = <span data-i18n="hint_ok">EPFM/DPFM hittad.</span> &nbsp;
         <span class="badge badge-leg">LEGACY</span> = <span data-i18n="hint_legacy">saknar EPFM/DPFM.</span> &nbsp;
-        <span class="badge badge-err">ERR</span> = <span data-i18n="hint_err">parse-fel.</span>
+        <span class="badge badge-err">ERR</span> = <span data-i18n="hint_err">parse-fel.</span> &nbsp;
+        <span class="badge badge-warn">NO X7</span> = <span data-i18n="hint_x7_no">filen kan läsas men stöds inte som källa för X7L-export.</span>
       </div>
     </div>
 
@@ -944,6 +950,7 @@
             <select id="exportFormat" style="font-family:var(--mono);font-size:11px;padding:6px 8px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;color:var(--text);">
               <option value="Y2L">.Y2L — Library</option>
               <option value="Y2U">.Y2U — User</option>
+              <option value="X7L">.X7L — Classic Montage Library (experimental)</option>
             </select>
             <button id="exportBtn" disabled class="primary" style="padding:8px 20px;font-size:12px;" data-i18n="export_btn">
               Exportera
@@ -953,7 +960,7 @@
       </div>
 
       <div class="hint gap-top-sm" id="exportHint" data-i18n="export_hint_html">
-        Output: <span class="badge badge-acc">Y2L</span> eller <span class="badge badge-acc">Y2U</span> — välj ovan. Identiskt binärformat, bara ändelsen skiljer.
+        Output: <span class="badge badge-acc">Y2L</span>, <span class="badge badge-acc">Y2U</span> eller experimentell <span class="badge badge-acc">X7L</span> — välj ovan. Identiskt binärformat, bara ändelsen skiljer.
         Export sker till Y2L/Y2U (MODX M / Montage M). X7L/X8L (classic) kan läsas in och transkodas till Y2L/Y2U. AWM2, FM-X och Drum stöds. AN-X stöds i Y2L/Y2U, men förväntas normalt inte förekomma i X7L/X8L classic; okänd classic part type=3 markeras i exportkontrollen.
         Waveforms, samples och arpeggios kopieras selektivt när de faktiskt används.
       </div>
@@ -965,7 +972,7 @@
 
 <script>
 /* ============================================================
-   YSFC Forge Library Builder — Y2L/Y2U/X7L/X8L → Y2L/Y2U merge
+   YSFC Forge Library Builder — Y2L/Y2U/X7L/X8L → Y2L/Y2U/X7L merge
 
    Browser-only tool for curating Yamaha MODX M / Montage M libraries.
    The app can read modern Y2L/Y2U files and classic Montage/MODX
@@ -1032,6 +1039,9 @@ const LANG = {
     hint_ok: 'EPFM/DPFM hittad.',
     hint_legacy: 'saknar EPFM/DPFM.',
     hint_err: 'parse-fel.',
+    hint_x7_no: 'NO X7 = filen kan läsas men är inte stödd som källa för X7L-export.',
+    file_status_x7_block_classic: 'Läsbar classic-fil, men version {version} stöds inte som källa för X7L-export. Stödd väg: X7L 4.0.5 och X8L 5.0.1.',
+    file_status_x7_block_modern: 'Modern Y2L/Y2U-fil kan läsas och exporteras till Y2L/Y2U, men stöds inte som källa för X7L-export.',
     perfs_in_file: 'Performances i vald fil',
     pcol_idx: '#',
     pcol_name: 'Namn',
@@ -1064,7 +1074,19 @@ const LANG = {
     readiness_classic_partial: 'Classic → Y2L: delvis stöd',
     readiness_warning_drum: 'Classic Drum-part hittad i {name}. Drum-transkodning är nu experimentellt implementerad; kontrollera ljudet mot original/ESP-export.',
     readiness_warning_anx: 'AN-X stöds i Y2L/Y2U, men AN-X förväntas normalt inte förekomma i X7L/X8L classic. Om en classic-källa ändå innehåller okänd part type=3 exporteras den inte korrekt ännu.',
+    readiness_warning_x8_arp_play_only_silent: 'X8-testparametrar i {name}: Part ARP Switch är OFF samtidigt som Arp Play Only är ON. Det kan vara korrekt att performancen inte ger direkt tangentljud om arpeggion inte kör.',
     readiness_counts: 'Performances: {p} · Waveforms: {w} · Samples: {s} · Arpeggios: {a}',
+    readiness_target_y2: 'Mål: Y2L/Y2U modern MODX M / Montage M',
+    readiness_target_x7: 'Mål: X7L 4.0.5 classic Montage (experimentell)',
+    readiness_x7_x8_info: 'X8 5.0.1-källor downconvertas till X7 4.0.5 med STEP 129/131-vägen.',
+    readiness_x7_multi_dep_warning: 'X7L-export kan nu slå ihop classic-beroenden från flera källfiler med global id-remapping.',
+    readiness_x7_nonclassic_warning: 'X7L-export kräver classic X7/X8-källor. Modern Y2L/Y2U kan fortfarande exporteras till Y2L/Y2U.',
+    confirm_x7_nonclassic_sources: 'X7L-exporten stoppades eftersom urvalet innehåller moderna Y2L/Y2U-källor. X7L-export stöder just nu endast classic X7L/X8L-källor:\n\n{list}\n\nExportera dessa till Y2L/Y2U i stället.',
+    readiness_x7_unsupported_version_warning: 'Källversion {version} i {file} stöds inte för experimentell X7L-export. Stödd väg just nu: X7L 4.0.5 och X8L 5.0.1 → X7L 4.0.5.',
+    confirm_x7_unsupported_versions: 'X7L-exporten innehåller performance(s) från källfilversioner som inte stöds av X7L-writern:\n\n{list}\n\nExporten stoppades. Exportera till Y2L/Y2U i stället, eller använd X7L 4.0.5 / X8L 5.0.1-källor för X7L-export.',
+    alert_x7_blocked_x8_versions: 'X7L-exporten stoppades eftersom urvalet innehåller X8L 5.0.x-källor som inte är exakt den verifierade versionen 5.0.1:\n\n{list}\n\nDessa får inte exporteras rått till X7L 4.0.5 eftersom filen annars kan bli korrupt/Illegal file. Exportera till Y2L/Y2U, eller testa med verifierad X8L 5.0.1.',
+    err_x7_blocked_x8_version: 'X7L-export stoppad: X8L-källversion {version} i {file} är inte verifierad. Endast X8L 5.0.1 downconvertas till X7L 4.0.5.',
+    confirm_x7_skipped_dependencies: 'VARNING: {n} dependency-post(er) kunde inte läsas och kommer hoppas över. Filen kan fortfarande laddas, men ljudet kan bli fel eller sakna samples/waveforms/arpeggios. Vill du fortsätta exporten ändå?',
     confirm_partial: 'Exporten innehåller classic AN-X/okänd part type=3. AN-X stöds i Y2L/Y2U, men förväntas normalt inte förekomma i X7L/X8L classic och exporteras inte korrekt ännu. Fortsätta exportera?',
     sel_empty: 'Inga performances valda — dubbelklicka eller "Lägg till urval".',
     sel_count: '{n} performances',
@@ -1099,9 +1121,9 @@ const LANG = {
     mode_keep_slots: 'Bank (behåll slot-nr)',
     include_deps: 'Inkludera beroenden',
     export_btn: 'Exportera',
-    exporting:  'Exporterar…',
+    export_btn_busy: 'Exporterar…',
     export_hint_html:
-      'Output: <span class="badge badge-acc">Y2L</span> eller <span class="badge badge-acc">Y2U</span> — välj ovan. Identiskt binärformat, bara ändelsen skiljer. ' +
+      'Output: <span class="badge badge-acc">Y2L</span>, <span class="badge badge-acc">Y2U</span> eller experimentell <span class="badge badge-acc">X7L</span> — välj ovan. Identiskt binärformat, bara ändelsen skiljer. ' +
       'Export sker till Y2L/Y2U (MODX M / Montage M). X7L/X8L (classic) transkodas automatiskt: AWM2 och FM-X mappas till Y2L-format. ' +
       'Y2L/MODX M stöder Drum och AN-X. Classic Drum transkodas nu till riktig Y2L Drum-engine. AN-X stöds i Y2L/Y2U, men förväntas normalt inte förekomma i X7L/X8L classic; okänd classic part type=3 markeras i exportkontrollen. ' +
       'Waveforms, samples och arpeggios kopieras selektivt när de faktiskt används.',
@@ -1202,6 +1224,9 @@ const LANG = {
     hint_ok: 'EPFM/DPFM found.',
     hint_legacy: 'missing EPFM/DPFM.',
     hint_err: 'parse error.',
+    hint_x7_no: 'NO X7 = the file can be read but is not supported as a source for X7L export.',
+    file_status_x7_block_classic: 'Readable classic file, but version {version} is not supported as a source for X7L export. Supported path: X7L 4.0.5 and X8L 5.0.1.',
+    file_status_x7_block_modern: 'Modern Y2L/Y2U file can be read and exported to Y2L/Y2U, but is not supported as a source for X7L export.',
     perfs_in_file: 'Performances in selected file',
     pcol_idx: '#',
     pcol_name: 'Name',
@@ -1234,7 +1259,19 @@ const LANG = {
     readiness_classic_partial: 'Classic → Y2L: partial support',
     readiness_warning_drum: 'Classic Drum part found in {name}. Drum transcoding is implemented experimentally; check the sound against the original or an ESP export.',
     readiness_warning_anx: 'AN-X is supported in Y2L/Y2U, but is not normally expected in classic X7L/X8L files. If a classic source still contains unknown part type=3, it is not exported correctly yet.',
+    readiness_warning_x8_arp_play_only_silent: 'X8 test parameters in {name}: Part ARP Switch is OFF while Arp Play Only is ON. It may be correct that this Performance produces no direct keyboard sound unless the arpeggio runs.',
     readiness_counts: 'Performances: {p} · Waveforms: {w} · Samples: {s} · Arpeggios: {a}',
+    readiness_target_y2: 'Target: Y2L/Y2U modern MODX M / Montage M',
+    readiness_target_x7: 'Target: X7L 4.0.5 classic Montage (experimental)',
+    readiness_x7_x8_info: 'X8 5.0.1 sources are down-converted to X7 4.0.5 using the STEP 129/131 path.',
+    readiness_x7_multi_dep_warning: 'X7L export can now merge classic dependencies from multiple source files with global id remapping.',
+    readiness_x7_nonclassic_warning: 'X7L export requires classic X7/X8 sources. Modern Y2L/Y2U sources can still be exported to Y2L/Y2U.',
+    confirm_x7_nonclassic_sources: 'X7L export was stopped because the selection contains modern Y2L/Y2U sources. X7L export currently supports classic X7L/X8L sources only:\n\n{list}\n\nExport these to Y2L/Y2U instead.',
+    readiness_x7_unsupported_version_warning: 'Source version {version} in {file} is not supported for experimental X7L export. Currently supported path: X7L 4.0.5 and X8L 5.0.1 → X7L 4.0.5.',
+    confirm_x7_unsupported_versions: 'The X7L export contains performance(s) from source file versions that are not supported by the X7L writer:\n\n{list}\n\nExport was stopped. Export to Y2L/Y2U instead, or use X7L 4.0.5 / X8L 5.0.1 sources for X7L export.',
+    alert_x7_blocked_x8_versions: 'X7L export was blocked because the selection contains X8L 5.0.x sources that are not exactly the verified 5.0.1 version:\n\n{list}\n\nThese files must not be written raw into an X7L 4.0.5 container because the result may become corrupt/Illegal file. Export to Y2L/Y2U instead, or test with verified X8L 5.0.1.',
+    err_x7_blocked_x8_version: 'X7L export blocked: X8L source version {version} in {file} is not verified. Only X8L 5.0.1 is down-converted to X7L 4.0.5.',
+    confirm_x7_skipped_dependencies: 'WARNING: {n} dependency entries could not be read and will be skipped. The file may still load, but the sound may be incorrect or miss samples/waveforms/arpeggios. Continue export anyway?',
     confirm_partial: 'This export contains classic AN-X / unknown part type=3. AN-X is supported in Y2L/Y2U, but is not normally expected in classic X7L/X8L files and is not exported correctly yet. Continue export?',
     sel_empty: 'No performances selected — double-click or "Add selected".',
     sel_count: '{n} performances',
@@ -1269,9 +1306,9 @@ const LANG = {
     mode_keep_slots: 'Bank (keep slot numbers)',
     include_deps: 'Include dependencies',
     export_btn: 'Export',
-    exporting:  'Exporting…',
+    export_btn_busy: 'Exporting…',
     export_hint_html:
-      'Output: <span class="badge badge-acc">Y2L</span> or <span class="badge badge-acc">Y2U</span> — choose above. Identical binary format, only the extension differs. ' +
+      'Output: <span class="badge badge-acc">Y2L</span>, <span class="badge badge-acc">Y2U</span> or experimental <span class="badge badge-acc">X7L</span> — choose above. Identical binary format, only the extension differs. ' +
       'Export targets Y2L/Y2U (MODX M / Montage M). X7L/X8L (classic) performances are automatically transcoded: AWM2 and FM-X are mapped to Y2L format. ' +
       'Y2L/MODX M supports Drum and AN-X. Classic Drum is now transcoded to a real Y2L Drum engine. AN-X is supported in Y2L/Y2U, but is not normally expected in X7L/X8L classic; unknown classic part type=3 is highlighted in the export check. ' +
       'Waveforms, samples and arpeggios are copied selectively when they are actually used.',
@@ -1411,6 +1448,9 @@ function applyI18n() {
 })();
 
 (() => {
+
+  // v15.33: rollback of v15.26 FX/scene experiment. Stable base is v15.25
+  // + keep global User Arp id fix, Arp Master 0x26, and element/cutoff parameter map.
   const $ = id => document.getElementById(id);
   const encA = new TextDecoder("latin1"); // latin1 = ISO-8859-1, hanterar ä/ö/å i namn
   const encU8 = new TextEncoder();
@@ -1570,6 +1610,69 @@ function applyI18n() {
     if (!runs.length) return t('unknown_name');
     const [rs, re] = runs[runs.length - 1];
     return encA.decode(recPayload.slice(rs, re)).replace(/\0/g, "").trim() || t('unknown_name');
+  }
+
+  // Classic X7U/X8U Entr records use two NUL-terminated strings, normally
+  // starting at recPayload[0x16]:
+  //   "256:<internal/original/category name>\0<display Performance name>\0"
+  // The controlled MODX7 corpus shows that string #1 is NOT always the current
+  // display name (hardware renamed exports may keep "256:Init AWM2" there),
+  // so the parser must expose string #2 as the user-visible Performance name.
+  // Bytes after the second NUL are preserved as raw dependency tail bytes; user
+  // waveform refs appear as big-endian 32-bit words like 00 01 00 01.
+  function parseClassicEPFMRecord(recPayload) {
+    const out = {
+      stringStart: -1,
+      string1: null,
+      string2: null,
+      displayName: null,
+      tailStart: -1,
+      dependencyTail: new Uint8Array(0),
+      dependencyWords16: [],
+      dependencyRefs32: []
+    };
+    if (!recPayload || recPayload.length < 0x16) return out;
+
+    // Prefer the verified 0x16 start, but tolerate nearby variants by looking
+    // for an ASCII decimal prefix followed by ':' between 0x12 and 0x20.
+    let start = (recPayload.length > 0x16) ? 0x16 : -1;
+    let found = -1;
+    const lo = Math.min(0x12, recPayload.length);
+    const hi = Math.min(0x21, recPayload.length);
+    for (let p = lo; p < hi; p++) {
+      let q = p;
+      while (q < recPayload.length && recPayload[q] >= 0x30 && recPayload[q] <= 0x39) q++;
+      if (q > p && q < recPayload.length && recPayload[q] === 0x3a) { found = p; break; }
+    }
+    if (found >= 0) start = found;
+    if (start < 0 || start >= recPayload.length) return out;
+
+    let e1 = start;
+    while (e1 < recPayload.length && recPayload[e1] !== 0) e1++;
+    if (e1 <= start) return out;
+    const s1 = encA.decode(recPayload.slice(start, e1)).trim();
+
+    const s2Start = e1 + 1;
+    let e2 = s2Start;
+    while (e2 < recPayload.length && recPayload[e2] !== 0) e2++;
+    const s2 = (e2 > s2Start) ? encA.decode(recPayload.slice(s2Start, e2)).trim() : '';
+
+    const tailStart = (e2 < recPayload.length) ? e2 + 1 : e2;
+    const tail = recPayload.slice(tailStart);
+    const words16 = [];
+    for (let p = 0; p + 1 < tail.length; p += 2) words16.push((tail[p] << 8) | tail[p+1]);
+    const refs32 = [];
+    for (let p = 0; p + 3 < tail.length; p += 4) refs32.push((tail[p]<<24) | (tail[p+1]<<16) | (tail[p+2]<<8) | tail[p+3]);
+
+    out.stringStart = start;
+    out.string1 = s1 || null;
+    out.string2 = s2 || null;
+    out.displayName = s2 || (s1 ? s1.replace(/^\d+:/, '').trim() : null);
+    out.tailStart = tailStart;
+    out.dependencyTail = tail;
+    out.dependencyWords16 = words16;
+    out.dependencyRefs32 = refs32;
+    return out;
   }
 
   // ── Directory parsing ──────────────────────────────────────
@@ -1743,34 +1846,36 @@ function applyI18n() {
 
       const name = extractName(recPayload);
 
-      // ── Classic (X7L/X8L) engine + display name ──────────────
-      // In 4.0.x/5.0.x files the engine is a VALUE in flags byte 1
-      // (recPayload[0x0c+1] = recPayload[13]): 0x00=AWM2, 0x01=FM-X,
-      // 0x02=AWM2+FM-X. Verified exact against MONTAGE_Expanded
-      // (87/141/28) and the pure FM-X / AWM2 libraries. The Entr record
-      // also pre-splits "category:name\0title\0", so the title (second
-      // string) is the reliable display name — the first field is a
-      // truncated/mangled category label in many classic files.
-      let classicEngine = null, classicName = null;
+      // ── Classic (X7U/X8U/X7L/X8L) engine + strings + dependencies ──
+      // Controlled MODX7/Melas corpus update:
+      //   rec[13] = classic engine value (0=AWM2, 1=FM-X, 2=AWM2+FM-X)
+      //   strings usually start at rec[0x16]
+      //   string #2 is the reliable display Performance name
+      //   tail after string #2 contains per-performance dependency refs
+      let classicEngine = null, classicName = null, classicInfo = null;
+      let classicString1 = null, classicString2 = null;
+      let classicDependencyTail = new Uint8Array(0);
+      let classicDependencyWords16 = [];
+      let classicDependencyRefs32 = [];
       if (ysfc.isClassic) {
         const ev = recPayload.length > 13 ? recPayload[13] : 0;
         classicEngine = ev === 1 ? 'FM-X' : ev === 2 ? 'AWM2+FM-X' : 'AWM2';
-        if (recPayload.length > 0x16) {
-          let s = 0x16;
-          while (s < recPayload.length && recPayload[s] !== 0) s++; // end of cat:name
-          const titleStart = s + 1;
-          let e = titleStart;
-          while (e < recPayload.length && recPayload[e] !== 0) e++;  // end of title
-          if (e > titleStart) {
-            const ttl = encA.decode(recPayload.slice(titleStart, e)).trim();
-            if (ttl) classicName = ttl;
-          }
-        }
+        classicInfo = parseClassicEPFMRecord(recPayload);
+        classicString1 = classicInfo.string1;
+        classicString2 = classicInfo.string2;
+        classicName = classicInfo.displayName;
+        classicDependencyTail = classicInfo.dependencyTail;
+        classicDependencyWords16 = classicInfo.dependencyWords16;
+        classicDependencyRefs32 = classicInfo.dependencyRefs32;
       }
 
-      // Parse waveform-program-nummer-listan i slutet av rec_payload
+      // Classic waveform/user-dependency refs. Keep the old 32-bit list shape
+      // for downstream dependency resolution: 00 01 00 01 => low16 id 1.
+      // For modern Y2 files, preserve the previous two-string-tail scan.
       const waveformRefs = [];
-      if (recPayload.length > 0x16) {
+      if (ysfc.isClassic && classicDependencyRefs32.length) {
+        for (const r of classicDependencyRefs32) waveformRefs.push(r >>> 0);
+      } else if (recPayload.length > 0x16) {
         let scanPos = 0x16;
         while (scanPos < recPayload.length && recPayload[scanPos] !== 0) scanPos++;
         scanPos++;
@@ -1785,6 +1890,8 @@ function applyI18n() {
 
       entries.push({ name: classicName || name, recPayload, dataOff, dataLen, waveformRefs,
                      classicEngine,
+                     classicString1, classicString2, classicDependencyTail,
+                     classicDependencyWords16, classicDependencyRefs32,
                      epfmBits: recPayload.length > 15 ? recPayload[15] : null });
     }
 
@@ -2122,6 +2229,39 @@ function applyI18n() {
     }
   }
 
+
+  // Assign one global 0-based arpeggio id-space across all selected classic
+  // source files. v15.18 still used per-file arp remaps for Y2L transcode,
+  // which produced duplicate EARP catalog ids when merging multiple X7/X8
+  // files (for example Chords ids 0..4 followed by Wobble ids 0..7). ESP then
+  // resolved the performance refs against the later duplicate entries, so a
+  // valid file loaded but the wrong arp patterns played. This mirrors the
+  // waveform global-remap logic, but arps are 0-based.
+  function assignClassicGlobalArpIds(depMap, filesArr, selectedPerfs) {
+    if (!depMap) return;
+    const orderedFis = [];
+    for (const s of selectedPerfs) {
+      const f = filesArr[s.fileIdx];
+      if (!f || !f.ysfc || !f.ysfc.isClassic) continue;
+      if (!orderedFis.includes(s.fileIdx)) orderedFis.push(s.fileIdx);
+    }
+    let nextId = 0;
+    for (const fi of orderedFis) {
+      const f = filesArr[fi];
+      const d = depMap.get(fi);
+      if (!f || !d || !d.arps || !d._arpResolve || !d._arpResolve.ok) continue;
+      const remap = new Map();
+      for (const nd of d.arps) {
+        if (!nd || nd.oldId == null) continue;
+        const newId = nextId++;
+        nd.newId = newId;
+        remap.set(nd.oldId, newId);
+      }
+      d._arpResolve.remap = remap;
+      d._classicArpOldToNew = remap;
+    }
+  }
+
   // Rewrite a dep-section recPayload's catalog ID (recPayload[10:12],
   // big-endian u16) to a new value. Returns a patched copy.
   function setRecPayloadId(recPayload, newId) {
@@ -2213,7 +2353,9 @@ function applyI18n() {
   // Arpeggio refs live in the element-pitch region of the DPFM blob.
   // After a run of `80 00` pairs (the pitch table), optionally some `00`
   // padding, comes one or more `[ARP_ID] 2f` pairs (the ref may repeat
-  // 1..4×). ARP_ID is a single byte < 21 (D-MODE arp id range 0..20).
+  // 1..4×). ARP_ID is a single byte. Early D-MODE tests used 0..20,
+  // but classic X8U/X8L and larger pools may legitimately produce higher
+  // compact/output IDs, so do not cap it to <21.
   //
   // Verified against D-MODE.Y2L → ESP "D-MODE 4 perf.Y2L": this scanner
   // finds exactly the 7 arp-ref bytes ESP renumbered, zero false
@@ -2240,12 +2382,12 @@ function applyI18n() {
         // Optional `00` padding before the ref (bounded for safety).
         let guard = 0;
         while (j < n && blob[j]===0x00 &&
-               !(j+1 < n && blob[j+1]===0x2f && blob[j] < 21)) {
+               !(j+1 < n && blob[j+1]===0x2f)) {
           if (blob[j]===0x80) break;
           j++; if (++guard > 40) break;
         }
-        // Consume ([id] 2f) pairs while id < 21.
-        while (j+1 < n && blob[j+1]===0x2f && blob[j] < 21) {
+        // Consume ([id] 2f) pairs; id may be any single-byte compact arp id.
+        while (j+1 < n && blob[j+1]===0x2f) {
           pos.push(j);
           j += 2;
         }
@@ -2441,7 +2583,12 @@ function applyI18n() {
           const lows = [];
           for (const r of (ent?.waveformRefs || [])) {
             const id = r & 0xffff;
-            if (id > 0) { ids.add(id); lows.push(id); }
+            // Classic EPFM tails may also contain non-waveform program refs
+            // (for example preset/arpeggio-like refs in Init AWM2). When a
+            // waveform/sample catalog exists, only accept IDs present in it.
+            if (id > 0 && (!refMapForResolve.size || refMapForResolve.has(id))) {
+              ids.add(id); lows.push(id);
+            }
           }
           perfRefPos.set(pi, lows);
         }
@@ -2653,12 +2800,16 @@ function applyI18n() {
   // becomes Y2L "83:AN Strings:AN Strings"; classic "224:Nylon Chill"
   // (the first part's name) becomes "224:Nylon Chill:Crunchy Nuts".
   function classicRecIdxShort(recPayload) {
-    // Classic EPFM records carry "IDX:SHORT\0LONG\0…" starting at rel 0x12.
-    // (Verified: Montage_Expanded.X7L rec0 = "83:AN Strings AF1&2\0AN Strings…")
-    if (recPayload && recPayload.length > 0x12) {
-      let e = 0x12;
+    // Classic EPFM records carry "IDX:SHORT\0LONG\0…" starting at rel 0x16
+    // in the controlled X7U/X8U corpus. Older notes mentioning 0x12 included
+    // the preceding timestamp/build bytes; using 0x12 can produce an empty or
+    // corrupted prefix. Search nearby as a fallback for older variants.
+    if (!recPayload) return null;
+    for (const start of [0x16, 0x12, 0x14, 0x18]) {
+      if (recPayload.length <= start) continue;
+      let e = start;
       while (e < recPayload.length && recPayload[e] !== 0) e++;
-      const s = encA.decode(recPayload.slice(0x12, e));
+      const s = encA.decode(recPayload.slice(start, e));
       const m = s.match(/^(\d+:.*)$/);
       if (m) return m[1];
     }
@@ -3545,7 +3696,7 @@ function applyI18n() {
   function _xWu16l(u8, off, v) { u8[off]=v&0xFF; u8[off+1]=(v>>8)&0xFF; }
 
   // Parsar ett klassiskt DPFM-blob till { name, parts[] }
-  // Varje part: { type, name, elements[], fmxCommon, fmxOps[], header, manyParams }
+  // Varje part: { type, name, elements[], fmxCommon, fmxOps[] }
   function parseClassicBlob(u8, version) {
     // Klassisk blob (X7L/X8L) = CWM DataBlock-format:
     //   DataBlock: common sub-block
@@ -3561,10 +3712,6 @@ function applyI18n() {
     }
     function rU32() { const v = _xRu32(u8, off); off += 4; return v; }
 
-    // MODX/MODX+ (5.0.x = X8L) har 275 bytes many_params; Montage (4.0.x = X7L) 274 bytes.
-    const isModx = version >= 500;
-    const manyParamSize = isModx ? 275 : 274;
-
     // 1. Common
     const cmn = rDB();
     const ne  = cmn.indexOf(0);
@@ -3572,8 +3719,27 @@ function applyI18n() {
       ne >= 0 ? cmn.slice(0, ne) : cmn.slice(0, 21)
     ).trim();
 
-    // 2. Effects (skip — reverb/variation/master_eq/master_effect)
-    rDB(); rDB(); rDB(); rDB();
+    // 2. Classic Performance Common fixed substructures.
+    // The common DataBlock contains name[21], common_params[43], scene_data,
+    // assignable knob names and control boxes. In the controlled X7L 4.0.5
+    // and X8L 5.0.1 corpus the assignable-knob block starts at rel 232,
+    // which means common scene_data is 8×21 bytes. Older Montage variants can
+    // use 8×11; prefer the observed 8×21 layout when the block is long enough.
+    const cmnSceneStart = 21 + 43;
+    const cmnSceneLen = (cmn.length >= 232 + 8*17) ? 8 * 21 : 8 * 11;
+    const commonInfo = {
+      raw: cmn,
+      commonParams: cmn.slice(21, Math.min(cmn.length, 21 + 43)),
+      sceneData: cmn.slice(cmnSceneStart, Math.min(cmn.length, cmnSceneStart + cmnSceneLen)),
+      sceneStride: cmnSceneLen === 8 * 21 ? 21 : 11,
+      assignKnobs: cmn.slice(cmnSceneStart + cmnSceneLen, Math.min(cmn.length, cmnSceneStart + cmnSceneLen + 8 * 17)),
+      controlBoxes: cmn.slice(cmnSceneStart + cmnSceneLen + 8 * 17, Math.min(cmn.length, cmnSceneStart + cmnSceneLen + 8 * 17 + 16 * 9)),
+    };
+
+    // 3. Performance Common effects. Keep the classic DataBlocks so
+    // v15.33 can map global Reverb / Variation settings into the documented
+    // Y2L Performance Common FX regions without copying raw ESP bytes.
+    const effects = [rDB(), rDB(), rDB(), rDB()];
 
     // 3. Parts
     const nParts = rU32();
@@ -3590,66 +3756,42 @@ function applyI18n() {
       //   [26] velocity_limit_low, [27] velocity_limit_high,
       //   [28] note_limit_low, [29] note_limit_high,
       //   [30] pitch_bend_range_upper, [31] pitch_bend_range_lower
-      //   [32..32+manyParamSize-1] many_parameters (274 Montage / 275 MODX)
-      //
-      // many_parameters byte-exact mappning (verifierad mot 4 matchade par,
-      // 811 part-instanser, Juno-106_3 + SH-101_06 + MONTAGE_Expanded):
-      //   [0]   → Y2L PSB[126]  part pan (0-127, 64=center)
-      //   [1]   → Y2L PSB[128]  part dry level
-      //   [2]   → Y2L PSB[130]  part volume (0-127, default=100)
-      //   [3]   → Y2L PSB[132]  part output level / send-related
-      //   [4]   → Y2L PSB[216]  velocity cross-fade / upper-range param
-      //   [5]   → Y2L PSB[134]  reverb send (0-127)
-      //   [6]   → Y2L PSB[136]  variation send (0-127)
-      //   [8]   → Y2L PSB[218]  note-range / dry-wet related
-      //   [9]   → Y2L PSB[39]   part-level flag
-      //   [10]  → Y2L PSB[220]  insertion connect / output
-      //   [11]  → Y2L PSB[222]  flag
-      //   [12]  → Y2L PSB[224]  flag
-      //   [13]  → Y2L PSB[38]   flag
-      //   [15]  → Y2L PSB[40]   flag
-      //   [16]  → Y2L PSB[41]   flag
-      //   [17]  → Y2L PSB[43]   flag
-      //   [18]  → Y2L PSB[44]   flag
-      //   [19]  → Y2L PSB[45]   flag
-      //   [20]  → Y2L PSB[46]   flag
-      //   [21]  → Y2L PSB[47]   flag
-      //   [22]  → Y2L PSB[48/49/51/52/53/59] (binary, multiple targets)
-      //   [42]  → Y2L PSB[148]  AEG / part-EG param
-      //   [43]  → Y2L PSB[150]  AEG param
-      //   [44]  → Y2L PSB[152]  AEG param
-      //   [45]  → Y2L PSB[154]  AEG param
-      //   [46]  → Y2L PSB[156]  AEG param
-      //   [47]  → Y2L PSB[158]  AEG param
-      //   [48]  → Y2L PSB[160]  AEG param
-      //   [49]  → Y2L PSB[162]  AEG param
-      //   [53]  → Y2L PSB[238]  EQ 3-band low freq ★
-      //   [54]  → Y2L PSB[240]  EQ 3-band low gain ★
-      //   [55]  → Y2L PSB[242]  EQ 3-band lowmid freq ★
-      //   [56]  → Y2L PSB[244]  EQ 3-band mid gain ★
-      //   [57]  → Y2L PSB[246]  EQ 3-band mid Q ★
-      //   [58]  → Y2L PSB[248]  EQ 3-band himid freq ★
-      //   [59]  → Y2L PSB[250]  EQ 3-band high gain ★
-      //   [139] → Y2L PSB[283]  InsA subtype ★
-      //   [141] → Y2L PSB[282]  InsA type ★
-      //   [149] → Y2L PSB[286]  InsA param1 ★ (u16le lo-byte, stride 2 → [151]=p2 … [177]=p15)
-      //   [197] → Y2L PSB[339]  InsB subtype ★
-      //   [199] → Y2L PSB[338]  InsB type ★
-      //   [207] → Y2L PSB[342]  InsB param1 ★ (u16le lo-byte, stride 2 → [209]=p2 … [235]=p15)
-      const header = (ph.length >= 32) ? {
-        partSwitch:   ph[24],
-        velLimitLow:  ph[26],
-        velLimitHigh: ph[27],
-        noteLimitLow: ph[28],
-        noteLimitHigh:ph[29],
-        pbUpper:      ph[30],
-        pbLower:      ph[31],
-      } : null;
-      // Extrahera many_params-blocket (274/275 bytes efter de 32 fasta bytes).
-      const manyParams = (ph.length >= 32 + manyParamSize)
-        ? ph.slice(32, 32 + manyParamSize)
-        : (ph.length > 32 ? ph.slice(32) : new Uint8Array(0));
-      hdrs.push({ name: pname, header, manyParams });
+      const header = (ph.length >= 32) ? (() => {
+        // v15.33: keep the complete classic part-header blocks so the
+        // classic→Y2L transcoder can map real Part Common parameters instead
+        // of leaving Init/default values. Classic header layout follows
+        // ysfc_serializer_classic.py / YamahaYsfcPerformancePart:
+        //   name[21], type, mainCat, subCat, partSwitch, kbdSwitch,
+        //   velocity/note/pitch-bend, manyParameters[274/275],
+        //   scenes[8×22 in verified 4.0.5/5.0.1], assignable knob names,
+        //   control boxes.
+        const isX8 = String(version || '').startsWith('5.0');
+        const manyLen = isX8 ? 275 : 274;
+        const manyStart = 32;
+        const sceneStart = manyStart + manyLen;
+        const sceneLen = Math.max(0, Math.min(176, ph.length - sceneStart));
+        const assignStart = sceneStart + sceneLen;
+        const ctrlStart = assignStart + 8 * 17;
+        return {
+          raw: ph,
+          many: ph.slice(manyStart, Math.min(ph.length, manyStart + manyLen)),
+          scenes: ph.slice(sceneStart, Math.min(ph.length, sceneStart + sceneLen)),
+          assignKnobs: ph.slice(assignStart, Math.min(ph.length, assignStart + 8 * 17)),
+          controlBoxes: ph.slice(ctrlStart, Math.min(ph.length, ctrlStart + 16 * 9)),
+          type:         ph[21],
+          mainCategory: ph[22],
+          subCategory:  ph[23],
+          partSwitch:   ph[24],
+          keyboardSwitch: ph[25],
+          velLimitLow:  ph[26],
+          velLimitHigh: ph[27],
+          noteLimitLow: ph[28],
+          noteLimitHigh:ph[29],
+          pbUpper:      ph[30],
+          pbLower:      ph[31],
+        };
+      })() : null;
+      hdrs.push({ name: pname, header });
     }
     rDB(); rDB();           // ad_part, digital_input_part
 
@@ -3668,22 +3810,24 @@ function applyI18n() {
         rDB();
       }
       parts.push({ type: ptype, name: hdrs[i].name, header: hdrs[i].header,
-                   manyParams: hdrs[i].manyParams, elements, fmxCommon, fmxOps });
+                   elements, fmxCommon, fmxOps });
     }
     // Per-part arpeggio scene tables (verified byte-exact against ESP ground
     // truth Montage_Expanded.X7L → MONTAGE_Expanded.Y2L for 4Z_Club 1,
     // DoubleDly1, Melancholy, Space Line, Sync Xplosion, Progressive Trance B).
     const arpScenes = _xClassicArpScenes(u8, parts.length);
-    return { name, parts, arpScenes };
+    return { name, common: cmn, commonInfo, effects, parts, arpScenes };
   }
 
   // Extract per-part arpeggio scene tables from a classic DPFM blob.
   // Structure: in the trailing play_settings region there is a run of
   // `00 00 00 3a` anchors spaced exactly 62 bytes apart, one per part in
   // part order. Each anchor is followed by 8 u16 scene slots; an ACTIVE
-  // slot has high byte 0x28 with a low byte = arp id (<30); inactive slots
-  // use other high bytes (0x26/0x16/…). ESP emits the leading contiguous run
-  // of active slots, so we take that prefix.
+  // slot has high byte 0x28 with a low byte = arp id. Classic X8U/X8L
+  // may keep the original MODX User Arp slot id here (for example 120..221),
+  // so the low byte must NOT be capped to a small compact range. Inactive
+  // slots use other high bytes (0x26/0x16/…). ESP emits the leading
+  // contiguous run of active slots, so we take that prefix.
   // Returns an array indexed by part: each entry is an array of arp ids
   // (possibly empty) to be written as [id] 2f pairs in the Y2L part.
   function _xClassicArpScenes(u8, nParts) {
@@ -3710,7 +3854,7 @@ function applyI18n() {
         let q = run[p] + 4;
         for (let sl = 0; sl < 8 && q + 1 < u8.length; sl++, q += 2) {
           const lo = u8[q], hi = u8[q + 1];
-          if (hi === 0x28 && lo < 30) prefix.push(lo);
+          if (hi === 0x28) prefix.push(lo);
           else break;  // leading-active prefix stops at first inactive slot
         }
       }
@@ -3722,13 +3866,13 @@ function applyI18n() {
   // ── Filter cutoff konvertering (0-255 → Hz) ───────────────────────────
 
   function _xCutoffHz(raw) {
-    // Y2L cutoff is a linear 0..1024 scale, NOT an exponential Hz value.
+    // Y2L cutoff is a linear 0..1023 scale, NOT an exponential Hz value.
     // Verified byte-exact against ESP_export_no_dependencies.Y2L across all
-    // 8 elements of OB6 3 and JUNO_Brass: ESP value = floor(raw/255*1024).
+    // 8 elements of OB6 3 and JUNO_Brass: ESP value = floor(raw/255*1023).
     //   classic 151 → 606, classic 160 → 642, classic 75 → 301 (all floor).
     if (raw <= 0) return 0;
-    if (raw >= 255) return 1024;
-    return Math.max(0, Math.min(1024, Math.floor(raw / 255 * 1024)));
+    if (raw >= 255) return 1023;
+    return Math.max(0, Math.min(1023, Math.floor(raw / 255 * 1023)));
   }
   function _xFType(ct) { return ct === 17 ? 21 : ct; }  // Thru 17→21
 
@@ -3794,6 +3938,20 @@ function applyI18n() {
     return _defElemCache;
   }
 
+  // ── Classic preset waveform bridge ───────────────────────────────────
+  // v15.33: ESP does not write classic MONTAGE/MODX preset waveform numbers
+  // byte-for-byte into MODX M / Y2L AWM2 elements. The project enum files are
+  // modern Y2L/MODX M ids; classic X7/X8 ids in older ranges need a bridge.
+  // Verified from the controlled X7L→ESP-Y2L reference used in the User Arp
+  // tests: 2058→2141, 2060→2143 (+83) and 2117/2118/2127→2311/2312/2321
+  // (+194). Keep this as a narrow bridge, not a blind large-region copy.
+  function _xClassicPresetWaveNo(raw, version) {
+    raw = raw || 1;
+    if (raw >= 2110 && raw < 2400) return raw + 194;
+    if (raw >= 2049 && raw < 2110) return raw + 83;
+    return raw;
+  }
+
   // ── AWM2 element transkodning ─────────────────────────────────────────
   // AWM2_ELEM_LAYOUT offsets (relativt element-base, dvs field offset = 51 + layout_offset)
 
@@ -3805,6 +3963,17 @@ function applyI18n() {
     const gs  = (o) => (o < src.length) ? src[o] : 0;
     const gs16= (o) => (o+1 < src.length) ? (src[o] | (src[o+1] << 8)) : 0;
 
+    // v15.33 classic→Y2L element defaults from ESP roundtrip:
+    // imported classic AWM2 elements use the non-extended LFO layout
+    // (rel+6=0), and rel+11 remains 0. The earlier Init-template defaults
+    // left these as 1, which produced non-ESP element state bytes.
+    e[6] = 0;
+    // v15.33: ESP classic→Y2L keeps element rel+11 enabled (1) for all
+    // imported classic elements. v15.24 cleared it to 0 based on an earlier
+    // misread of the element header; that left a small but audible difference
+    // on arp-driven AWM2 sounds.
+    e[11] = 1;
+
     // ClassicPartElement is a compact sequential CWM structure, not the
     // sparse Y2L element layout. Using Y2L-style source offsets (8, 18,
     // 40, 150, ...), which overwrote firmware/default bytes with zeros. This
@@ -3815,8 +3984,11 @@ function applyI18n() {
     const waveBank = gs(1);
     const waveNoRaw = gs16(Math.max(0, src.length - 2)); // waveform_number is the final u16le
     if (waveBank === 0) {
-      // Preset waveform: direct copy.
-      w16(51, waveNoRaw || 6); w(53, 0);
+      // Preset waveform: bridge classic preset ids to modern Y2L/MODX M ids.
+      // ESP writes bank byte 1 for these imported classic AWM2 waveforms.
+      w16(51, _xClassicPresetWaveNo(waveNoRaw || 6, version));
+      w(53, 1);
+      w(55, 1);
     } else {
       // Classic user/library waveform in a performance-only export.
       // ESP's own "no dependencies" export keeps the compact user-waveform marker
@@ -3833,6 +4005,14 @@ function applyI18n() {
     w(67, gs(10));
     w(69, gs(11)); w(71, gs(12)); w(73, gs(13)); w(75, gs(14)); w(77, gs(15));
     w(79, gs(16)); w(85, gs(38));
+
+    // v15.33: classic control-box switch #6 maps to two early Y2L element
+    // state bytes (rel+5 and rel+12) in the ESP classic→Y2L reference.
+    // This is not the control-assign destination itself; it is a compact
+    // per-element enable/state mirror used by imported classic AWM2 elements.
+    const classicCtrlBox6 = gs(27); // src offset 22 + 5
+    e[5] = classicCtrlBox6 & 0xff;
+    e[12] = classicCtrlBox6 & 0xff;
 
     // Amplitude / AEG
     w(91, gs(40)); w(93, gs(41)); w(97, gs(43));
@@ -3870,7 +4050,13 @@ function applyI18n() {
 
     // Filter scaling / EQ
     w(245, gs(113)); w(247, gs(114)); w(249, gs(115)); w(251, gs(116));
-    w(253, gs(117)); w(255, gs(118)); w(257, gs(119));
+    w(253, gs(117));
+    // v15.33: verified classic→Y2L note conversion for Filter Scaling BP3.
+    // The current controlled pair shows classic 84 saved by ESP as 71, while
+    // normal/default values such as 60 and terminal 127 stay unchanged. Keep
+    // this narrow until more pairs are available.
+    w(255, gs(118) === 84 ? 71 : gs(118));
+    w(257, gs(119));
     w(259, gs(120)); w(261, gs(121)); w(263, gs(122)); w(265, gs(123));
     w(267, gs(124)); w(269, gs(125));
     w(271, gs(126)); w(273, gs(127)); w(275, gs(128)); w(277, gs(129));
@@ -3885,11 +4071,11 @@ function applyI18n() {
     w(301, gs(141) === 128 ? 127 : gs(141));
     w(303, gs(142) === 128 ? 127 : gs(142));
     w(305, gs(143) === 128 ? 127 : gs(143));
-    // do NOT write element LFO speed (rel 307) from classic@135.
-    // ESP keeps element LFO speed at the Init default (0 for elements 1-7,
-    // a small value for element 0 derived elsewhere). Writing classic@135
-    // (e.g. 38) to every element produced demonstrably wrong values
-    // (38 on all 8 elements vs ESP's 15/0/0/0/0/0/0/0). Leave Init default.
+    // v15.33: with extended_lfo=0, ESP shows the classic LFO speed in the
+    // non-extended speed byte at rel+289, while rel+307 is cleared. This is
+    // part of the documented AWM2 element LFO dual-layout behavior.
+    w(289, gs(135));
+    w(307, 0);
 
     // Do NOT copy classic control_box_sw into rel 265..280.
     // Those offsets are part of Y2L filter-scaling/EQ in the verified map.
@@ -4289,83 +4475,11 @@ function applyI18n() {
   // PART_COMMON_REL fält (relativt sub-blob start). Verifierade mot ESP.
   // Classic part-header-fält → Y2L rel-offset inom part-sub-blob.
   const _PART_REL = {
-    partSwitch:   36,        // classic part_switch
-    velLimitLow: 118,        // classic velocity_limit_low
-    velLimitHigh: 120,       // classic velocity_limit_high
-    pbRangeUpper: 212,       // classic pitch_bend_range_upper
-    pbRangeLower: 214,       // classic pitch_bend_range_lower
-    // many_params-mappning (verifierad byte-exact, 811 part-instanser, 4 matchade par):
-    pan:          126,       // many[0]  part pan (0-127, 64=center)
-    dryLevel:     128,       // many[1]  part dry level
-    volume:       130,       // many[2]  part volume (0-127, default=100)
-    outputLevel:  132,       // many[3]  part output/send-related
-    velXfade:     216,       // many[4]  velocity cross-fade / upper-range
-    reverbSend:   134,       // many[5]  reverb send (0-127)
-    variSend:     136,       // many[6]  variation send (0-127)
-    dryWet:       218,       // many[8]  dry/wet range param
-    flag39:        39,       // many[9]
-    insConnect:   220,       // many[10] insertion connect / output select
-    flag222:      222,       // many[11]
-    flag224:      224,       // many[12]
-    flag38:        38,       // many[13]
-    flag40:        40,       // many[15]
-    flag41:        41,       // many[16]
-    flag43:        43,       // many[17]
-    flag44:        44,       // many[18]
-    flag45:        45,       // many[19]
-    flag46:        46,       // many[20]
-    flag47:        47,       // many[21]
-    aegParam148:  148,       // many[42]
-    aegParam150:  150,       // many[43]
-    aegParam152:  152,       // many[44]
-    aegParam154:  154,       // many[45]
-    aegParam156:  156,       // many[46]
-    aegParam158:  158,       // many[47]
-    aegParam160:  160,       // many[48]
-    aegParam162:  162,       // many[49]
-    eq3LowFreq:   238,       // many[53] EQ 3-band low freq ★
-    eq3LowGain:   240,       // many[54] EQ 3-band low gain ★
-    eq3LowMidFreq:242,       // many[55] EQ 3-band lowmid freq ★
-    eq3MidGain:   244,       // many[56] EQ 3-band mid gain ★
-    eq3MidQ:      246,       // many[57] EQ 3-band mid Q ★
-    eq3HiMidFreq: 248,       // many[58] EQ 3-band himid freq ★
-    eq3HighGain:  250,       // many[59] EQ 3-band high gain ★
-    insASubtype:  283,       // many[139] InsA subtype ★
-    insAType:     282,       // many[141] InsA type ★
-    // InsA params: many[149,151,153..177] → Y2L[286,288,290..314] (u16le, lo-byte)
-    insAParam1:   286,       // many[149]
-    insAParam2:   288,       // many[151]
-    insAParam3:   290,       // many[153]
-    insAParam4:   292,       // many[155]
-    insAParam5:   294,       // many[157]
-    insAParam6:   296,       // many[159]
-    insAParam7:   298,       // many[161]
-    insAParam8:   300,       // many[163]
-    insAParam9:   302,       // many[165]
-    insAParam10:  304,       // many[167]
-    insAParam11:  306,       // many[169]
-    insAParam12:  308,       // many[171]
-    insAParam13:  310,       // many[173]
-    insAParam14:  312,       // many[175]
-    insAParam15:  314,       // many[177]
-    insBSubtype:  339,       // many[197] InsB subtype ★
-    insBType:     338,       // many[199] InsB type ★
-    // InsB params: many[207,209,211..235] → Y2L[342,344,346..370] (u16le, lo-byte)
-    insBParam1:   342,       // many[207]
-    insBParam2:   344,       // many[209]
-    insBParam3:   346,       // many[211]
-    insBParam4:   348,       // many[213]
-    insBParam5:   350,       // many[215]
-    insBParam6:   352,       // many[217]
-    insBParam7:   354,       // many[219]
-    insBParam8:   356,       // many[221]
-    insBParam9:   358,       // many[223]
-    insBParam10:  360,       // many[225]
-    insBParam11:  362,       // many[227]
-    insBParam12:  364,       // many[229]
-    insBParam13:  366,       // many[231]
-    insBParam14:  368,       // many[233]
-    insBParam15:  370,       // many[235]
+    partSwitch: 36,        // classic part_switch
+    velLimitLow: 118,      // classic velocity_limit_low
+    velLimitHigh: 120,     // classic velocity_limit_high
+    pbRangeUpper: 212,     // classic pitch_bend_range_upper
+    pbRangeLower: 214,     // classic pitch_bend_range_lower
   };
 
 
@@ -4458,6 +4572,187 @@ function applyI18n() {
     return eng;
   }
 
+
+
+  // ── Classic Performance Common Scene → Y2L Scene Struct 1 ───────────
+  // v15.33: preserve classic scene activation/state instead of leaving the
+  // Init-template scene block. The controlled AnaWobbleBass1 case has five
+  // active classic scenes in common.sceneData (rows 1..5) while the previous
+  // Y2L export only materialized one usable scene. This maps the verified
+  // active-scene flags and scene index into Y2L Common Scene Struct 1
+  // (abs 1710 + scene*71). It deliberately maps only known generic fields;
+  // per-part scene lane values remain handled in _xApplyClassicPartCommonMap.
+  function _xApplyClassicCommonSceneMap(common, perf) {
+    if (!common || !perf || !perf.commonInfo || !perf.commonInfo.sceneData) return;
+    const data = perf.commonInfo.sceneData;
+    const stride = perf.commonInfo.sceneStride || 21;
+    const w = (rel, v) => { if (rel >= 0 && rel < common.length) common[rel] = (v || 0) & 0xff; };
+
+    // v15.33: SAFE scene-state bridge.
+    // v15.31 wrote several guessed fields in Y2L Common Scene Struct 1
+    // (rel 1710 + scene*71), including snapshot/range/trailing-marker bytes.
+    // ESP rejected the resulting file with "Storage read/write error". Comparing
+    // that file with an ESP-saved classic→Y2L reference showed that only the
+    // active-scene flag and scene-index fields are safe/generic here; the other
+    // bytes are not simple classic-row mirrors and must remain template/mapper
+    // controlled until their exact semantics are known.
+    for (let scene = 0; scene < 8; scene++) {
+      const src = scene * stride;
+      const dst = 1710 + scene * 71;
+      if (src >= data.length || dst + 70 >= common.length) break;
+      const row2 = (src + 2 < data.length) ? data[src + 2] : 0;
+      const row4 = (src + 4 < data.length) ? data[src + 4] : 0;
+      const active = (row2 !== 0 || row4 !== 0);
+      if (!active) continue; // leave inactive scene rows exactly as the valid template/export path had them
+      w(dst + 0, 1);         // scene active / scene memory present
+      w(dst + 21, scene);    // ESP-imported active scenes carry their 0-based scene index here
+    }
+
+    // AWM2 primary engine mirror. Init-template left this at 1, while every
+    // ESP-saved AWM2 classic→Y2L reference in the controlled corpus uses 0.
+    if (perf.parts && perf.parts[0] && perf.parts[0].type === 0) w(6688, 0);
+  }
+
+  // ── Classic Performance Common FX → Y2L Performance Common ───────────
+  // v15.33: parameter-level Reverb/Variation mapping from the four classic
+  // global effect DataBlocks captured by parseClassicBlob(). This is the
+  // verified classic CWM FX record layout, not a blind ESP-region copy:
+  //   Reverb:    common[376]   = fx0[2]  (category/type family)
+  //              common[377]   = fx0[6]  (version/active byte)
+  //              common[378..410] = fx0[8..40]
+  //   Variation: common[432]   = fx1[2]
+  //              common[433]   = fx1[6]
+  //              common[434..435] = 04 00 (Y2L variation header)
+  //              common[436..468] = fx1[10..42]
+  // Master EQ / Master FX remain template-based until mapped separately.
+  function _xApplyClassicPerformanceCommonFxMap(common, perf) {
+    if (!common || !perf || !perf.effects) return;
+    const fx = perf.effects || [];
+    const g = (arr, i, d=0) => (arr && i >= 0 && i < arr.length) ? arr[i] : d;
+    const w = (rel, v) => { if (rel >= 0 && rel < common.length) common[rel] = (v || 0) & 0xff; };
+
+    const rev = fx[0];
+    if (rev && rev.length >= 41) {
+      w(376, g(rev, 2));
+      w(377, g(rev, 6));
+      for (let i = 0; i < 33; i++) w(378 + i, g(rev, 8 + i));
+    }
+
+    const vari = fx[1];
+    if (vari && vari.length >= 43) {
+      w(432, g(vari, 2));
+      w(433, g(vari, 6));
+      w(434, 0x04);
+      w(435, 0x00);
+      for (let i = 0; i < 33; i++) w(436 + i, g(vari, 10 + i));
+    }
+  }
+
+  // ── Classic Part Header → Y2L Part Common parameter map ───────────────
+  // v15.33: parameter-level map derived from the documented classic header
+  // model (name/type/categories/basic switches/manyParameters/scenes/control
+  // boxes) and the Y2L Part Common map in ysfc_serializer.py. This replaces
+  // the old tiny 5-field patch and avoids blind byte-region copies.
+  function _xApplyClassicPartCommonMap(psb, part) {
+    if (!psb || !part || !part.header) return;
+    const h = part.header;
+    const m = h.many || new Uint8Array(0);
+    const c = h.controlBoxes || new Uint8Array(0);
+    const g = (arr, i, d=0) => (arr && i >= 0 && i < arr.length) ? arr[i] : d;
+    const w = (rel, v) => { if (rel >= 0 && rel < psb.length) psb[rel] = (v || 0) & 0xff; };
+
+    // Basic Part Common fields (documented offsets in PART_COMMON_REL).
+    if (h.keyboardSwitch != null) w(31, h.keyboardSwitch);       // kbdCtrlOn_rel
+    if (h.partSwitch != null)    w(36, h.partSwitch);           // partSwitch_rel
+    // v15.33: rel+32 must remain cleared for imported classic AWM2 parts.
+    // Mapping classic many[9] here turned the Part Mute state on for X8 sources
+    // (AnaWobbleBass1/2) even though the ESP-saved Y2L reference keeps this
+    // byte at 0. Keep it as an import-state byte, not a direct manyParameter.
+    w(32, 0);
+    if (h.pbUpper != null)       w(212, h.pbUpper);             // pbRangeUpper_rel
+    if (h.pbLower != null)       w(214, h.pbLower);             // pbRangeLower_rel
+
+    // Categories and mixer/output values. Verified in the ESP roundtrip for
+    // the current controlled corpus: main/sub category at rel+114/+116,
+    // volume=many[2], variation send=many[6].
+    w(114, h.mainCategory || 0);
+    w(116, h.subCategory || 0);
+    if (m.length > 2) w(130, g(m, 2));                           // volume_rel
+    if (m.length > 6) w(136, g(m, 6));                           // varSend_rel
+    if (m.length > 10) w(220, g(m, 10));                         // portamentoTime_rel
+    if (m.length > 11) w(222, g(m, 11));                         // portamentoMode_rel
+    if (m.length > 53) w(238, g(m, 53));                         // partEqLowFreq_rel
+
+    // Per-part insertion FX A/B. Offsets come from Y2L Part Common insertion
+    // map: InsA rel+282/+283 + params at +286..+314; InsB rel+338/+339 +
+    // params at +342..+370. Classic values sit in manyParameters in the
+    // same order with sparse odd-byte storage.
+    const insA = [[282,141],[283,139],[286,149],[288,151],[290,153],[292,155],[294,157],[296,159],[298,161],[300,163],[302,165],[304,167],[306,169],[308,171],[310,173],[312,175],[314,177]];
+    const insB = [[338,199],[339,197],[342,207],[344,209],[346,211],[348,213],[350,215],[352,217],[354,219],[356,221],[358,223],[360,225],[362,227],[364,229],[366,231],[368,233],[370,235]];
+    for (const [rel, mi] of insA) if (mi < m.length) w(rel, g(m, mi));
+    for (const [rel, mi] of insB) if (mi < m.length) w(rel, g(m, mi));
+
+    // AWM2 LFO modulation-control matrix in Part Common.
+    if (m.length > 66) w(500, g(m, 66));
+    if (m.length > 67) w(502, g(m, 67));
+    if (m.length > 74) w(514, g(m, 74));
+    if (m.length > 76) w(516, g(m, 76));
+    if (m.length > 78) w(520, g(m, 78));
+    if (m.length > 80) w(524, g(m, 80));
+
+    // v15.33: AWM2 Part LFO import bridge. In the isolated ESP reference for
+    // AnaWobbleBass1, the visible Part LFO Fade Out parameter is 0, while the
+    // Init-template-based export kept 64. The classic header carries the same
+    // value in manyParameters[57] in the current documented CWM order, so map
+    // it into the Y2L Part LFO byte at rel+505. This also avoids the hardcoded
+    // Init-template center value that prevented the pan/LFO motion from
+    // matching the X7L import.
+    if (m.length > 57) w(505, g(m, 57));
+    // v15.33: ESP-imported classic AWM2 parts clear rel+512. Leaving the
+    // Init/template center value 0x40 can suppress/alter the visible Part LFO
+    // motion state for the Wobble arpeggio performances.
+    w(512, 0);
+
+    // v15.33: Y2L Scene Struct 2 defaults for imported classic parts.
+    // Earlier builds copied raw classic scene bytes into this structure, but
+    // the Y2L encoding uses centered/default values: Swing=128, Unit=3,
+    // Smooth=128. Leaving Init-derived 0/64/0 here made arpeggio/motion timing
+    // feel too fast/static, especially on AnaWobbleBass1. These are documented
+    // Part Common scene fields at rel 720 + scene*84.
+    for (let s = 0; s < 8; s++) {
+      const dst = 720 + s * 84;
+      w(dst + 0, 128);  // sceneSwing / Part MS Swing mirror
+      w(dst + 2, 3);    // sceneUnit / Arp Unit default 1/16
+      w(dst + 12, 128); // sceneSmooth / Part MS Smooth mirror
+    }
+
+    // Control Assign source/destination core from classic control box area
+    // into documented CA_PART slots (32×22 at rel+1520). The first 16 classic
+    // control boxes map to the first 16 CA_PART slots; remaining Y2L slots
+    // stay at template defaults.
+    if (c.length >= 16 * 9) {
+      for (let i = 0; i < 16; i++) {
+        const src = i * 9;
+        const dst = 1520 + i * 22;
+        // enabled/source/destination/depth-ish fields. Conservative subset:
+        // only write if the classic box is non-empty so Init defaults survive
+        // for unused slots.
+        let nonzero = false;
+        for (let k = 0; k < 9; k++) if (g(c, src + k) !== 0) { nonzero = true; break; }
+        if (!nonzero) continue;
+        w(dst + 0, g(c, src + 0));
+        w(dst + 2, g(c, src + 1));
+        w(dst + 4, g(c, src + 2));
+        w(dst + 6, g(c, src + 3));
+        w(dst + 8, g(c, src + 4));
+        w(dst + 10, g(c, src + 5));
+        w(dst + 12, g(c, src + 6));
+        w(dst + 14, g(c, src + 7));
+        w(dst + 16, g(c, src + 8));
+      }
+    }
+  }
+
   // ── Transkoda ett klassiskt DPFM-blob → Y2L DPFM-blob ─────────────────
 
   function transcodeClassicDPFMBlob(classicBlob, version, arpRemap) {
@@ -4490,6 +4785,72 @@ function applyI18n() {
                  : (p0type === 2) ? _ENG_TYPE_BYTE.fmx
                  : _ENG_TYPE_BYTE.awm2;                  // AN-X/unknown fallback = AWM2
 
+    // v15.33: Performance Common category/import-state bridge.
+    // ESP-saved classic→Y2L references mirror the first Part's classic
+    // main/sub category into Performance Common rel+62/+64. Earlier builds
+    // left Init/default values here (for example Straight Chords stayed at
+    // 0x10/0x00 instead of 0x0a/0x04). A few Init-import state flags at
+    // rel+33/+50/+52/+232/+234 are also cleared by ESP for imported classic
+    // performances; leaving them set can produce small transient artifacts.
+    const p0h = perf.parts[0]?.header;
+    if (p0h) {
+      if (common.length > 62) common[62] = p0h.mainCategory || 0;
+      if (common.length > 64) common[64] = p0h.subCategory || 0;
+    }
+    for (const rel of [33, 50, 52, 232, 234]) {
+      if (common.length > rel) common[rel] = 0;
+    }
+
+    // v15.33: Performance Common Arp Master Switch.
+    // v15.21 guessed common rel 0x1d, but a controlled ESP roundtrip where the
+    // user manually set Arp Master=On shows the actual switch byte at rel 0x26:
+    //   LB/master-test:  common[0x26] = 00
+    //   ESP Arp Master On: common[0x26] = 01
+    // Keep 0x1d enabled for compatibility with the ESP-saved classic→Y2L
+    // reference, but 0x26 is the byte that changed when Arp Master was toggled.
+    const hasClassicArpRefs = !!(perf.arpScenes && perf.arpScenes.some(arr => arr && arr.length > 0));
+    if (hasClassicArpRefs) {
+      if (common.length > 0x1d) common[0x1d] = 0x01;
+      if (common.length > 0x26) common[0x26] = 0x01;
+    }
+
+    // v15.33: Classic Performance Common import timing/control bridge.
+    // Controlled ESP roundtrips show that the trailing classic play-settings
+    // block carries Performance tempo and a small set of import-state fields
+    // that affect arp timing/motion. Earlier builds kept Init-template values
+    // here, making AnaWobbleBass1 play too fast even though EARP/DARP and
+    // Arp Master were correct.
+    //   classic blob[6682] -> Y2L common[92]  Performance tempo
+    //   classic blob[6681] -> Y2L common[104] import arp/motion mode byte
+    //   common[55]/[66]/[204] are ESP-import defaults for classic arps
+    //   classic blob[6708] toggles the Super Knob/arp motion import range
+    // X8/MODX classic blobs carry the trailing play-settings block two bytes
+    // later than X7/MONTAGE classic blobs (controlled X8U/X7L pair: tempo is
+    // at 6684 vs 6682). Use a version-based shift for these raw tail fields.
+    const classicTailShift = String(version || '').startsWith('5.0') ? 2 : 0;
+    if (u8.length > 6682 + classicTailShift) {
+      const tempo = u8[6682 + classicTailShift] & 0xff;
+      if (tempo > 0 && tempo < 250 && common.length > 92) common[92] = tempo;
+    }
+    if (u8.length > 6681 + classicTailShift && common.length > 104) common[104] = u8[6681 + classicTailShift] & 0xff;
+    if (common.length > 55)  common[55]  = 0x01;
+    if (common.length > 66)  common[66]  = 0x10;
+    if (common.length > 204) common[204] = 0x01;
+    if (u8.length > 6708 + classicTailShift) {
+      if ((u8[6708 + classicTailShift] & 0xff) !== 0) {
+        if (common.length > 112) common[112] = 0x7f;
+        if (common.length > 118) common[118] = 0x7f;
+      } else {
+        // ESP import of Straight Chords keeps the template center at [112]
+        // but writes 0x5f at [118] instead of Init's 0x60.
+        if (common.length > 118) common[118] = 0x5f;
+      }
+    }
+
+    // v15.33: map classic global scenes + Reverb/Variation into Y2L Performance Common.
+    _xApplyClassicCommonSceneMap(common, perf);
+    _xApplyClassicPerformanceCommonFxMap(common, perf);
+
     // ── Part sub-blobs (5765 bytes vardera) ───────────────────────────
     const psbs = [];
     const engs = [];
@@ -4507,91 +4868,23 @@ function applyI18n() {
       // Override part-namn (bytes 4..25 i sub-blob)
       const pn = new TextEncoder().encode((part.name || '').slice(0, 21));
       for (let j = 0; j < 21; j++) psb[4 + j] = (j < pn.length) ? pn[j] : 0;
-      // Override verifierade part-fält från classic part-header
-      // (classic part-data finns i part.header om parseClassicBlob lagrar den)
-      if (part.header) {
-        const h = part.header;
-        if (h.partSwitch != null)   psb[_PART_REL.partSwitch]   = h.partSwitch & 0xFF;
-        if (h.velLimitLow != null)  psb[_PART_REL.velLimitLow]  = h.velLimitLow & 0xFF;
-        if (h.velLimitHigh != null) psb[_PART_REL.velLimitHigh] = h.velLimitHigh & 0xFF;
-        if (h.pbUpper != null)      psb[_PART_REL.pbRangeUpper] = h.pbUpper & 0xFF;
-        if (h.pbLower != null)      psb[_PART_REL.pbRangeLower] = h.pbLower & 0xFF;
-      }
-      // Override many_params-fält (verifierade byte-exact mot 811 part-instanser).
-      // Hjälpfunktion: sätt PSB-byte om many_params-index finns.
-      const mp = part.manyParams;
-      if (mp && mp.length > 0) {
-        const mw = (mpIdx, psbRel) => {
-          if (mpIdx < mp.length && psbRel < _Y2L_PSB) psb[psbRel] = mp[mpIdx] & 0xFF;
-        };
-        // ── Prio 1: Part volume / pan ──
-        mw(0,   _PART_REL.pan);           // part pan (64=center)
-        mw(1,   _PART_REL.dryLevel);      // part dry level
-        mw(2,   _PART_REL.volume);        // part volume (0-127, default=100)
-        mw(3,   _PART_REL.outputLevel);   // part output level
-        mw(4,   _PART_REL.velXfade);      // velocity cross-fade
-        mw(5,   _PART_REL.reverbSend);    // reverb send (0-127)
-        mw(6,   _PART_REL.variSend);      // variation send (0-127)
-        mw(8,   _PART_REL.dryWet);        // dry/wet range param
-        mw(9,   _PART_REL.flag39);
-        mw(10,  _PART_REL.insConnect);    // insertion connect / output select
-        mw(11,  _PART_REL.flag222);
-        mw(12,  _PART_REL.flag224);
-        mw(13,  _PART_REL.flag38);
-        mw(15,  _PART_REL.flag40);
-        mw(16,  _PART_REL.flag41);
-        mw(17,  _PART_REL.flag43);
-        mw(18,  _PART_REL.flag44);
-        mw(19,  _PART_REL.flag45);
-        mw(20,  _PART_REL.flag46);
-        mw(21,  _PART_REL.flag47);
-        // AEG params
-        mw(42,  _PART_REL.aegParam148);
-        mw(43,  _PART_REL.aegParam150);
-        mw(44,  _PART_REL.aegParam152);
-        mw(45,  _PART_REL.aegParam154);
-        mw(46,  _PART_REL.aegParam156);
-        mw(47,  _PART_REL.aegParam158);
-        mw(48,  _PART_REL.aegParam160);
-        mw(49,  _PART_REL.aegParam162);
-        // ── Prio 1: Part EQ 3-band ──
-        mw(53,  _PART_REL.eq3LowFreq);
-        mw(54,  _PART_REL.eq3LowGain);
-        mw(55,  _PART_REL.eq3LowMidFreq);
-        mw(56,  _PART_REL.eq3MidGain);
-        mw(57,  _PART_REL.eq3MidQ);
-        mw(58,  _PART_REL.eq3HiMidFreq);
-        mw(59,  _PART_REL.eq3HighGain);
-        // ── Prio 3: InsA type + subtype + 15 params ──
-        mw(141, _PART_REL.insAType);
-        mw(139, _PART_REL.insASubtype);
-        mw(149, _PART_REL.insAParam1);  mw(151, _PART_REL.insAParam2);
-        mw(153, _PART_REL.insAParam3);  mw(155, _PART_REL.insAParam4);
-        mw(157, _PART_REL.insAParam5);  mw(159, _PART_REL.insAParam6);
-        mw(161, _PART_REL.insAParam7);  mw(163, _PART_REL.insAParam8);
-        mw(165, _PART_REL.insAParam9);  mw(167, _PART_REL.insAParam10);
-        mw(169, _PART_REL.insAParam11); mw(171, _PART_REL.insAParam12);
-        mw(173, _PART_REL.insAParam13); mw(175, _PART_REL.insAParam14);
-        mw(177, _PART_REL.insAParam15);
-        // ── Prio 3: InsB type + subtype + 15 params ──
-        mw(199, _PART_REL.insBType);
-        mw(197, _PART_REL.insBSubtype);
-        mw(207, _PART_REL.insBParam1);  mw(209, _PART_REL.insBParam2);
-        mw(211, _PART_REL.insBParam3);  mw(213, _PART_REL.insBParam4);
-        mw(215, _PART_REL.insBParam5);  mw(217, _PART_REL.insBParam6);
-        mw(219, _PART_REL.insBParam7);  mw(221, _PART_REL.insBParam8);
-        mw(223, _PART_REL.insBParam9);  mw(225, _PART_REL.insBParam10);
-        mw(227, _PART_REL.insBParam11); mw(229, _PART_REL.insBParam12);
-        mw(231, _PART_REL.insBParam13); mw(233, _PART_REL.insBParam14);
-        mw(235, _PART_REL.insBParam15);
-      }
+      // v15.33: structured classic Part Header → Y2L Part Common map.
+      _xApplyClassicPartCommonMap(psb, part);
       // Arpeggio scene references. The classic per-part scene table
       // (perf.arpScenes[i]) gives the arp ids for this part's scenes. In Y2L
       // they are stored as [id] 2f pairs immediately after the part's 80 00
       // pitch-table run (verified at rel 462, byte-exact vs ESP). The Init
       // template's part has the 80 00 run but no refs (Init uses no arp), so
       // we find the run end and write the refs there.
-      const sceneIds = perf.arpScenes && perf.arpScenes[i];
+      const sceneIdsRaw = perf.arpScenes && perf.arpScenes[i];
+      // If selective arp export is active, drop unknown/stale classic scene IDs
+      // instead of writing dangling [id]2f refs. This handles mixed MWE/X8
+      // tables such as [2,143,0,1,3], where 143 is not present in EARP.
+      const sceneIds = (sceneIdsRaw && arpRemap)
+        // Preserve scene slot positions: unknown/stale ids become empty slots
+        // (00 00), not a collapsed list. ESP preserves these holes.
+        ? sceneIdsRaw.map(id => arpRemap.has(id) ? id : null)
+        : sceneIdsRaw;
       if (sceneIds && sceneIds.length > 0) {
         // Find the 80 00 pitch-table run within this part sub-blob.
         let runEnd = -1;
@@ -4607,6 +4900,7 @@ function applyI18n() {
         if (runEnd >= 0 && runEnd + sceneIds.length * 2 + 2 <= _Y2L_PSB) {
           let w = runEnd;
           for (const id of sceneIds) {
+            if (id == null) { psb[w] = 0; psb[w+1] = 0; w += 2; continue; }
             // Renumber to the compacted 0-based catalog id if a remap is given
             // (selective arp export); otherwise write the original id.
             const outId = (arpRemap && arpRemap.has(id)) ? arpRemap.get(id) : id;
@@ -4781,11 +5075,11 @@ function applyI18n() {
   }
 
   // Map version string → hardware label (confirmed 4-way mapping).
-  // 4.0.x=Montage classic, 5.0.x=MODX classic, 4.1.x=Montage M, 5.1.x=MODX M.
+  // 4.0.x=Montage classic, 5.0.x=MODX/MODX+ classic, 4.1.x=Montage M, 5.1.x=MODX M.
   function hardwareForVersion(ver) {
     if (!ver) return '—';
     if (/^4\.0\./.test(ver)) return 'Montage';
-    if (/^5\.0\./.test(ver)) return 'MODX';
+    if (/^5\.0\./.test(ver)) return 'MODX/MODX+';
     if (/^4\.1\./.test(ver)) return 'Montage M';
     if (/^5\.1\./.test(ver)) return 'MODX M';
     return '—';
@@ -4811,6 +5105,31 @@ function applyI18n() {
     body.querySelectorAll('tr').forEach(tr => {
       tr.classList.toggle('selected', tr.dataset.idx === String(idx));
     });
+  }
+
+  function getLoadedFileStatusForCurrentExport(f) {
+    if (!f) return { cls: 'st-err', text: 'ERR', title: '' };
+    const fmt = ($('exportFormat')?.value || 'Y2L').toUpperCase();
+    if (!f.ok) {
+      return f.ysfc
+        ? { cls: 'st-leg', text: 'LEGACY', title: fileNotes(f) }
+        : { cls: 'st-err', text: 'ERR', title: fileNotes(f) };
+    }
+    // Only the experimental X7L path gets source-support status here.
+    // Y2L/Y2U keeps the existing parse/read status unchanged.
+    if (fmt === 'X7L') {
+      if (!(f.ysfc && f.ysfc.isClassic)) {
+        return { cls: 'st-block', text: 'NO X7', title: t('file_status_x7_block_modern') };
+      }
+      if (!isVerifiedClassicSourceForX7Export(f)) {
+        return {
+          cls: 'st-block',
+          text: 'NO X7',
+          title: t('file_status_x7_block_classic', { version: f.ysfc?.version || '?' })
+        };
+      }
+    }
+    return { cls: 'st-ok', text: 'OK', title: fileNotes(f) };
   }
 
   function refreshFileList() {
@@ -4848,9 +5167,13 @@ function applyI18n() {
         if (String(i) === selIdx) tr.classList.add("selected");
         tr.addEventListener("click", () => selectFileIndex(i));
 
-        // Status pill
-        const stCls = f.ok ? "st-ok" : (f.ysfc ? "st-leg" : "st-err");
-        const stTxt = f.ok ? "OK"   : (f.ysfc ? "LEGACY" : "ERR");
+        // Status pill. In normal Y2L/Y2U mode this shows parse status.
+        // In X7L export mode, readable but unsupported source versions are
+        // shown as NO X7 already in the Loaded Files table.
+        const fileStatus = getLoadedFileStatusForCurrentExport(f);
+        const stCls = fileStatus.cls;
+        const stTxt = fileStatus.text;
+        const stTitle = fileStatus.title || '';
 
         // Format from extension (uppercased); fall back to family.
         const fmt = (f.ext ? f.ext.toUpperCase() : (f.family === 'classic' ? 'X7L/X8L' : 'Y2L'));
@@ -4877,6 +5200,7 @@ function applyI18n() {
         const pill = document.createElement("span");
         pill.className = `st-pill ${stCls}`;
         pill.textContent = stTxt;
+        if (stTitle) pill.title = stTitle;
         cStatus.appendChild(pill);
         cells.push(cStatus);
 
@@ -5187,7 +5511,7 @@ function applyI18n() {
         cStatus.className = "scol-status";
         const chip = document.createElement("span");
         chip.className = "status-chip " + (diag.status === 'warn' ? 'warn' : 'ok');
-        chip.textContent = diag.status === 'warn' ? 'PARTIAL' : 'OK';
+        chip.textContent = diag.status === 'warn' ? (diag.statusLabel || 'WARN') : 'OK';
         cStatus.appendChild(chip);
         cStatus.title = diag.warnings.length ? diag.warnings.join('\n') : diag.statusText;
         tr.appendChild(cStatus);
@@ -5502,19 +5826,99 @@ function applyI18n() {
     return t === 0 ? 'AWM2' : t === 1 ? 'Drum' : t === 2 ? 'FM-X' : t === 3 ? 'AN-X' : 'Unknown';
   }
 
+  // X7L writer support policy (UI warning only): v15.3/v15.5 has been
+  // hardware/ESP-validated for native X7L 4.0.5 sources and X8L 5.0.1
+  // sources down-converted to X7L 4.0.5. Other classic versions may parse
+  // and may even export, but are not considered safe for X7L output yet.
+  // This deliberately affects only the experimental .X7L export path;
+  // Y2L/Y2U export remains unchanged.
+  function isVerifiedClassicSourceForX7Export(fileObj) {
+    const v = String(fileObj?.ysfc?.version || '');
+    return v === '4.0.5' || v === '5.0.1';
+  }
+
+  function collectX7UnsupportedVersionItems() {
+    const seen = new Set();
+    const out = [];
+    for (const s of selection) {
+      const f = files[s.fileIdx];
+      if (!f || !(f.ysfc && f.ysfc.isClassic)) continue;
+      if (isVerifiedClassicSourceForX7Export(f)) continue;
+      const key = `${s.fileIdx}:${f.ysfc.version || '?'}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push({ file: f.name || '?', version: f.ysfc.version || '?' });
+    }
+    return out;
+  }
+
+  // Hard safety gate for X7L export only. X8 5.0.x files that are not exactly
+  // the verified 5.0.1 down-conversion path must not be written raw into an
+  // X7L 4.0.5 container. This does not affect Y2L/Y2U export.
+  function collectX7BlockedX8VersionItems() {
+    const seen = new Set();
+    const out = [];
+    for (const s of selection) {
+      const f = files[s.fileIdx];
+      const v = String(f?.ysfc?.version || '');
+      if (!f || !(f.ysfc && f.ysfc.isClassic)) continue;
+      if (!/^5\.0\./.test(v) || v === '5.0.1') continue;
+      const key = `${s.fileIdx}:${v}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push({ file: f.name || '?', version: v || '?' });
+    }
+    return out;
+  }
+
+
+  function collectX7NonClassicSourceItems() {
+    const seen = new Set();
+    const out = [];
+    for (const s of selection) {
+      const f = files[s.fileIdx];
+      if (!f || (f.ysfc && f.ysfc.isClassic)) continue;
+      const key = `${s.fileIdx}:${f?.name || '?'}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push({ file: f?.name || '?', version: f?.ysfc?.version || '?' });
+    }
+    return out;
+  }
+
   function analyzeSelectionItem(sel) {
     const f = files[sel.fileIdx];
     const entry = f?.epfm?.entries?.[sel.perfIdx];
     const name = sel.name || entry?.name || t('unknown_name');
-    const result = { name, engine: '', status: 'ok', statusText: '', warnings: [], parts: [] };
+    const result = { name, engine: '', status: 'ok', statusLabel: 'OK', statusText: '', warnings: [], parts: [] };
     if (!f || !entry) { result.status='warn'; result.statusText='?'; return result; }
+
+    const fmt = ($('exportFormat')?.value || 'Y2L').toUpperCase();
 
     if (!(f.ysfc && f.ysfc.isClassic)) {
       const pb = getPerfBytes(f, sel.perfIdx);
       const meta = pb ? getPerfMeta(pb, entry.epfmBits ?? null) : null;
       result.engine = meta?.engine || '';
-      result.statusText = t('readiness_native');
+      if (fmt === 'X7L') {
+        result.status = 'warn';
+        result.statusLabel = 'NO X7';
+        result.statusText = t('readiness_x7_nonclassic_warning');
+        result.warnings.push(t('readiness_x7_nonclassic_warning'));
+      } else {
+        result.statusText = t('readiness_native');
+      }
       return result;
+    }
+
+    if (fmt === 'X7L' && !isVerifiedClassicSourceForX7Export(f)) {
+      result.status = 'warn';
+      result.statusLabel = 'NO X7';
+      const msg = t('readiness_x7_unsupported_version_warning', {
+        version: f.ysfc?.version || '?',
+        file: f.name || '?'
+      });
+      result.statusText = msg;
+      result.warnings.push(msg);
     }
 
     let parsed = null;
@@ -5531,11 +5935,26 @@ function applyI18n() {
     const hasAnxOrUnknown = partTypes.some(x => !(x === 0 || x === 1 || x === 2));
     if (hasAnxOrUnknown) {
       result.status = 'warn';
-      result.statusText = t('readiness_classic_partial');
+      if (result.statusLabel === 'OK') result.statusLabel = 'PARTIAL';
+      result.statusText = result.statusText ? (result.statusText + ' · ' + t('readiness_classic_partial')) : t('readiness_classic_partial');
       result.warnings.push(t('readiness_warning_anx', {name}));
-    } else {
+    } else if (!result.statusText) {
       result.statusText = t('readiness_classic_ok');
     }
+
+    // Diagnostic for the controlled X8 5.0.1 CFX parameter corpus. This does
+    // not block export. It explains the expected silent result when a source
+    // Performance has Part ARP Switch OFF and Arp Play Only ON.
+    try {
+      const isX8 = /^5\.0\./.test(f.ysfc?.version || '');
+      const pb = isX8 ? getPerfBytes(f, sel.perfIdx) : null;
+      if (isX8 && _classicX8KnownAudioRisk(pb)) {
+        result.status = 'warn';
+        if (result.statusLabel === 'OK') result.statusLabel = 'WARN';
+        result.statusText += ' · audio-risk parameter state';
+        result.warnings.push(t('readiness_warning_x8_arp_play_only_silent', {name}));
+      }
+    } catch (_) {}
     return result;
   }
 
@@ -5564,25 +5983,60 @@ function applyI18n() {
       return;
     }
     const r = collectReadiness();
-    el.className = r.warnings.length ? 'warn' : 'ok';
-    const title = r.warnings.length ? t('readiness_warnings') : t('readiness_ready');
+    const fmt = ($('exportFormat')?.value || 'Y2L').toUpperCase();
+    const extraWarnings = [];
+    let hasX8Source = false;
+    if (fmt === 'X7L') {
+      for (const s of selection) {
+        const f = files[s.fileIdx];
+        if (!f || !(f.ysfc && f.ysfc.isClassic)) extraWarnings.push(t('readiness_x7_nonclassic_warning'));
+        if (f && (f.ysfc?.version || '') === '5.0.1') hasX8Source = true;
+      }
+      for (const x of collectX7UnsupportedVersionItems()) {
+        extraWarnings.push(t('readiness_x7_unsupported_version_warning', { version: x.version, file: x.file }));
+      }
+    }
+    const allWarnings = r.warnings.concat(Array.from(new Set(extraWarnings)));
+    el.className = allWarnings.length ? 'warn' : 'ok';
+    const title = allWarnings.length ? t('readiness_warnings') : t('readiness_ready');
     const lines = [];
-    lines.push(`<div class="readiness-title ${r.warnings.length ? 'readiness-warn' : 'readiness-ok'}">${title}</div>`);
+    lines.push(`<div class="readiness-title ${allWarnings.length ? 'readiness-warn' : 'readiness-ok'}">${title}</div>`);
+    lines.push(`<div class="readiness-line readiness-muted">${fmt === 'X7L' ? t('readiness_target_x7') : t('readiness_target_y2')}</div>`);
+    if (fmt === 'X7L' && hasX8Source) lines.push(`<div class="readiness-line readiness-muted">${t('readiness_x7_x8_info')}</div>`);
     lines.push(`<div class="readiness-line">${t('readiness_counts', r.counts)}</div>`);
     for (const item of r.items.slice(0, 6)) {
       const cls = item.status === 'warn' ? 'warn' : 'ok';
-      lines.push(`<div class="readiness-line"><span class="status-chip ${cls}">${item.status === 'warn' ? 'WARN' : 'OK'}</span> ${escapeHtml(item.name)} — ${escapeHtml(item.engine || '')} — ${escapeHtml(item.statusText)}</div>`);
+      lines.push(`<div class="readiness-line"><span class="status-chip ${cls}">${item.status === 'warn' ? (item.statusLabel || 'WARN') : 'OK'}</span> ${escapeHtml(item.name)} — ${escapeHtml(item.engine || '')} — ${escapeHtml(item.statusText)}</div>`);
     }
     if (r.items.length > 6) lines.push(`<div class="readiness-line readiness-muted">… ${r.items.length - 6} more</div>`);
-    for (const wmsg of r.warnings.slice(0, 4)) {
-      lines.push(`<div class="readiness-line readiness-warn">⚠ ${escapeHtml(wmsg)}</div>`);
-    }
-    if (r.warnings.length > 4) lines.push(`<div class="readiness-line readiness-warn">⚠ … ${r.warnings.length - 4} more warning(s)</div>`);
+    // v15.5: Do not repeat warning details as separate lines. The selected
+    // performance rows above already include the relevant warning text, and
+    // the Selection table carries the NO X7/WARN status chip. This keeps
+    // the export check readable when one unsupported source version is selected.
     el.innerHTML = lines.join('');
   }
 
   function escapeHtml(s) {
     return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  // v15.16: Safer browser download helper. Chromium 149 can fail to show
+  // the Save dialog if the object URL is revoked immediately after a
+  // synthetic click, especially after a longer synchronous export. Keep the
+  // URL alive for a while and revoke it asynchronously.
+  function triggerBinaryDownload(bytesOrBuf, outName) {
+    const blob = new Blob([bytesOrBuf], { type: "application/octet-stream" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = outName;
+    a.style.display = "none";
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      try { URL.revokeObjectURL(url); } catch (_) {}
+      try { a.remove(); } catch (_) {}
+    }, 30000);
   }
 
   function hasPartialClassicTranscodeWarnings() {
@@ -5858,6 +6312,7 @@ function applyI18n() {
     // Computed once here and reused for blob patching and catalog rebuild.
     const _v13Deps = getDepsForSelection(selection, files);
     assignClassicGlobalDependencyIds(_v13Deps, files, selection);
+    assignClassicGlobalArpIds(_v13Deps, files, selection);
 
     for (let ci = 0; ci < chosen.length; ci++) {
       const it = chosen[ci];
@@ -6258,24 +6713,17 @@ function applyI18n() {
     let outName;
     if (userFilename) {
       // Strip any extension the user might have included and add our format
-      const stripped = userFilename.replace(/\.(y2l|y2u)$/i, "");
+      const stripped = userFilename.replace(/\.(y2l|y2u|x7l|x7u|x8l|x8u)$/i, "");
       outName = `${stripped}.${fmt}`;
     } else {
-      const baseName = base.name.replace(/\.(y2l|y2u)$/i, "")
+      const baseName = base.name.replace(/\.(y2l|y2u|x7l|x7u|x8l|x8u)$/i, "")
                                 .replace(/^✨\s*/, "")  // strip synthetic emoji prefix
                                 .replace(/[^\w\-]+/g, "_")  // sanitize for filename
                                 .replace(/_+/g, "_")
                                 .replace(/^_|_$/g, "");
       outName = `${baseName || "export"}_merge_${selection.length}.${fmt}`;
     }
-    const blob = new Blob([outBuf], { type: "application/octet-stream" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = outName;
-    document.body.appendChild(a);
-    a.click();
-    URL.revokeObjectURL(a.href);
-    a.remove();
+    triggerBinaryDownload(outBuf, outName);
 
     // Assemble export diagnostics + warnings.
     // Detect classic source files that carry arpeggio dependencies which
@@ -6328,6 +6776,809 @@ function applyI18n() {
     );
   }
 
+
+
+  // ── Experimental classic X7L writer (v15.2) ─────────────────
+  // Scope: builds a new classic 4.0.5 X7L-style container from selected
+  // classic X7/X7U performances. This path is deliberately isolated from
+  // the existing Y2L/Y2U export pipeline so current Y2 export behaviour is
+  // unchanged. X8L/X8U 5.0.1 → X7L uses the experimental 5.0.1-to-4.0.5 blob down-converter validated by the STEP 129/131 controlled tests.
+  const CLASSIC_X7_TEMPLATE_B64 = "WUFNQUhBLVlTRkMAAAAAADQuMC41AAAAAAAAAAAAAAAAAACA////////////////AAAAUf//////////AAAnEkVQRk0AAAERRFBGTQAAAVNFV0ZNAAAbwURXRk0AABvNRVdJTQAAG9lEV0lNAAAb5UVBUlAAABvxREFSUAAAG/1FU09NAAAcCUVTUEcAABwVRFNPTQAAHCFEU1BHAAAcLUVDUlYAABw5RENSVgAAHEVFTFNUAAAcUURMU1QAABxd//////////////////////////////////////////////////////////////////////////////////////////////////////////8ARVBGTQAAADoAAAABRW50cgAAAC4AABpaAAAADAA/IAAAAAAAAAAAACcRMjU2OkluaXQgQVdNMgBJbml0IEFXTTIARFBGTQAAGmYAAAABRGF0YQAAGloAAAIASW5pdCBBV00yAAAAAAAAAAAAAAAAAAMAQEBAQEBAQEBAQEB/QAEBAQEBEAILYFZXWFkREhMUFRYXGH9/QEABAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAACAgICAgICAgICAgICAgICAAICAgICAgICAgICAgICAgIAAgICAgICAgICAgICAgICAgACAgICAgICAgICAgICAgICAAICAgICAgICAgICAgICAgIAAgICAgICAgICAgICAgICAgACAgICAgICAgICAgICAgICAAICAgICAgICAgICAgICAgIAABCHwAAAUAAGAACAEAAAUAAGAACAEAAAUAAGAACAEAAAUAAGAACAEAAAUAAGAACAEAAAUAAGAACAEAAAUAAGAACAEAAAUAAGAACAEAAAUAAGAACAEAAAUAAGAACAEAAAUAAGAACAEAAAUAAGAACAEAAAUAAGAACAEAAAUAAGAACAEAAAUAAGAACAEAAAUAAGAAAAA9AQAAAAIAAQAAACAACgArAA0AMQAdAAgABwA3AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFAQAAAAD8DAAAADwADAAAABQAAADYASQBjABYAQAAuAEIAAAAiAEAABgAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAWBAAH8AAAASAUAMBwBAFAdAHAdALAdANAcAAAAAPwgAIAADAAIAAAAQAFoAAwApAA8AVAADACgABABUAAMAKAA0AGAABgBPAAAAAAAAAAAAAAAAAAAAAAAAQBAHfwAAAAEAAAL6SW5pdCBBV00yAAAAAAAAAAAAAAAAABAAAQEBfwB/Qj5AQGRAgAwAf0AAQAEAAQABAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQFAQEBAQEBAQEBAQDZAjUAA50AAAQAAAAAAIAsAAAB/QAIAAgAEAAQABgBAQEBAQEBAQEBAQEBAQEBAAAB/QEAAf2RAAAAAAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAQEAMEABADBAAUBAEAcAAH9/AGRADAB/QEBAQEBAQIADZGRAQEAAAABkQAwAf0BAQEBAQECAA2RkQEBAAAAAZEAMAH9AQEBAQEBAgANkZEBAQAAAAGRADAB/QEBAQEBAQIADZGRAQEAAAABkQAwAf0BAQEBAQECAA2RkQEBAAAAAZEAMAH9AQEBAQEBAgANkZEBAQAAAAGRADAB/QEBAQEBAQIADZGRAQEAAAABkQAwAf0BAQEBAQECAA2RkQEBAAABBc3NpZ24gMSAgICAgICAgAEFzc2lnbiAyICAgICAgICAAQXNzaWduIDMgICAgICAgIABBc3NpZ24gNCAgICAgICAgAEFzc2lnbiA1ICAgICAgICAAQXNzaWduIDYgICAgICAgIABBc3NpZ24gNyAgICAgICAgAEFzc2lnbiA4ICAgICAgICAAAAEBAAAFAABgAAEBAAAFAABgAAEBAAAFAABgAAEBAAAFAABgAAEBAAAFAABgAAEBAAAFAABgAAEBAAAFAABgAAEBAAAFAABgAAEBAAAFAABgAAEBAAAFAABgAAEBAAAFAABgAAEBAAAFAABgAAEBAAAFAABgAAEBAAAFAABgAAEBAAAFAABgAAEBAAAFAABgAAAAjgNkQAAAfwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBAQAwQAEAMEABQEAQBwAAf38AAAAHA2RAAAB/AAAAAAAAAAAIAAAAlQEAAAEBAEAAQEAAAH8BfwAAAH9/AQABAQEBAQEBAQEBAQEBAQEBCwB/QAADAEBAfzIAf39/BEBAGEAkMDxIgICAgEBAQEAAYDxAAChAQECAgICAgFQEQEACQDwEoEAAQACA5gAAQEBQgP///4BoBEBAAkAYJDA8SICAgIBKQAAANkDnQAEBACYAAAAAAICAgAAAAAEAAAAAlQAAAAEBAEAAQEAAAH8BfwAAAH9/AQABAQEBAQEBAQEBAQEBAQEBCwB/QAADAEBAfzIAf39/BEBAGEAkMDxIgICAgEBAQEAAYDxAAChAQECAgICAgFQEQEACQDwEoEAAQACA5gAAQEBQgP///4BoBEBAAkAYJDA8SICAgIBKQAAANkDnQAEBACYAAAAAAICAgAAAAAEAAAAAlQAAAAEBAEAAQEAAAH8BfwAAAH9/AQABAQEBAQEBAQEBAQEBAQEBCwB/QAADAEBAfzIAf39/BEBAGEAkMDxIgICAgEBAQEAAYDxAAChAQECAgICAgFQEQEACQDwEoEAAQACA5gAAQEBQgP///4BoBEBAAkAYJDA8SICAgIBKQAAANkDnQAEBACYAAAAAAICAgAAAAAEAAAAAlQAAAAEBAEAAQEAAAH8BfwAAAH9/AQABAQEBAQEBAQEBAQEBAQEBCwB/QAADAEBAfzIAf39/BEBAGEAkMDxIgICAgEBAQEAAYDxAAChAQECAgICAgFQEQEACQDwEoEAAQACA5gAAQEBQgP///4BoBEBAAkAYJDA8SICAgIBKQAAANkDnQAEBACYAAAAAAICAgAAAAAEAAAAAlQAAAAEBAEAAQEAAAH8BfwAAAH9/AQABAQEBAQEBAQEBAQEBAQEBCwB/QAADAEBAfzIAf39/BEBAGEAkMDxIgICAgEBAQEAAYDxAAChAQECAgICAgFQEQEACQDwEoEAAQACA5gAAQEBQgP///4BoBEBAAkAYJDA8SICAgIBKQAAANkDnQAEBACYAAAAAAICAgAAAAAEAAAAAlQAAAAEBAEAAQEAAAH8BfwAAAH9/AQABAQEBAQEBAQEBAQEBAQEBCwB/QAADAEBAfzIAf39/BEBAGEAkMDxIgICAgEBAQEAAYDxAAChAQECAgICAgFQEQEACQDwEoEAAQACA5gAAQEBQgP///4BoBEBAAkAYJDA8SICAgIBKQAAANkDnQAEBACYAAAAAAICAgAAAAAEAAAAAlQAAAAEBAEAAQEAAAH8BfwAAAH9/AQABAQEBAQEBAQEBAQEBAQEBCwB/QAADAEBAfzIAf39/BEBAGEAkMDxIgICAgEBAQEAAYDxAAChAQECAgICAgFQEQEACQDwEoEAAQACA5gAAQEBQgP///4BoBEBAAkAYJDA8SICAgIBKQAAANkDnQAEBACYAAAAAAICAgAAAAAEAAAAAlQAAAAEBAEAAQEAAAH8BfwAAAH9/AQABAQEBAQEBAQEBAQEBAQEBCwB/QAADAEBAfzIAf39/BEBAGEAkMDxIgICAgEBAQEAAYDxAAChAQECAgICAgFQEQEACQDwEoEAAQACA5gAAQEBQgP///4BoBEBAAkAYJDA8SICAgIBKQAAANkDnQAEBACYAAAAAAICAgAAAAAEAAAABthEAAH8AfwB/AH8AfwB/AH8AfwAAAAAAAAAAAAAAAQAAQAMAAQF/QAAPAEBAQEBAQEBAQEBAQEBAQEAAAAAAAAAAAAAAAAAAAAAAAAAFAAEAAAAABQABAABAAA8AQEBAQEBAQEBAQEBAQEBAQAAAAAAAAAAAAAAAAAAAAAAAAAUAAAAAAAAFAAAAAEAADwBAQEBAQEBAQEBAQEBAQEBAAAAAAAAAAAAAAAAAAAAAAAAABQAAAAAAAAUAAAAAQAAPAEBAQEBAQEBAQEBAQEBAQEAAAAAAAAAAAAAAAAAAAAAAAAAFAAAAAAAABQAAAABAAA8AQEBAQEBAQEBAQEBAQEBAQAAAAAAAAAAAAAAAAAAAAAAAAAUAAAAAAAAFAAAAAEAADwBAQEBAQEBAQEBAQEBAQEBAAAAAAAAAAAAAAAAAAAAAAAAABQAAAAAAAAUAAAAAQAAPAEBAQEBAQEBAQEBAQEBAQEAAAAAAAAAAAAAAAAAAAAAAAAAFAAAAAAAABQAAAABAAA8AQEBAQEBAQEBAQEBAQEBAQAAAAAAAAAAAAAAAAAAAAAAAAAUAAAAAAAAFAAAAAAAAAA4AAEBAQEAAAAAAAAAAAAAABnUBQEBAAEBAQEBAQEBAAAEAAEADAAEBf0AADwBAQEBAQEBAQEBAQEBAQEBAAAAAAAAAAAAAAAAAAAAAAAAABQABAAAAAAUAAQAAQAAPAEBAQEBAQEBAQEBAQEBAQEAAAAAAAAAAAAAAAAAAAAAAAAAFAAEAAAAABQABAABAAA8AQEBAQEBAQEBAQEBAQEBAQAAAAAAAAAAAAAAAAAAAAAAAAAUAAQAAAAAFAAEAAEAADwBAQEBAQEBAQEBAQEBAQEBAAAAAAAAAAAAAAAAAAAAAAAAABQABAAAAAAUAAQAAQAAPAEBAQEBAQEBAQEBAQEBAQEAAAAAAAAAAAAAAAAAAAAAAAAAFAAEAAAAABQABAABAAA8AQEBAQEBAQEBAQEBAQEBAQAAAAAAAAAAAAAAAAAAAAAAAAAUAAQAAAAAFAAEAAEAADwBAQEBAQEBAQEBAQEBAQEBAAAAAAAAAAAAAAAAAAAAAAAAABQABAAAAAAUAAQAAQAAPAEBAQEBAQEBAQEBAQEBAQEAAAAAAAAAAAAAAAAAAAAAAAAAFAAEAAAAABQABAAAAAQAAQAMAAQF/QAAPAEBAQEBAQEBAQEBAQEBAQEAAAAAAAAAAAAAAAAAAAAAAAAAFAAEAAAAABQABAABAAA8AQEBAQEBAQEBAQEBAQEBAQAAAAAAAAAAAAAAAAAAAAAAAAAUAAQAAAAAFAAEAAEAADwBAQEBAQEBAQEBAQEBAQEBAAAAAAAAAAAAAAAAAAAAAAAAABQABAAAAAAUAAQAAQAAPAEBAQEBAQEBAQEBAQEBAQEAAAAAAAAAAAAAAAAAAAAAAAAAFAAEAAAAABQABAABAAA8AQEBAQEBAQEBAQEBAQEBAQAAAAAAAAAAAAAAAAAAAAAAAAAUAAQAAAAAFAAEAAEAADwBAQEBAQEBAQEBAQEBAQEBAAAAAAAAAAAAAAAAAAAAAAAAABQABAAAAAAUAAQAAQAAPAEBAQEBAQEBAQEBAQEBAQEAAAAAAAAAAAAAAAAAAAAAAAAAFAAEAAAAABQABAABAAA8AQEBAQEBAQEBAQEBAQEBAQAAAAAAAAAAAAAAAAAAAAAAAAAUAAQAAAAAFAAEAAAABAABAAwABAX9AAA8AQEBAQEBAQEBAQEBAQEBAQAAAAAAAAAAAAAAAAAAAAAAAAAUAAQAAAAAFAAEAAEAADwBAQEBAQEBAQEBAQEBAQEBAAAAAAAAAAAAAAAAAAAAAAAAABQABAAAAAAUAAQAAQAAPAEBAQEBAQEBAQEBAQEBAQEAAAAAAAAAAAAAAAAAAAAAAAAAFAAEAAAAABQABAABAAA8AQEBAQEBAQEBAQEBAQEBAQAAAAAAAAAAAAAAAAAAAAAAAAAUAAQAAAAAFAAEAAEAADwBAQEBAQEBAQEBAQEBAQEBAAAAAAAAAAAAAAAAAAAAAAAAABQABAAAAAAUAAQAAQAAPAEBAQEBAQEBAQEBAQEBAQEAAAAAAAAAAAAAAAAAAAAAAAAAFAAEAAAAABQABAABAAA8AQEBAQEBAQEBAQEBAQEBAQAAAAAAAAAAAAAAAAAAAAAAAAAUAAQAAAAAFAAEAAEAADwBAQEBAQEBAQEBAQEBAQEBAAAAAAAAAAAAAAAAAAAAAAAAABQABAAAAAAUAAQAAAAEAAEADAAEBf0AADwBAQEBAQEBAQEBAQEBAQEBAAAAAAAAAAAAAAAAAAAAAAAAABQABAAAAAAUAAQAAQAAPAEBAQEBAQEBAQEBAQEBAQEAAAAAAAAAAAAAAAAAAAAAAAAAFAAEAAAAABQABAABAAA8AQEBAQEBAQEBAQEBAQEBAQAAAAAAAAAAAAAAAAAAAAAAAAAUAAQAAAAAFAAEAAEAADwBAQEBAQEBAQEBAQEBAQEBAAAAAAAAAAAAAAAAAAAAAAAAABQABAAAAAAUAAQAAQAAPAEBAQEBAQEBAQEBAQEBAQEAAAAAAAAAAAAAAAAAAAAAAAAAFAAEAAAAABQABAABAAA8AQEBAQEBAQEBAQEBAQEBAQAAAAAAAAAAAAAAAAAAAAAAAAAUAAQAAAAAFAAEAAEAADwBAQEBAQEBAQEBAQEBAQEBAAAAAAAAAAAAAAAAAAAAAAAAABQABAAAAAAUAAQAAQAAPAEBAQEBAQEBAQEBAQEBAQEAAAAAAAAAAAAAAAAAAAAAAAAAFAAEAAAAABQABAAAAAAZ1AUBAQABAQEBAQEBAQAABAABAAwABAX9AAA8AQEBAQEBAQEBAQEBAQEBAQAAAAAAAAAAAAAAAAAAAAAAAAAUAAQAAAAAFAAEAAEAADwBAQEBAQEBAQEBAQEBAQEBAAAAAAAAAAAAAAAAAAAAAAAAABQAAAAAAAAUAAAAAQAAPAEBAQEBAQEBAQEBAQEBAQEAAAAAAAAAAAAAAAAAAAAAAAAAFAAAAAAAABQAAAABAAA8AQEBAQEBAQEBAQEBAQEBAQAAAAAAAAAAAAAAAAAAAAAAAAAUAAAAAAAAFAAAAAEAADwBAQEBAQEBAQEBAQEBAQEBAAAAAAAAAAAAAAAAAAAAAAAAABQAAAAAAAAUAAAAAQAAPAEBAQEBAQEBAQEBAQEBAQEAAAAAAAAAAAAAAAAAAAAAAAAAFAAAAAAAABQAAAABAAA8AQEBAQEBAQEBAQEBAQEBAQAAAAAAAAAAAAAAAAAAAAAAAAAUAAAAAAAAFAAAAAEAADwBAQEBAQEBAQEBAQEBAQEBAAAAAAAAAAAAAAAAAAAAAAAAABQAAAAAAAAUAAAAAAAEAAEADAAEBf0AADwBAQEBAQEBAQEBAQEBAQEBAAAAAAAAAAAAAAAAAAAAAAAAABQABAAAAAAUAAQAAQAAPAEBAQEBAQEBAQEBAQEBAQEAAAAAAAAAAAAAAAAAAAAAAAAAFAAAAAAAABQAAAABAAA8AQEBAQEBAQEBAQEBAQEBAQAAAAAAAAAAAAAAAAAAAAAAAAAUAAAAAAAAFAAAAAEAADwBAQEBAQEBAQEBAQEBAQEBAAAAAAAAAAAAAAAAAAAAAAAAABQAAAAAAAAUAAAAAQAAPAEBAQEBAQEBAQEBAQEBAQEAAAAAAAAAAAAAAAAAAAAAAAAAFAAAAAAAABQAAAABAAA8AQEBAQEBAQEBAQEBAQEBAQAAAAAAAAAAAAAAAAAAAAAAAAAUAAAAAAAAFAAAAAEAADwBAQEBAQEBAQEBAQEBAQEBAAAAAAAAAAAAAAAAAAAAAAAAABQAAAAAAAAUAAAAAQAAPAEBAQEBAQEBAQEBAQEBAQEAAAAAAAAAAAAAAAAAAAAAAAAAFAAAAAAAABQAAAAAAAQAAQAMAAQF/QAAPAEBAQEBAQEBAQEBAQEBAQEAAAAAAAAAAAAAAAAAAAAAAAAAFAAEAAAAABQABAABAAA8AQEBAQEBAQEBAQEBAQEBAQAAAAAAAAAAAAAAAAAAAAAAAAAUAAAAAAAAFAAAAAEAADwBAQEBAQEBAQEBAQEBAQEBAAAAAAAAAAAAAAAAAAAAAAAAABQAAAAAAAAUAAAAAQAAPAEBAQEBAQEBAQEBAQEBAQEAAAAAAAAAAAAAAAAAAAAAAAAAFAAAAAAAABQAAAABAAA8AQEBAQEBAQEBAQEBAQEBAQAAAAAAAAAAAAAAAAAAAAAAAAAUAAAAAAAAFAAAAAEAADwBAQEBAQEBAQEBAQEBAQEBAAAAAAAAAAAAAAAAAAAAAAAAABQAAAAAAAAUAAAAAQAAPAEBAQEBAQEBAQEBAQEBAQEAAAAAAAAAAAAAAAAAAAAAAAAAFAAAAAAAABQAAAABAAA8AQEBAQEBAQEBAQEBAQEBAQAAAAAAAAAAAAAAAAAAAAAAAAAUAAAAAAAAFAAAAAAABAABAAwABAX9AAA8AQEBAQEBAQEBAQEBAQEBAQAAAAAAAAAAAAAAAAAAAAAAAAAUAAQAAAAAFAAEAAEAADwBAQEBAQEBAQEBAQEBAQEBAAAAAAAAAAAAAAAAAAAAAAAAABQAAAAAAAAUAAAAAQAAPAEBAQEBAQEBAQEBAQEBAQEAAAAAAAAAAAAAAAAAAAAAAAAAFAAAAAAAABQAAAABAAA8AQEBAQEBAQEBAQEBAQEBAQAAAAAAAAAAAAAAAAAAAAAAAAAUAAAAAAAAFAAAAAEAADwBAQEBAQEBAQEBAQEBAQEBAAAAAAAAAAAAAAAAAAAAAAAAABQAAAAAAAAUAAAAAQAAPAEBAQEBAQEBAQEBAQEBAQEAAAAAAAAAAAAAAAAAAAAAAAAAFAAAAAAAABQAAAABAAA8AQEBAQEBAQEBAQEBAQEBAQAAAAAAAAAAAAAAAAAAAAAAAAAUAAAAAAAAFAAAAAEAADwBAQEBAQEBAQEBAQEBAQEBAAAAAAAAAAAAAAAAAAAAAAAAABQAAAAAAAAUAAAAAAAAACgAAgICAgAMAWgAAAAA6AAAAAAAAAAAAAAAAAAAAAAAAAAEBAwB/AX8AAAEDAGRkgEBAAAAAAABAgICAgICAgICAgICAgICAgEVXRk0AAAAEAAAAAERXRk0AAAAEAAAAAEVXSU0AAAAEAAAAAERXSU0AAAAEAAAAAEVBUlAAAAAEAAAAAERBUlAAAAAEAAAAAEVTT00AAAAEAAAAAEVTUEcAAAAEAAAAAERTT00AAAAEAAAAAERTUEcAAAAEAAAAAEVDUlYAAAAEAAAAAERDUlYAAAAEAAAAAEVMU1QAAAAEAAAAAERMU1QAAAAEAAAAAA==";
+  let _classicX7TemplateBytes = null;
+  function getClassicX7TemplateBytes() {
+    if (!_classicX7TemplateBytes) _classicX7TemplateBytes = decodeBase64ToBytes(CLASSIC_X7_TEMPLATE_B64);
+    return _classicX7TemplateBytes;
+  }
+
+  function _classicSectionPayload(fileObj, tag) {
+    if (!fileObj || !fileObj.ysfc || !fileObj.ysfc.sections.has(tag)) return null;
+    const sec = fileObj.ysfc.readSection(tag);
+    return fileObj.ysfc.u8.slice(sec.payloadStart, sec.payloadEnd);
+  }
+
+  function _classicRawPerfBlob(fileObj, perfIdx) {
+    const e = fileObj?.epfm?.entries?.[perfIdx];
+    if (!e || e.dataOff == null || e.dataLen == null) return null;
+    const pool = fileObj.dpfm.payloadFull || fileObj.dpfm.dataPool;
+    if (e.dataOff + e.dataLen > pool.length) return null;
+    return pool.slice(e.dataOff, e.dataOff + e.dataLen);
+  }
+
+
+  // STEP 130/131 controlled MODX7 CFX corpus parameter map.
+  // These offsets are X8 5.0.1 DPFM blob offsets before down-conversion.
+  // They are not used to modify parameters; they are retained as an internal
+  // validation map so the X8→X7 offset shift is explicit and auditable.
+  const CLASSIC_X8_501_KNOWN_PARAM_OFFSETS = {
+    part1ArpSwitch:             0x1a32,
+    part1KeyboardControl:       0x0302,
+    part1InsertEffectA:         0x0408,
+    part1InsertEffectB:         0x0409,
+    commonVariationSwitch:      0x0283,
+    commonReverbSwitch:         0x0242,
+    commonMasterEqSwitch:       0x028c,
+    commonMasterFxSwitch:       0x02dc,
+    commonPortamentoMaster:     0x0029,
+    part1MonoPoly:              0x0316,
+    part1KeyAssign:             0x0346,
+    part1ElementPan:            0x0332,
+    part1ArpPlayOnly:           0x1a33
+  };
+  function _classicX8ToX7BlobOffset(x8Offset) {
+    // Documentation-only helper for the older STEP 129/131 two-byte-delete
+    // validation map. Production conversion below is structural and edits
+    // block payloads/size fields; keep this only as an audit reference.
+    // The old validation path deleted original X8 offsets 0x674 and 0x419.
+    // Anything after both deletions shifts by -2; offsets between them shifts by -1.
+    let o = x8Offset;
+    if (x8Offset > 0x674) o--;
+    if (x8Offset > 0x419) o--;
+    return o;
+  }
+
+
+  function _classicX8KnownAudioRisk(blob) {
+    // STEP 130/131 CFX corpus diagnostic only. The source X8 offsets are:
+    //   0x1a32 = Part 1 ARP Switch
+    //   0x1a33 = Part 1 Arp Play Only
+    // A consecutive test chain can intentionally create a silent direct-key
+    // Performance by turning ARP Switch OFF and then Arp Play Only ON.
+    // This is not a file-structure/export error; it is a musical parameter
+    // state that requires arpeggio playback to produce sound.
+    if (!blob || blob.length <= 0x1a33) return null;
+    if (blob[0x1a32] === 0x00 && blob[0x1a33] === 0x01) return 'arpPlayOnlyWithArpOff';
+    return null;
+  }
+
+  function _classicReadBlockAt(src, off) {
+    if (off + 4 > src.length) return null;
+    const dv = new DataView(src.buffer, src.byteOffset + off, 4);
+    const size = u32be(dv, 0);
+    const start = off + 4;
+    const end = start + size;
+    if (end > src.length) return null;
+    return { off, size, start, end };
+  }
+
+  function _classicDownconvertX8BlobToX7Experimental(blob, entry, sourceVersion) {
+    // v15.3/v15.10: structural X8 source-version → X7 4.0.5 down-convert for classic AWM2
+    // performance blobs. The earlier v15.2 byte-delete path removed the two
+    // single-part offsets 0x419/0x674 from the flattened blob. That corrupts
+    // multi-part/sample blobs because the extra X8 bytes live inside each
+    // chunked part-header block, and the block size fields must be reduced.
+    //
+    // Observed classic AWM2 structure:
+    //   common + 4 scene blocks: unchanged
+    //   part count N
+    //   N part-header blocks: X8 size 763 → X7 size 762, delete rel 0x130
+    //   summary block:          X8 size 143 → X7 size 142, delete rel 0x8c
+    //   remainder: unchanged
+    // This gives the expected X7 lengths:
+    //   1 part 6748→6746, 2 parts 10466→10463,
+    //   3 parts 14184→14180, 4 parts 17902→17897.
+    const src = new Uint8Array(blob || []);
+    if (src.length <= 0x674) return src;
+    // Defensive guard: this structural converter is verified only for classic
+    // AWM2/Drum-style X8 blobs. FM-X/AN-X/mixed engines have different block
+    // layouts and must not pass through the AWM2 byte-deletion path.
+    try {
+      const parsed0 = parseClassicBlob(src, sourceVersion || '5.0.1');
+      const parts0 = parsed0?.parts || [];
+      const awmLike = parts0.length > 0 && parts0.every(p => p.type === 0 || p.type === 1);
+      if (!awmLike) {
+        throw new Error('X8→X7 downconvert is currently verified only for AWM2/Drum source blobs.');
+      }
+    } catch (e) {
+      if (e && /verified only/.test(String(e.message || e))) throw e;
+      return src;
+    }
+
+    const out = [];
+    let off = 0;
+    function appendBytes(u8) { for (let i = 0; i < u8.length; i++) out.push(u8[i]); }
+    function appendBlock(deleteRel) {
+      const blk = _classicReadBlockAt(src, off);
+      if (!blk) throw new Error('bad X8 block');
+      const data = Array.from(src.slice(blk.start, blk.end));
+      if (deleteRel != null && deleteRel >= 0 && deleteRel < data.length) data.splice(deleteRel, 1);
+      const size = data.length >>> 0;
+      out.push((size >>> 24) & 0xff, (size >>> 16) & 0xff, (size >>> 8) & 0xff, size & 0xff);
+      for (const b of data) out.push(b);
+      off = blk.end;
+    }
+
+    try {
+      // common + 4 scene blocks
+      appendBlock(null);
+      for (let i = 0; i < 4; i++) appendBlock(null);
+      if (off + 4 > src.length) return src;
+      const partCount = u32be(new DataView(src.buffer, src.byteOffset + off, 4), 0);
+      if (partCount < 1 || partCount > 16) return src;
+      out.push(src[off], src[off+1], src[off+2], src[off+3]);
+      off += 4;
+
+      // One X8-only byte per part-header block.
+      for (let i = 0; i < partCount; i++) appendBlock(0x130);
+      // One X8-only byte in the following summary/global block.
+      appendBlock(0x8c);
+      // Small following block unchanged.
+      appendBlock(null);
+      // Rest of part/element/op blocks unchanged.
+      appendBytes(src.slice(off));
+    } catch (_) {
+      return src;
+    }
+
+    const candidate = new Uint8Array(out);
+    try {
+      const parsed = parseClassicBlob(candidate, '4.0.5');
+      if (parsed && parsed.parts && parsed.parts.length) return candidate;
+    } catch (_) {
+      // Keep the safe fallback below.
+    }
+    return src;
+  }
+
+  function _classicClonePatchOffLen(recPayload, newOff, newLen, destSlot) {
+    const out = new Uint8Array(recPayload);
+    if (out.length >= 8) {
+      const dv = new DataView(out.buffer);
+      setU32be(dv, 0, newLen >>> 0);
+      setU32be(dv, 4, newOff >>> 0);
+    }
+    // Classic EPFM byte 0x0b is the program/library slot index used by ESP
+    // as part of the visible catalogue key. When records are copied from
+    // several source files, multiple entries often still carry slot 0. ESP
+    // then loads the library but hides/collapses the colliding Performances
+    // in Category Search. Renumber to the destination order, exactly like the
+    // Y2L/Y2U exporter already does for modern EPFM records.
+    if (out.length > 0x0b && destSlot != null && destSlot >= 0 && destSlot <= 0xff) {
+      out[0x0b] = destSlot & 0xff;
+    }
+    return out;
+  }
+
+  function _classicBuildEntrPayload(newRecPayloads) {
+    const N = newRecPayloads.length;
+    let total = 8;
+    for (let i = 0; i < N; i++) total += (i === 0 ? 4 : 8) + newRecPayloads[i].length;
+    const out = new Uint8Array(total);
+    const dv = new DataView(out.buffer);
+    let w = 0;
+    setU32be(dv, w, N); w += 4;
+    out.set(encU8.encode('Entr'), w); w += 4;
+    for (let i = 0; i < N; i++) {
+      if (i > 0) { out.set(encU8.encode('Entr'), w); w += 4; }
+      setU32be(dv, w, newRecPayloads[i].length); w += 4;
+      out.set(newRecPayloads[i], w); w += newRecPayloads[i].length;
+    }
+    return out;
+  }
+
+  function _classicBuildDataPayload(blobs) {
+    const N = blobs.length;
+    let total = 8;
+    for (let i = 0; i < N; i++) total += (i === 0 ? 4 : 8) + blobs[i].length;
+    const out = new Uint8Array(total);
+    const dv = new DataView(out.buffer);
+    const offsets = [];
+    let w = 0;
+    setU32be(dv, w, N); w += 4;
+    out.set(encU8.encode('Data'), w); w += 4;
+    for (let i = 0; i < N; i++) {
+      if (i > 0) { out.set(encU8.encode('Data'), w); w += 4; }
+      setU32be(dv, w, blobs[i].length); w += 4;
+      offsets.push(w);
+      out.set(blobs[i], w); w += blobs[i].length;
+    }
+    return { payload: out, offsets };
+  }
+
+  function _classicBuildContainer(sectionPayloads, templateBytes) {
+    const tpl = templateBytes || getClassicX7TemplateBytes();
+    const tplYsfc = parseYSFC(tpl.buffer.slice(tpl.byteOffset || 0, (tpl.byteOffset || 0) + tpl.byteLength));
+    const order = ['EPFM','DPFM','EWFM','DWFM','EWIM','DWIM','EARP','DARP','ESOM','ESPG','DSOM','DSPG','ECRV','DCRV','ELST','DLST'];
+    const dirOff = tplYsfc.dirUsedOff;
+    const tplFirst = Math.min(...Array.from(tplYsfc.sections.values()));
+    const catSize = order.length * 8;
+    // Preserve the X7 4.0.5 template's fixed header/library-info region.
+    // This intentionally keeps the first section at the same absolute offset
+    // as the template. Do not recompute this from catalog size unless the
+    // classic library-info region has been mapped and rebuilt explicitly.
+    const firstChunkOff = tplFirst;
+    if (firstChunkOff < dirOff + catSize + 8) {
+      throw new Error('Classic X7 template directory is too small for catalog + sentinel.');
+    }
+
+    const chunks = [];
+    for (const tag of order) {
+      let payload = sectionPayloads.get(tag);
+      if (!payload) {
+        // Never copy stale dependency/list sections from the template when the
+        // current export did not build them. A template EARP/DARP section can
+        // otherwise survive in an export with zero arpeggios and make the
+        // post-build validator fail (or, worse, leave unrelated dependencies).
+        // Entry sections use [count=0]['Entr']; data sections use [count=0]['Data'].
+        if (['EWFM','EWIM','EARP','ECRV','ELST'].includes(tag)) {
+          payload = _classicBuildEntrPayload([]);
+        } else if (['DWFM','DWIM','DARP','DCRV','DLST'].includes(tag)) {
+          payload = _classicBuildDataPayload([]).payload;
+        } else {
+          const sec = tplYsfc.sections.has(tag) ? tplYsfc.readSection(tag) : null;
+          payload = sec ? tpl.slice(sec.payloadStart, sec.payloadEnd) : new Uint8Array([0,0,0,0]);
+        }
+      }
+      chunks.push([tag, payload]);
+    }
+
+    let off = firstChunkOff;
+    const offsets = new Map();
+    for (const [tag, payload] of chunks) { offsets.set(tag, off); off += 8 + payload.length; }
+    const out = new Uint8Array(off);
+    const dv = new DataView(out.buffer);
+    out.set(tpl.slice(0, firstChunkOff), 0);
+    // Preserve the X7 4.0.5 header/template bytes, but rewrite the chunk catalogue.
+    for (let i = 0; i < order.length; i++) {
+      const tag = order[i];
+      const p = dirOff + i * 8;
+      out.set(encU8.encode(tag), p);
+      setU32be(dv, p + 4, offsets.get(tag));
+    }
+    // Catalogue terminator safety check. Real files stop directory scanning on
+    // value 0xffffffff. Because the bytes between the catalogue and first
+    // chunk are part of the template's fixed library-info/header region, only
+    // rewrite the terminator if the template already has a sentinel at this
+    // exact position. Otherwise preserve the template bytes and fail loudly if
+    // a future catalogue would not fit before the fixed region.
+    const sentinelOff = dirOff + order.length * 8;
+    if (sentinelOff + 8 <= firstChunkOff) {
+      const tplDv = new DataView(tpl.buffer, tpl.byteOffset || 0, tpl.byteLength);
+      const templateHasSentinelHere = u32be(tplDv, sentinelOff + 4) === 0xffffffff;
+      if (templateHasSentinelHere) {
+        out.fill(0, sentinelOff, sentinelOff + 4);
+        setU32be(dv, sentinelOff + 4, 0xffffffff);
+      }
+    }
+    for (const [tag, payload] of chunks) {
+      const p = offsets.get(tag);
+      out.set(encU8.encode(tag), p);
+      setU32be(dv, p + 4, payload.length);
+      out.set(payload, p + 8);
+    }
+    return out.buffer;
+  }
+
+
+  // Build classic dependency sections from several source files and remap
+  // their local ids into one collision-free X7L id-space. This helper is used
+  // only by the experimental .X7L writer; Y2L/Y2U export remains untouched.
+  function _classicDepEntryId(entry, fallbackIdx) {
+    const rp = entry && entry.recPayload;
+    if (rp && rp.length >= 12) return ((rp[10] << 8) | rp[11]) >>> 0;
+    return fallbackIdx >>> 0;
+  }
+
+  function _classicPatchDepEntryId(recPayload, newId) {
+    const out = new Uint8Array(recPayload || []);
+    if (out.length >= 12) {
+      out[10] = (newId >>> 8) & 0xff;
+      out[11] = newId & 0xff;
+    }
+    return out;
+  }
+
+  function _classicDepBlob(depInfo, idx) {
+    const e = depInfo && depInfo.entries && depInfo.entries[idx];
+    if (!depInfo || !e || e.dataOff == null || e.dataLen == null) return null;
+    const pool = depInfo.dPayloadFull || depInfo.dPool;
+    if (!pool || e.dataOff + e.dataLen > pool.length) return null;
+    return pool.slice(e.dataOff, e.dataOff + e.dataLen);
+  }
+
+  function _classicBuildDepSectionPair(depInfo, items) {
+    if (!depInfo || !items || !items.length) return null;
+    const blobs = [];
+    const recsSeed = [];
+    for (const it of items) {
+      const e = depInfo.entries[it.idx];
+      const b = _classicDepBlob(depInfo, it.idx);
+      if (!e || !b) continue;
+      blobs.push(b);
+      recsSeed.push(_classicPatchDepEntryId(e.recPayload, it.newId));
+    }
+    if (!blobs.length) return null;
+    const dBuilt = _classicBuildDataPayload(blobs);
+    const recs = recsSeed.map((rp, i) => {
+      const r = new Uint8Array(rp);
+      if (r.length >= 8) {
+        const dv = new DataView(r.buffer);
+        setU32be(dv, 0, blobs[i].length >>> 0);
+        setU32be(dv, 4, dBuilt.offsets[i] >>> 0);
+      }
+      return r;
+    });
+    return { entryPayload: _classicBuildEntrPayload(recs), dataPayload: dBuilt.payload, count: recs.length };
+  }
+
+  function _classicBuildDepIdIndex(depInfo) {
+    const m = new Map();
+    if (!depInfo || !depInfo.entries) return m;
+    for (let i = 0; i < depInfo.entries.length; i++) {
+      const id = _classicDepEntryId(depInfo.entries[i], i);
+      if (!m.has(id)) m.set(id, i);
+      // Classic arpeggio scene tables sometimes use entry index rather than
+      // recPayload[10:12]. Keep the index alias too.
+      if (!m.has(i)) m.set(i, i);
+    }
+    return m;
+  }
+
+  function _classicWaveformIdPositionsInBlob(blob) {
+    const out = [];
+    if (!blob || blob.length < 32) return out;
+    let off = 0;
+    const ru32 = (p) => ((blob[p]<<24) | (blob[p+1]<<16) | (blob[p+2]<<8) | blob[p+3]) >>> 0;
+    const rdb = () => {
+      if (off + 4 > blob.length) return null;
+      const sz = ru32(off); off += 4;
+      const start = off; const end = off + sz;
+      if (end > blob.length) return null;
+      off = end;
+      return { start, end, size: sz };
+    };
+    const ru32seq = () => { if (off + 4 > blob.length) return null; const v = ru32(off); off += 4; return v; };
+    try {
+      if (!rdb()) return out;             // common
+      for (let i = 0; i < 4; i++) if (!rdb()) return out; // effects
+      const nParts = ru32seq();
+      if (nParts == null || nParts > 16) return out;
+      for (let i = 0; i < nParts; i++) if (!rdb()) return out; // part headers
+      if (!rdb() || !rdb()) return out;   // ad/digital input
+      for (let p = 0; p < nParts; p++) {
+        const ptype = ru32seq();
+        if (ptype == null) return out;
+        if (ptype === 0 || ptype === 1) {
+          const nElem = ru32seq();
+          if (nElem == null || nElem > 128) return out;
+          for (let e = 0; e < nElem; e++) {
+            const db = rdb(); if (!db) return out;
+            if (db.size >= 4) {
+              const bank = blob[db.start + 1];
+              const idPos = db.end - 2;
+              const oldId = blob[idPos] | (blob[idPos + 1] << 8);
+              if (bank !== 0 && oldId > 0) out.push({ pos: idPos, oldId });
+            }
+          }
+        } else if (ptype === 2) {
+          const nOps = ru32seq();
+          if (nOps == null || nOps > 16) return out;
+          if (!rdb()) return out;
+          for (let o = 0; o < nOps; o++) if (!rdb()) return out;
+        } else {
+          if (!rdb()) return out;
+        }
+      }
+    } catch (_) {
+      return [];
+    }
+    return out;
+  }
+
+  function _classicArpIdPositionsInBlob(blob, maxArpId) {
+    const out = [];
+    if (!blob || !blob.length) return out;
+    // Classic X8U/X8L can store the original MODX User Arp slot number in
+    // the scene table (for example 120..221). Do not cap the low byte by the
+    // number of EARP entries; callers validate the returned id against the
+    // actual EARP id/index map before exporting or patching. maxArpId is kept
+    // only for call-site compatibility.
+    let nParts = 0;
+    try { nParts = parseClassicBlob(blob, '').parts.length; } catch (_) { nParts = 0; }
+    if (!nParts) return out;
+    const anchors = [];
+    for (let i = 0; i + 3 < blob.length; i++) {
+      if (blob[i] === 0 && blob[i+1] === 0 && blob[i+2] === 0 && blob[i+3] === 0x3a) anchors.push(i);
+    }
+    let run = null;
+    for (let s = anchors.length - 1; s >= 0; s--) {
+      const r = [anchors[s]];
+      for (let k = s - 1; k >= 0; k--) {
+        if (anchors[k] + 62 === r[0]) r.unshift(anchors[k]); else break;
+      }
+      if (r.length >= nParts) { run = r.slice(0, nParts); break; }
+    }
+    if (!run) return out;
+    for (let p = 0; p < nParts; p++) {
+      let q = run[p] + 4;
+      for (let sl = 0; sl < 8 && q + 1 < blob.length; sl++, q += 2) {
+        const lo = blob[q], hi = blob[q + 1];
+        if (hi === 0x28) out.push({ pos: q, oldId: lo });
+        else break;
+      }
+    }
+    return out;
+  }
+
+  function _classicPatchEPFMWaveformTail(recPayload, fileIdx, wfRemapByKey) {
+    const out = new Uint8Array(recPayload || []);
+    const info = parseClassicEPFMRecord(out);
+    if (!info || info.tailStart < 0) return out;
+    for (let p = info.tailStart; p + 3 < out.length; p += 4) {
+      const prog = ((out[p]<<24) | (out[p+1]<<16) | (out[p+2]<<8) | out[p+3]) >>> 0;
+      const oldId = prog & 0xffff;
+      const key = `${fileIdx}:${oldId}`;
+      if (oldId > 0 && wfRemapByKey.has(key)) {
+        const nv = wfRemapByKey.get(key) & 0xffff;
+        out[p+2] = (nv >>> 8) & 0xff;
+        out[p+3] = nv & 0xff;
+      }
+    }
+    return out;
+  }
+
+  function _classicPatchBlobIdsForX7Export(blob, fileIdx, wfRemapByKey, arpRemapByKey) {
+    const out = new Uint8Array(blob || []);
+    for (const r of _classicWaveformIdPositionsInBlob(out)) {
+      const direct = `${fileIdx}:${r.oldId}`;
+      const altPlus2 = `${fileIdx}:${r.oldId + 2}`; // X8 catalog ↔ X7 blob bridge seen in controlled corpus
+      const nv = wfRemapByKey.has(direct) ? wfRemapByKey.get(direct)
+               : wfRemapByKey.has(altPlus2) ? wfRemapByKey.get(altPlus2)
+               : null;
+      if (nv != null) { out[r.pos] = nv & 0xff; out[r.pos + 1] = (nv >>> 8) & 0xff; }
+    }
+    for (const r of _classicArpIdPositionsInBlob(out, files[fileIdx]?.arp?.entries?.length || 0)) {
+      const key = `${fileIdx}:${r.oldId}`;
+      if (arpRemapByKey.has(key)) out[r.pos] = arpRemapByKey.get(key) & 0xff;
+    }
+    return out;
+  }
+
+  function _classicPrepareMultiSourceDependencies(chosen, blobs, meta, doWfm, doSam, doArp) {
+    // Default dependency sections must be syntactically valid empty sections,
+    // not 4 zero bytes. Otherwise the post-build validator will try to parse
+    // e.g. EARP/DARP when the output contains zero arpeggios and fail because
+    // the section does not contain the required [count][Entr/Data] header.
+    const emptyEntrPayload = _classicBuildEntrPayload([]);
+    const emptyDataPayload = _classicBuildDataPayload([]).payload;
+    const sectionPayloads = new Map();
+    for (const tag of ['EWFM','EWIM','EARP']) sectionPayloads.set(tag, emptyEntrPayload);
+    for (const tag of ['DWFM','DWIM','DARP']) sectionPayloads.set(tag, emptyDataPayload);
+
+    const selectedByFile = new Map();
+    for (let i = 0; i < chosen.length; i++) {
+      const it = chosen[i];
+      if (!selectedByFile.has(it.fileIdx)) selectedByFile.set(it.fileIdx, []);
+      selectedByFile.get(it.fileIdx).push({ choiceIndex: i, perfIdx: it.perfIdx, blob: blobs[i], meta: meta[i] });
+    }
+
+    const wfRemapByKey = new Map();
+    const arpRemapByKey = new Map();
+    const wfmItemsByFile = new Map();
+    const wimItemsByFile = new Map();
+    const arpItemsByFile = new Map();
+    let nextWfId = 1;
+    let nextArpId = 0;
+    let wfRefCount = 0;
+    let arpRefCount = 0;
+
+    for (const [fi, arr] of selectedByFile) {
+      const f = files[fi];
+      if (!f) continue;
+      const wfmIdx = _classicBuildDepIdIndex(f.wfm);
+      const wimIdx = _classicBuildDepIdIndex(f.wim);
+      const arpIdx = _classicBuildDepIdIndex(f.arp);
+
+      const wfIds = new Set();
+      if ((doWfm || doSam) && (f.wfm || f.wim)) {
+        for (const x of arr) {
+          const ent = f.epfm && f.epfm.entries && f.epfm.entries[x.perfIdx];
+          for (const r of (ent && ent.waveformRefs) || []) {
+            const id = r & 0xffff;
+            if (id > 0 && ((!wfmIdx.size && !wimIdx.size) || wfmIdx.has(id) || wimIdx.has(id))) wfIds.add(id);
+          }
+          // Fallback for files whose EPFM tail is sparse: scan the actual
+          // outgoing classic blob too. This keeps preset-only performances at
+          // zero dependencies, but catches user-waveform refs present in the
+          // part element data.
+          for (const r of _classicWaveformIdPositionsInBlob(x.blob)) {
+            if (r.oldId > 0 && (wfmIdx.has(r.oldId) || wimIdx.has(r.oldId) || wfmIdx.has(r.oldId + 2) || wimIdx.has(r.oldId + 2))) {
+              wfIds.add((wfmIdx.has(r.oldId) || wimIdx.has(r.oldId)) ? r.oldId : r.oldId + 2);
+            }
+          }
+        }
+      }
+      for (const oldId of Array.from(wfIds).sort((a,b)=>a-b)) {
+        const key = `${fi}:${oldId}`;
+        if (!wfRemapByKey.has(key)) wfRemapByKey.set(key, nextWfId++);
+      }
+      if (doWfm && f.wfm) {
+        const list = [];
+        for (const oldId of Array.from(wfIds).sort((a,b)=>a-b)) {
+          const idx = wfmIdx.get(oldId);
+          if (idx != null) list.push({ idx, newId: wfRemapByKey.get(`${fi}:${oldId}`) });
+        }
+        if (list.length) wfmItemsByFile.set(fi, list);
+      }
+      if (doSam && f.wim) {
+        const list = [];
+        for (const oldId of Array.from(wfIds).sort((a,b)=>a-b)) {
+          const idx = wimIdx.get(oldId);
+          if (idx != null) list.push({ idx, newId: wfRemapByKey.get(`${fi}:${oldId}`) });
+        }
+        if (list.length) wimItemsByFile.set(fi, list);
+      }
+
+      const arpIds = new Set();
+      if (doArp && f.arp) {
+        for (const x of arr) {
+          for (const r of _classicArpIdPositionsInBlob(x.blob, f.arp?.entries?.length || 0)) {
+            if (arpIdx.has(r.oldId)) arpIds.add(r.oldId);
+          }
+        }
+      }
+      for (const oldId of Array.from(arpIds).sort((a,b)=>a-b)) {
+        const key = `${fi}:${oldId}`;
+        if (!arpRemapByKey.has(key)) arpRemapByKey.set(key, nextArpId++);
+      }
+      if (doArp && f.arp) {
+        const list = [];
+        for (const oldId of Array.from(arpIds).sort((a,b)=>a-b)) {
+          const idx = arpIdx.get(oldId);
+          if (idx != null) list.push({ idx, newId: arpRemapByKey.get(`${fi}:${oldId}`) });
+        }
+        if (list.length) arpItemsByFile.set(fi, list);
+      }
+    }
+
+    // Patch performance blobs after global id assignment and before DPFM is built.
+    for (let i = 0; i < blobs.length; i++) {
+      const fi = meta[i].fileIdx;
+      const beforeW = _classicWaveformIdPositionsInBlob(blobs[i]).length;
+      const beforeA = _classicArpIdPositionsInBlob(blobs[i], files[fi]?.arp?.entries?.length || 0).length;
+      blobs[i] = _classicPatchBlobIdsForX7Export(blobs[i], fi, wfRemapByKey, arpRemapByKey);
+      wfRefCount += beforeW;
+      arpRefCount += beforeA;
+    }
+
+    // Build merged dependency sections, preserving source order from the selection.
+    function orderedFileIds(mapObj) {
+      const out = [];
+      for (const it of chosen) if (mapObj.has(it.fileIdx) && !out.includes(it.fileIdx)) out.push(it.fileIdx);
+      return out;
+    }
+    function concatItems(mapObj) {
+      const out = [];
+      for (const fi of orderedFileIds(mapObj)) {
+        const f = files[fi];
+        for (const item of mapObj.get(fi)) out.push({ ...item, fileIdx: fi, file: f });
+      }
+      return out;
+    }
+    function buildPairFor(tagE, tagD, depProp, mapObj) {
+      const all = concatItems(mapObj);
+      if (!all.length) return null;
+      const blobsLocal = [];
+      const recsSeed = [];
+      let skippedCount = 0;
+      for (const it of all) {
+        const depInfo = it.file[depProp];
+        const e = depInfo && depInfo.entries[it.idx];
+        const b = _classicDepBlob(depInfo, it.idx);
+        if (!e || !b) { skippedCount++; continue; }
+        recsSeed.push(_classicPatchDepEntryId(e.recPayload, it.newId));
+        blobsLocal.push(b);
+      }
+      if (!blobsLocal.length) return null;
+      const dBuilt = _classicBuildDataPayload(blobsLocal);
+      const recs = recsSeed.map((rp, i) => {
+        const r = new Uint8Array(rp);
+        if (r.length >= 8) {
+          const dv = new DataView(r.buffer);
+          setU32be(dv, 0, blobsLocal[i].length >>> 0);
+          setU32be(dv, 4, dBuilt.offsets[i] >>> 0);
+        }
+        return r;
+      });
+      return { tagE, tagD, ePayload: _classicBuildEntrPayload(recs), dPayload: dBuilt.payload, writtenCount: recs.length, skippedCount, plannedCount: all.length };
+    }
+
+    const wfmPair = buildPairFor('EWFM','DWFM','wfm', wfmItemsByFile);
+    if (wfmPair) { sectionPayloads.set('EWFM', wfmPair.ePayload); sectionPayloads.set('DWFM', wfmPair.dPayload); }
+    const wimPair = buildPairFor('EWIM','DWIM','wim', wimItemsByFile);
+    if (wimPair) { sectionPayloads.set('EWIM', wimPair.ePayload); sectionPayloads.set('DWIM', wimPair.dPayload); }
+    const arpPair = buildPairFor('EARP','DARP','arp', arpItemsByFile);
+    if (arpPair) { sectionPayloads.set('EARP', arpPair.ePayload); sectionPayloads.set('DARP', arpPair.dPayload); }
+
+    return {
+      sectionPayloads,
+      wfRemapByKey,
+      arpRemapByKey,
+      counts: {
+        waveforms: wfmPair ? wfmPair.writtenCount : 0,
+        samples: wimPair ? wimPair.writtenCount : 0,
+        arpeggios: arpPair ? arpPair.writtenCount : 0,
+        waveformRefsPatched: wfRefCount,
+        arpRefsPatched: arpRefCount,
+        dependencyEntriesSkipped: (wfmPair?.skippedCount || 0) + (wimPair?.skippedCount || 0) + (arpPair?.skippedCount || 0),
+        sourceFiles: new Set([...wfmItemsByFile.keys(), ...wimItemsByFile.keys(), ...arpItemsByFile.keys()]).size
+      }
+    };
+  }
+
+
+  function _classicValidateExportBuffer(outBuf, expected) {
+    try {
+      const ysfc = parseYSFC(outBuf);
+      const chk = checkClassic(ysfc);
+      if (!chk.ok) throw new Error(chk.notes || 'classic check failed');
+      const epfm = parseEPFM(ysfc);
+      const dpfm = parseDPFM(ysfc);
+      if (!epfm || !dpfm) throw new Error('EPFM/DPFM missing after build');
+      if (epfm.entries.length !== expected.performanceCount) {
+        throw new Error(`EPFM count mismatch (${epfm.entries.length} != ${expected.performanceCount})`);
+      }
+      if (dpfm.count !== expected.performanceCount) {
+        throw new Error(`DPFM count mismatch (${dpfm.count} != ${expected.performanceCount})`);
+      }
+      const tmp = { epfm, dpfm };
+      for (let i = 0; i < epfm.entries.length; i++) {
+        const e = epfm.entries[i];
+        if (e.dataOff == null || e.dataLen == null) throw new Error(`Missing blob pointer for performance ${i+1}`);
+        if (e.dataOff + e.dataLen > dpfm.payloadFull.length) throw new Error(`Blob out of range for performance ${i+1}`);
+        const b = getPerfBytes(tmp, i);
+        if (!b || b.length !== e.dataLen) throw new Error(`Blob readback failed for performance ${i+1}`);
+        const parsed = parseClassicBlob(b, ysfc.version || '4.0.5');
+        if (!parsed || !parsed.parts || parsed.parts.length < 1) throw new Error(`Classic blob parse failed for performance ${i+1}`);
+      }
+      const depChecks = [
+        ['EWFM','DWFM','waveforms'],
+        ['EWIM','DWIM','samples'],
+        ['EARP','DARP','arpeggios'],
+      ];
+      for (const [eTag, dTag, key] of depChecks) {
+        const want = expected[key] || 0;
+        const has = ysfc.sections.has(eTag) || ysfc.sections.has(dTag);
+        if (!has && want === 0) continue;
+        const dep = parseDepSection(ysfc, eTag, dTag);
+        if (!dep) throw new Error(`${eTag}/${dTag} parse failed after build`);
+        if (dep.entries.length !== want) throw new Error(`${eTag} count mismatch (${dep.entries.length} != ${want})`);
+        if (dep.dCount !== want) throw new Error(`${dTag} count mismatch (${dep.dCount} != ${want})`);
+        for (let i = 0; i < dep.entries.length; i++) {
+          const de = dep.entries[i];
+          if (de.dataOff == null || de.dataLen == null) throw new Error(`${eTag} entry ${i+1} missing data pointer`);
+          if (de.dataOff + de.dataLen > dep.dPayloadFull.length) throw new Error(`${dTag} blob out of range for entry ${i+1}`);
+        }
+      }
+      return true;
+    } catch (e) {
+      throw new Error('Post-build X7L validation failed: ' + (e?.message || e));
+    }
+  }
+
+  function exportMergeToX7LExperimental() {
+    if (!selection.length) throw new Error('No performances selected.');
+    const mode = $('modeSelect').value;
+    const doWfm = $('depWaveforms').checked;
+    const doSam = $('depSamples').checked;
+    const doArp = $('depArps').checked;
+
+    const chosen = (mode === 'keep-slots')
+      ? (() => {
+          const slots = Math.max(...selection.map(s => (s.origSlot ?? 0) + 1), 0);
+          const arr = new Array(slots).fill(null);
+          for (const s of selection) arr[s.origSlot ?? 0] = s;
+          return arr.filter(Boolean);
+        })()
+      : selection.map(s => ({ ...s }));
+
+    // Verified X7L export source policy:
+    //   X7L 4.0.5: native classic X7 path
+    //   X8L 5.0.1: structural X8→X7 down-convert path
+    // Other classic versions are allowed only after the existing UI warning/confirm,
+    // and are deliberately treated as unverified rather than silently supported.
+    let hasX8Downconvert = false;
+    let x8DownconvertCount = 0;
+    let x8AudioRiskCount = 0;
+    for (const it of chosen) {
+      const f = files[it.fileIdx];
+      if (!f || !f.ok || !(f.ysfc && f.ysfc.isClassic)) throw new Error('X7L export currently requires classic X7/X8 source files.');
+      const sourceVersion = String(f.ysfc.version || '');
+      // X7L-only hard gate: do not let unverified X8 5.0.x blobs pass through raw.
+      if (/^5\.0\./.test(sourceVersion) && sourceVersion !== '5.0.1') {
+        throw new Error(t('err_x7_blocked_x8_version', { version: sourceVersion, file: f.name || '?' }));
+      }
+      if (sourceVersion === '5.0.1') hasX8Downconvert = true;
+    }
+
+    const blobs = [];
+    const srcEntries = [];
+    const blobMeta = [];
+    for (const it of chosen) {
+      const f = files[it.fileIdx];
+      const e = f.epfm.entries[it.perfIdx];
+      const raw = _classicRawPerfBlob(f, it.perfIdx);
+      const isX8Source = (f.ysfc.version || '') === '5.0.1';
+      const b = isX8Source ? _classicDownconvertX8BlobToX7Experimental(raw, e, f.ysfc.version || '5.0.1') : raw;
+      if (isX8Source) {
+        x8DownconvertCount++;
+        if (_classicX8KnownAudioRisk(raw)) x8AudioRiskCount++;
+      }
+      if (!e || !b) throw new Error('Could not read classic performance blob: ' + (it.name || 'unknown'));
+      srcEntries.push(e);
+      blobs.push(new Uint8Array(b));
+      blobMeta.push({ fileIdx: it.fileIdx, perfIdx: it.perfIdx, isX8Source });
+    }
+
+    const depMerge = _classicPrepareMultiSourceDependencies(chosen, blobs, blobMeta, doWfm, doSam, doArp);
+    if (depMerge.counts.dependencyEntriesSkipped > 0) {
+      const msg = t('confirm_x7_skipped_dependencies', { n: depMerge.counts.dependencyEntriesSkipped });
+      if (!confirm(msg)) {
+        setStatus(t('status_export_failed', { msg: 'Export cancelled: skipped dependencies.' }), msg, 'warn');
+        return;
+      }
+    }
+    const dBuilt = _classicBuildDataPayload(blobs);
+    const recs = srcEntries.map((e, i) => {
+      const patchedTail = _classicPatchEPFMWaveformTail(e.recPayload, blobMeta[i].fileIdx, depMerge.wfRemapByKey);
+      return _classicClonePatchOffLen(patchedTail, dBuilt.offsets[i], blobs[i].length, i);
+    });
+    const epfmPayload = _classicBuildEntrPayload(recs);
+
+    const sectionPayloads = depMerge.sectionPayloads;
+    sectionPayloads.set('EPFM', epfmPayload);
+    sectionPayloads.set('DPFM', dBuilt.payload);
+
+    const outBuf = _classicBuildContainer(sectionPayloads, getClassicX7TemplateBytes());
+    _classicValidateExportBuffer(outBuf, {
+      performanceCount: chosen.length,
+      waveforms: depMerge.counts.waveforms,
+      samples: depMerge.counts.samples,
+      arpeggios: depMerge.counts.arpeggios
+    });
+    const fmt = 'X7L';
+    const userFilename = $('exportFilename')?.value?.trim();
+    let outName;
+    if (userFilename) {
+      const stripped = userFilename.replace(/\.(y2l|y2u|x7l|x7u|x8l|x8u)$/i, '');
+      outName = `${stripped}.${fmt}`;
+    } else {
+      outName = `classic_x7l_merge_${selection.length}.${fmt}`;
+    }
+    triggerBinaryDownload(outBuf, outName);
+
+    const details = [
+      `${chosen.length} classic performance(s) exported to X7L 4.0.5 container.`,
+      `EPFM: ${epfmPayload.length} bytes`,
+      `DPFM: ${dBuilt.payload.length} bytes`,
+      `Dependencies merged: ${depMerge.counts.waveforms} waveforms, ${depMerge.counts.samples} samples, ${depMerge.counts.arpeggios} arpeggios from ${depMerge.counts.sourceFiles} source file(s).`,
+      depMerge.counts.dependencyEntriesSkipped ? `⚠ WARNING: ${depMerge.counts.dependencyEntriesSkipped} dependency entr${depMerge.counts.dependencyEntriesSkipped === 1 ? 'y was' : 'ies were'} skipped because the entry or data blob could not be read. The file may load but sound incorrectly.` : null,
+      `ID remap: ${depMerge.counts.waveformRefsPatched} waveform element ref(s), ${depMerge.counts.arpRefsPatched} arpeggio scene ref(s) scanned/patched where applicable.`,
+      hasX8Downconvert ? `X8→X7 downconvert: ${x8DownconvertCount} source blob(s), structural part-header/global-block conversion, STEP 129/131 validation path.` : 'X7/X7U 4.0.x source path.',
+      x8AudioRiskCount ? `Audio diagnostic: ${x8AudioRiskCount} X8 source Performance(s) have ARP Switch OFF + Arp Play Only ON; direct keyboard silence can be expected.` : null
+    ].filter(Boolean).join('\n');
+    setStatus(t('status_export_done', { name: outName }), details, 'warn');
+  }
+
   // ── Event listeners ────────────────────────────────────────
   $("addFiles").addEventListener("change", e => loadFiles(e.target.files));
 
@@ -6335,13 +7586,7 @@ function applyI18n() {
   $("dropZone").addEventListener("dragleave", () => $("dropZone").classList.remove("drag-over"));
   $("dropZone").addEventListener("drop", e => { e.preventDefault(); $("dropZone").classList.remove("drag-over"); loadFiles(e.dataTransfer.files); });
 
-  $("fileList").addEventListener("change", () => {
-    // Clear the "Performances in Selected File" filter when switching files,
-    // so a leftover query can't hide all performances of the newly picked file.
-    const fi = $("filterInput");
-    if (fi) fi.value = "";
-    updatePerfEnabled(); refreshPerfList();
-  });
+  $("fileList").addEventListener("change", () => { updatePerfEnabled(); refreshPerfList(); });
   $("filterInput").addEventListener("input", () => refreshPerfList());
 
   // Custom perf-list interaktion (ersätter native <select multiple>)
@@ -6507,68 +7752,99 @@ function applyI18n() {
     selection.length = 0; refreshSelectionList(); updateBars(); updateDepSummary();
   });
 
-  // Clear all selected state on the hidden <select> so a re-render can't
-  // resurrect stale index-based selections (refreshSelectionList preserves
-  // selection by index).
-  function clearSelListSelection() {
-    const sl = $("selectionList");
-    for (let i = 0; i < sl.options.length; i++) sl.options[i].selected = false;
-  }
-
   $("moveUpBtn").addEventListener("click", () => {
-    const sl = $("selectionList");
-    const idxs = Array.from(sl.selectedOptions).map(o => parseInt(o.value, 10))
+    const idxs = Array.from($("selectionList").selectedOptions).map(o => parseInt(o.value, 10))
       .filter(Number.isInteger).sort((a,b) => a - b);
     if (!idxs.length || idxs[0] === 0) return;
     for (const i of idxs) { const t = selection[i]; selection[i] = selection[i-1]; selection[i-1] = t; }
-    // Compute new positions BEFORE re-render, then wipe stale selection so the
-    // re-render starts clean and only the moved items end up selected.
-    const newIdxs = idxs.map(i => i - 1);
-    clearSelListSelection();
     refreshSelectionList(); updateBars();
-    for (const i of newIdxs) { if (sl.options[i]) sl.options[i].selected = true; }
+    const sl = $("selectionList");
+    for (const i of idxs) { if (sl.options[i-1]) sl.options[i-1].selected = true; }
     syncSelTableFromSelect();
   });
 
   $("moveDownBtn").addEventListener("click", () => {
-    const sl = $("selectionList");
-    const idxs = Array.from(sl.selectedOptions).map(o => parseInt(o.value, 10))
+    const idxs = Array.from($("selectionList").selectedOptions).map(o => parseInt(o.value, 10))
       .filter(Number.isInteger).sort((a,b) => b - a);
     if (!idxs.length || idxs[0] === selection.length - 1) return;
     for (const i of idxs) { const t = selection[i]; selection[i] = selection[i+1]; selection[i+1] = t; }
-    const newIdxs = idxs.map(i => i + 1);
-    clearSelListSelection();
     refreshSelectionList(); updateBars();
-    for (const i of newIdxs) { if (sl.options[i]) sl.options[i].selected = true; }
+    const sl = $("selectionList");
+    for (const i of idxs) { if (sl.options[i+1]) sl.options[i+1].selected = true; }
     syncSelTableFromSelect();
   });
 
   $("baseFileSelect").addEventListener("change", () => { updateBars(); updateExportBtn(); });
+  $("exportFormat").addEventListener("change", () => { refreshFileList(); updateBars(); updateExportBtn(); refreshSelectionList(); updateExportReadiness(); });
   $("depWaveforms").addEventListener("change", () => { updateDepSummary(); updateExportReadiness(); });
   $("depSamples").addEventListener("change", () => { updateDepSummary(); updateExportReadiness(); });
   $("depArps").addEventListener("change", () => { updateDepSummary(); updateExportReadiness(); });
 
-  $("exportBtn").addEventListener("click", () => {
-    if (hasPartialClassicTranscodeWarnings() && !confirm(t('confirm_partial'))) return;
+  function setExportBusy(isBusy) {
     const btn = $("exportBtn");
-    const origText = btn.textContent;
-    btn.classList.add("exporting");
-    btn.textContent = btn.dataset.i18n === "export_btn" ? t("exporting") : origText;
-    // Yield one frame so the browser paints the spinner before the
-    // synchronous (potentially multi-second) export pipeline runs.
-    setTimeout(() => {
-      try {
-        exportMergeToY2L();
-      } catch (err) {
-        console.error(err);
-        setStatus(t('status_export_failed',{msg: (err?.message || err)}), "", "err");
-      } finally {
-        btn.classList.remove("exporting");
-        btn.textContent = origText;
-      }
-    }, 0);
-  });
+    if (!btn) return;
+    if (isBusy) {
+      btn.dataset.prevDisabled = btn.disabled ? "1" : "0";
+      btn.disabled = true;
+      btn.classList.add("busy");
+      btn.setAttribute("aria-busy", "true");
+      btn.innerHTML = `<span class="btn-spinner" aria-hidden="true"></span>${t('export_btn_busy')}`;
+    } else {
+      btn.classList.remove("busy");
+      btn.removeAttribute("aria-busy");
+      btn.textContent = t('export_btn');
+      updateExportBtn();
+    }
+  }
 
+  function waitForPaint() {
+    return new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  }
+
+  $("exportBtn").addEventListener("click", async () => {
+    const btn = $("exportBtn");
+    if (btn.classList.contains("busy")) return;
+    try {
+      const fmt = ($("exportFormat")?.value || "Y2L").toUpperCase();
+      if (fmt === "X7L") {
+        const nonClassic = collectX7NonClassicSourceItems();
+        if (nonClassic.length) {
+          const list = nonClassic.map(x => `• ${x.file} — ${x.version}`).join('\n');
+          alert(t('confirm_x7_nonclassic_sources', { list }));
+          return;
+        }
+        const blockedX8 = collectX7BlockedX8VersionItems();
+        if (blockedX8.length) {
+          const list = blockedX8.map(x => `• ${x.file} — ${x.version}`).join('\n');
+          alert(t('alert_x7_blocked_x8_versions', { list }));
+          return;
+        }
+        const unsupported = collectX7UnsupportedVersionItems();
+        if (unsupported.length) {
+          const list = unsupported.map(x => `• ${x.file} — ${x.version}`).join('\n');
+          alert(t('confirm_x7_unsupported_versions', { list }));
+          return;
+        }
+        setExportBusy(true);
+        await waitForPaint();
+        exportMergeToX7LExperimental();
+        return;
+      }
+      if (hasPartialClassicTranscodeWarnings() && !confirm(t('confirm_partial'))) return;
+      setExportBusy(true);
+      await waitForPaint();
+      exportMergeToY2L();
+    }
+    catch (err) {
+      console.error(err);
+      const msg = (err?.message || err);
+      setStatus(t('status_export_failed',{msg}), "", "err");
+      alert(t('status_export_failed', { msg }));
+    }
+    finally {
+      setExportBusy(false);
+    }
+  });
   // Expose refresh for language toggle (re-renders dynamic content
   // like file list, perf list, dep summary, etc. when language changes)
   window.__libRefresh = refreshAll;
