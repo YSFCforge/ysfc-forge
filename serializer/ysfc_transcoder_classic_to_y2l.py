@@ -91,6 +91,8 @@ SUBBLOB_PREFIX        = b'\x00\x00\x00\x15'   # 4-byte sub-blob prefix i Y2L
 # AWM2_ELEM_LAYOUT base: element_base + 51
 AWM2_ENGINE_HEADER_SIZE = 3
 AWM2_ELEMENT_STRIDE     = 313
+AWM2_LAST_ELEMENT_SIZE  = 309
+ENGINE_POOL_SEP_SIZE    = 5
 AWM2_ELEM_LAYOUT_OFFSET = 51   # AWM2_ELEM_LAYOUT keys är rel från elem_base - 51
 
 # Engine type bytes (Y2L blob[6700])
@@ -269,7 +271,11 @@ def _make_y2l_default_element() -> bytearray:
     w(0, 1)         # enable = 1 (on)
     w(1, 0)         # keyondly_sync = off
     w(2, 0)         # aeg_half_damper = off
-    w(6, 1)         # extended_lfo = on (Init Normal AWM2 default)
+    # Y2L serializes 39 presence/activation flags before the waveform fields.
+    # Byte 6 is format-dependent and is set by transcode_element().
+    for rel in (*range(3, 6), *range(7, 43)):
+        w(rel, 1)
+    w(6, 1)         # X7L/MONTAGE extended-LFO layout default
 
     # ── Waveform ────────────────────
     w16(51, 6)      # waveformNumber = 6 (default "CFX v06 St")
@@ -440,7 +446,8 @@ _Y2L_DEFAULT_ELEMENT = _make_y2l_default_element()
 
 def transcode_element(classic: ClassicPartElement,
                       elem_idx: int = 0,
-                      preset_only: bool = True) -> bytes:
+                      preset_only: bool = True,
+                      extended_lfo_flag: int = 1) -> bytes:
     """Konvertera ett klassiskt AWM2-element till ett 313-byte Y2L element block.
 
     classic     — källelement från en ClassicPartElement
@@ -454,6 +461,7 @@ def transcode_element(classic: ClassicPartElement,
       4. Lämna omappade fält på sina defaults
     """
     e = bytearray(_Y2L_DEFAULT_ELEMENT)
+    e[6] = 1 if extended_lfo_flag else 0
 
     def w(rel, val):
         e[rel] = max(0, min(255, val)) & 0xFF
@@ -518,15 +526,16 @@ def transcode_element(classic: ClassicPartElement,
 # ─────────────────────────────────────────────────────────────────────────────
 
 def transcode_part_to_awm2_engine(part: ClassicPerformancePart,
-                                   element_count: int = 8) -> bytes:
+                                   element_count: int = 8,
+                                   source_fmt: str = FORMAT_MONTAGE) -> bytes:
     """Bygg ett Y2L AWM2 engine block från en klassisk performance part.
 
     Returnerar bytes-objektet: [engine_header(3)] + [element_1(313)] × N
 
-    Engine header (3 bytes):
-      byte 0: engine_count_byte = element_count + 2 (t.ex. 8+2=10=0x0A)
-      byte 1: 0x00
-      byte 2: 0x2B ('+' ASCII, Y2L marker)
+    Engine header (3 bytes): [0x00, 0x00, 0x2B].
+    Element count is stored outside the first engine block and in the 5-byte
+    inter-engine prefix for subsequent parts. Element 8 is 309 bytes, while
+    elements 1-7 are 313 bytes.
     """
     elements = part.elements[:element_count]
     # Pad till element_count med "off" element
@@ -537,15 +546,16 @@ def transcode_part_to_awm2_engine(part: ClassicPerformancePart,
 
     out = bytearray()
 
-    # Engine header (3 bytes)
-    engine_count_byte = element_count + 2
-    out.append(engine_count_byte)
-    out.append(0x00)
-    out.append(0x2B)   # '+'
+    # Native Y2L AWM2 header. The element count is not stored here.
+    out.extend((0x00, 0x00, 0x2B))
 
-    # Element blocks
+    # Elements 1-7 are 313 bytes; the final element omits four tail bytes.
     for i, elem in enumerate(elements):
-        out.extend(transcode_element(elem, elem_idx=i))
+        encoded = transcode_element(
+            elem, elem_idx=i,
+            extended_lfo_flag=0 if source_fmt == FORMAT_MODX else 1,
+        )
+        out.extend(encoded if i < element_count - 1 else encoded[:AWM2_LAST_ELEMENT_SIZE])
 
     return bytes(out)
 
@@ -601,7 +611,7 @@ def build_y2l_blob(classic_perf: ClassicPerformance,
         Part Common headers (5765-byte default sub-blobs) från referens.
       • Annars: fyll med syntetisk minimalt-giltigt Common + Part headers.
       • AWM2 engine blocks skapas av transcode_part_to_awm2_engine().
-      • FM-X parts kopieras opakt (klassiskt format) med varning.
+      • FM-X parts transkodas till ett 1143-byte Y2L engine-block.
       • blob[6695] uppdateras till antal aktiva parts.
       • blob[6700] uppdateras till engine type byte för Part 1.
 
@@ -660,17 +670,31 @@ def build_y2l_blob(classic_perf: ClassicPerformance,
     fmx_ref = _get_fmx_ref_engine()
 
     engine_blocks = []
+    engine_prefixes = {
+        PART_TYPE_AWM2: bytes.fromhex("0000000800"),
+        PART_TYPE_DRUM: bytes.fromhex("0000004900"),
+        PART_TYPE_FMX:  bytes.fromhex("0000005228"),
+    }
     for part_idx in range(n_parts):
         p = classic_perf.parts[part_idx]
         if p.type == PART_TYPE_FMX:
-            engine_blocks.append(transcode_fmx_part_to_engine(p, ref_engine=fmx_ref))
-        elif p.type in (PART_TYPE_AWM2, PART_TYPE_DRUM):
-            engine_blocks.append(transcode_part_to_awm2_engine(p))
+            block = transcode_fmx_part_to_engine(p, ref_engine=fmx_ref)
+        elif p.type == PART_TYPE_AWM2:
+            block = transcode_part_to_awm2_engine(p, source_fmt=classic_perf.fmt)
+        elif p.type == PART_TYPE_DRUM:
+            # Drum mapping is not implemented yet. Preserve native block length
+            # so following mixed-engine parts remain correctly aligned.
+            awm2_fallback = transcode_part_to_awm2_engine(p, source_fmt=classic_perf.fmt)
+            block = bytes((0x00, 0x00, 0x40)) + awm2_fallback[3:]
+            block = block.ljust(4963, b"\x00")[:4963]
         else:
             fallback_part = ClassicPerformancePart()
             fallback_part.type = PART_TYPE_AWM2
             fallback_part.elements = [ClassicPartElement()]
-            engine_blocks.append(transcode_part_to_awm2_engine(fallback_part))
+            block = transcode_part_to_awm2_engine(fallback_part, source_fmt=classic_perf.fmt)
+        if part_idx > 0:
+            block = engine_prefixes.get(p.type, b"\x00" * ENGINE_POOL_SEP_SIZE) + block
+        engine_blocks.append(block)
 
     # ── 4. Sätt engine type bytes i Part Common-blocken ────────────────────
     # Engine type bytes: AWM2=0x0A, FMX=0x02, Drum=0x01
@@ -718,8 +742,8 @@ def transcode_classic_to_y2l(
     for i, part in enumerate(classic_perf.parts):
         if part.type == PART_TYPE_FMX:
             warnings.append(
-                f"Part {i+1} ({part.name!r}): FM-X engine — ersatt med AWM2 fallback. "
-                f"FM-X transkodning kräver Fas 3b."
+                f"Part {i+1} ({part.name!r}): FM-X transkodning är experimentell; "
+                f"omappade Y2L-interna flaggor behåller referens/defaultvärden."
             )
         for j, elem in enumerate(part.elements):
             if elem.wave_bank != 0:

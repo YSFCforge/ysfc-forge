@@ -25,6 +25,31 @@ Alla fyra engines är binärverifierade (alla kända parametrar). Multi/GM 16-pa
 
 ---
 
+## Aktuell formatstödmodell
+
+YSFC Forge behandlar för närvarande de Yamaha-filfamiljer som stöds som separata men närbesläktade layouter:
+
+| Familj | Typiska versioner | Filändelser | Aktuell roll i YSFC Forge |
+|---|---|---|---|
+| MODX M / MONTAGE M long layout | `5.1.x` / moderna `.Y2L`/`.Y2U`-exporter | `.Y2L`, `.Y2U` | Primärt native exportmål |
+| MONTAGE M short layout | `4.1.x` / `.X2L`-liknande library-layout | syns ofta som `.Y2L` eller `.X2L` beroende på källa | Experimentell Performance-import; konverteras till long Y2L-layout vid export |
+| Legacy MONTAGE | `4.0.x` | `.X7L`, `.X7U` | Experimentell Performance-import/konvertering |
+| Legacy MODX / MODX+ | `5.0.x` | `.X8L`, `.X8U` | Experimentell Performance-import/konvertering |
+
+Library Builderns aktuella mål är att exportera valda Performances och nödvändiga beroenden. Den försöker inte klona komplett biblioteksstate. Live Sets, Patterns, Favorites och viss enhetsspecifik biblioteksmetadata ligger avsiktligt utanför aktuell export-scope.
+
+## Aktuell Library Builder-konvertering
+
+| Källtyp | Engines | Beroenden | Notering |
+|---|---|---|---|
+| Native long `.Y2L`/`.Y2U` | AWM2, FM-X, AN-X, Drum | Selektiva waveforms, samples, arpeggios | Primär stödd väg |
+| Legacy `.X7L`/`.X8L` | AWM2, FM-X, Drum | Selektiva waveforms, samples, arpeggios | Konverteras till modern Y2L DPFM-layout; classic AN-X förväntas normalt inte i X7L/X8L-källor |
+| MONTAGE M short-layout `.X2L`-liknande filer | AWM2, FM-X, AN-X, Drum | Performance-export; beroenden hanteras när de refereras genom stödda sektioner | Short common/part/engine-regioner expanderas till long Y2L-layout |
+
+AN-X stöds fullt ut i Y2L/Y2U-målformatet. AN-X förväntas normalt inte förekomma i ursprungliga legacy MONTAGE/MODX `.X7L`/`.X8L`-bibliotek; om en classic-källa exponerar en okänd part-typ ska den behandlas som en okänd classic engine, inte antas vara en giltig classic AN-X-källa.
+
+---
+
 ## Performance ↔ Waveform-koppling & selektiv export
 
 En performance refererar en USER-waveform via fasta DPFM-blob-strukturer:

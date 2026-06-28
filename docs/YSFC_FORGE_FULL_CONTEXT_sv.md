@@ -32,6 +32,42 @@ Tolkningen av Part Common rel +126..+158 styrs av engine_type. Den delade AEG-bl
 
 ---
 
+## Aktuell format- och exportmodell
+
+YSFC Forge behandlar de Yamaha-filfamiljer som stöds som separata men närbesläktade layouter:
+
+| Familj | Typiska versioner | Filändelser | Aktuell roll |
+|---|---|---|---|
+| MODX M / MONTAGE M long layout | `5.1.x` moderna exporter | `.Y2L`, `.Y2U` | Primärt native exportmål |
+| MONTAGE M short layout | `4.1.x` / `.X2L`-liknande layout | `.Y2L`, `.X2L`-liknande källor | Experimentell Performance-import; expanderas till long-layout Y2L/Y2U |
+| Legacy MONTAGE | `4.0.x` | `.X7L`, `.X7U` | Experimentell Performance-import/konvertering |
+| Legacy MODX / MODX+ | `5.0.x` | `.X8L`, `.X8U` | Experimentell Performance-import/konvertering |
+
+Library Builder exporterar valda Performances och de beroenden de kräver. Verktyget försöker inte klona komplett biblioteksstate. Live Sets, Patterns, Favorites och enhetsmetadata ligger utanför aktuell export-scope.
+
+### Aktuell Library Builder-konvertering
+
+| Källtyp | Engines | Beroenden | Notering |
+|---|---|---|---|
+| Native long `.Y2L`/`.Y2U` | AWM2, FM-X, AN-X, Drum | Selektiva waveforms, samples, arpeggios | Primär stödd väg |
+| Legacy `.X7L`/`.X8L` | AWM2, FM-X, Drum | Selektiva waveforms, samples, arpeggios | Konverteras till modern Y2L DPFM-layout |
+| MONTAGE M short-layout `.X2L`-liknande filer | AWM2, FM-X, AN-X, Drum | Konverteras när de refereras genom stödda sektioner | Short common/part/engine-regioner expanderas till long-layout Y2L |
+
+AN-X stöds fullt ut i det moderna Y2L/Y2U-målformatet. AN-X förväntas normalt inte förekomma i legacy MONTAGE/MODX `.X7L`/`.X8L`-bibliotek; okända classic part-typer behandlas som ej stödda classic engines.
+
+### Aktuell Y2L/User-Arp-exportmodell
+
+User Arps hanteras både som beroendedata och som playback-/scene-state. Den aktuella exportvägen:
+
+- remappar EARP/DARP-ID:n globalt i den exporterade målfilen
+- skriver om scene-level arpeggio-referenser till kompakta 0-baserade ID:n
+- skriver Arp Master-state för importerade classic-Performances med aktiva arp-referenser
+- undviker att classic import-state-bytes mappas till Part Mute
+- använder inte Arp Play Only som ersättning för Arp Master
+- nollar classic import-state-bytes som kan påverka uppspelning där ESP-referensexporter visar dem nollade
+
+Detta är den aktuella modellen för exporter där filen laddar men User-Arp-drivna scenes annars skulle bli tysta eller spela fel.
+
 ## Performance ↔ Waveform / Sample / Arpeggio-koppling
 
 Selektiv export kopierar bara de beroenden som en vald uppsättning performances faktiskt använder. En giltig Y2L kräver att katalog-ID:n är en **kontinuerlig sekvens**, så exporten både kopierar de refererade beroendena och renumrerar dem, och skriver om blob-referenserna så att de matchar.
@@ -917,7 +953,8 @@ Per-Part rel-offsets är **identiska över alla 16 parts** inom samma engine. Of
 | 6776 | 75 | **partBankSelectSw** (ext-only) | bool | 1=ON | ★★★★★ | `Test-AWM2_BankSelect-toogle_Off` |
 | 6790 | 89 | **partPanSw** (ext-only) | bool | 1=ON | ★★★★★ | `Test-AWM2_Pan-toggle_Off` |
 | 6791 | 90 | **partVolExpSw** (ext-only) | bool | 1=ON | ★★★★★ | `Test-AWM2_VolExp-toggle_Off` |
-| 6801 | 100 | partArpMasterOn | bool | 1=ON | ★★★★★ | |
+| 6801 | 100 | **partArpMasterOn** | bool | 1=ON | ★★★★★ | Måste bevaras/sättas korrekt för User-Arp playback |
+| 6802 | 101 | **partArpPlayOnly** | bool | 0 | ★★★★★ | Ska inte användas som ersättning för Arp Master |
 | 6831 | 130 | **partVolume = EF Part Output** (UI-aliasing) | direct, 0..127 | 100 | ★★★★★ | `Part1_Volume_127`, `EnvelopeFollowerOutput_70` |
 | 6833 | 132 | **partPan** | c64 | 64 (=C) | ★★★★★ | `TEST5R3-T2b-Mixing-Part1-PanL20` |
 | 6835 | 134 | **partRevSend** | direct, 0..127 | 0 | ★★★★★ | `TEST5R3-T2c-Mixing-Part1-Rev50` |
@@ -956,6 +993,8 @@ UI har **två paths** för samma logiska funktion. Editor måste hantera båda.
 **Part Mute/Solo:** Part Mute @ abs 6733 är persisterad (TEST5R3-T5i),
 medan Part Solo är **UI-only state** och persisteras INTE i blob
 (TEST5R3-T5j gav 0 signal-diffs).
+
+**User-Arp-säkerhetsregel:** `partMute` vid rel +32, `partArpMasterOn` vid rel +100 och `partArpPlayOnly` vid rel +101 är separata persisterade tillstånd. En korrekt Y2L-export kan aktivera Arp Master när en Part har aktiva User-Arp scene-referenser, men får inte sätta Part Mute och får inte behandla Arp Play Only som likvärdigt med Arp Master.
 
 **Part Mode (rel +30) ★★★★★:** `partMode` = 0 (Internal, default) eller 1 (External).
 När External är aktiverat skickar Part:n MIDI till externa enheter och följande
@@ -3186,20 +3225,136 @@ Riktigt okänt:                    ~50      ( 1.3% av nz)
 **Praktisk implikation:** ~98,7% non-zero coverage uppnådd. Återstående 1,3%
 preserveras verbatim — ingen funktionalitetsförlust för editor.
 
-## 18.6 Rekommenderade testfiler för full parametertäckning
+## 18.6 Konsoliderad verifierad teknisk täckning ★★★★★
 
-Fem dedikerade tester skulle eliminera de sista okända bytes:
+Detta avsnitt bevarar aktuella tekniska slutsatser som ursprungligen togs fram under fokuserade analys-pass. Det är inte en changelog; det är aktuell implementation-/referenskunskap som inte får tappas bort när äldre utforskande anteckningar tas bort.
 
-1. `TEST-PERF-TOGGLES-71-91.Y2L` — sekventiella toggles 71-91
-2. `TEST-COMMON-131-152.Y2L` — Common-bytes mellan 131-152
-3. `TEST-PERF-EFX-EXTRA.Y2L` — bytes mellan Master FX och Reverb FX
-4. `TEST-MS-LANE-INTERFACE.Y2L` — abs 4044 vs 8929 Lane-interface
-5. `TEST-CONTROL-NAMES-238.Y2L` — Common abs 232, 234, 238
+### AN-X engine-täckning
 
-Resterande ~196 bytes (Stride-106 + OPAQUE) **är bekräftat oexponerade**
-och behöver inte mer testning.
+AN-X engine-poolen betraktas som fullständigt mappad för kända användarredigerbara fält. Den aktuella modellen är:
 
----
+| Kategori | Aktuell tolkning |
+|---|---|
+| UI-mappade fält | 171 fält, inklusive oscillator-, noise-, filter-, WaveFolder-, Mod LFO-destination- och EG-relaterade fält |
+| Interna bytes | 458 firmware-/internbytes som kopieras eller seedas från verifierad baseline |
+| Kvarvarande varierande omappade bytes | 0 kända |
+
+Viktiga AN-X-fält som måste finnas kvar i referensen/serializern:
+
+- Noise: `noise_tone`, `noise_connect`, `noise_unknown`
+- Amp AEG: `amp_aeg_release`, `amp_aeg_time_vel`, `amp_aeg_sustain_hi`, `amp_aeg_time_vel_marker`
+- OSC1/2/3: waveform, octave, pitch, PEG depth markers, pitch LFO depth, sync pitch, pulse width, shaper, connect och velocity-relaterade fält
+- OSC EG per oscillator: attack, decay, sustain, release där de finns
+- Filter / WaveFolder: `filter2_type`, `wavefolder_eg_depth`, `wavefolder_texture`
+- Mod LFO matrix-trailers: OSC1/OSC2/OSC3/filter destination-trailers med default 127
+
+Den explicita flat-mappningen av OSC-fält är säkrare än att anta perfekt uniform stride för alla OSC-fält. Serializern ska bevara kända AN-X interna/routing-konstanter byte-för-byte eller seeda dem från verifierad baseline.
+
+### AWM2 element-täckning
+
+AWM2 element-strukturen betraktas som fullständigt mappad för kända användarredigerbara fält. Återstående icke-UI-bytes är firmware-/internkonstanter eller padding som ska bevaras/stängas, inte exponeras som redigerbara parametrar.
+
+Kritiska AWM2-slutsatser:
+
+| Rel | Fält | Encoding / status |
+|---:|---|---|
+| +159 | `pegKFCenterNote` | MIDI-note; UI-bekräftad Pitch EG Center Key |
+| +237 | `feg_depth` | verifierad FEG Depth |
+| +239 | `feg_segment` | verifierad FEG Segment |
+| +241 | `feg_time_vel` | verifierad FEG Time/Vel |
+| +243 | `feg_depth_vel` | c64, binärverifierad med dedikerad single-edit-test |
+| +245 | `feg_curve` / `filter_curve` | verifierad FEG Curve |
+| +247 | `feg_time_key` / `filter_time_key` | verifierad FEG Time/Key |
+| +249 | `feg_center_key` / `filter_scaling_center_key` | verifierad FEG Center Key |
+| +289 | `lfoSpeed` | normal LFO speed när Extended LFO är av |
+
+Konflikten kring rel `+243` är löst: fältet är `feg_depth_vel`, inte en orelaterad okänd byte. PEG/FEG-symmetrin är `FEG = PEG + 54` för motsvarande Segment, Time/Vel, Depth/Vel, Curve, Time/Key och Center Key.
+
+AWM2 internkonstanter som ska vara stängda inkluderar rel `+46`, `+90`, `+148`, `+200`, padding vid `+309..+311` samt relaterade routing-/trailer-bytes. Extended LFO-default är `1` (ON), inte `0`.
+
+Adresskonventionerna får inte blandas ihop:
+
+| Konvention | Element 1 base | Användning |
+|---|---:|---|
+| audit abs | 12469 | dokumentation och binära testoffsets |
+| `AWM2_ELEM_LAYOUT` base | 12520 | aktiv layoutkod |
+| `AWM2_ELEM1_BASE` | 12532 | helper-offsets för binärverifiering |
+
+Konversion: `AWM2_ELEM_LAYOUT_offset + 51 = AWM2_ELEMENT_FIELDS_rel` i audit-relativ konvention.
+
+### FM-X engine-täckning
+
+FM-X betraktas som fullständigt mappad för aktuell användarredigerbar täckning. Den aktuella modellen är:
+
+| Kategori | Aktuell tolkning |
+|---|---|
+| UI-mappade fält | 141 fält |
+| Interna bytes | 863 firmware-/internbytes inklusive OP-trailers |
+| Kvarvarande varierande omappade bytes | 0 kända |
+
+Viktiga FM-X-fält som måste finnas kvar i referensen/serializern:
+
+- PEG: `fmx_peg_center_key`, `fmx_peg_level_decay2`, `fmx_peg_level_release`, `fmx_peg_time_attack`, `fmx_peg_time_decay1`, `fmx_peg_time_release`, `fmx_peg_depth`
+- 2nd LFO / algorithm: `fmx_2nd_lfo_phase`, `fmx_2nd_lfo_delay`, `fmx_algorithm`, `fmx_feedback`
+- Part Filter / FEG: resonance velocity, hold/release time, hold/attack/decay/sustain/release levels, depth, segment, time velocity, depth velocity, curve, time key och center key
+- Filter Scaling: fyra breakpoints och fyra cutoff offsets
+- Per-OP-fält: key-on reset, frequency mode, fixed-mode pitch key/velocity, AEG levels, level velocity, per-OP 2nd LFO pitch/amp mod destinations
+
+FM-X OP-stride är 123 bytes. Per-OP-tilläggen är:
+
+| Rel inom OP | Fält | Status |
+|---:|---|---|
+| +58 | `op_2nd_lfo_pitch_mod_dest` | UI-fält |
+| +60 | `op_2nd_lfo_amp_mod_dest` | UI-fält |
+| +66 | `op_trailer_a` | [INTERN], default 127 |
+| +68 | `op_trailer_b` | [INTERN], default 127 |
+| +70 | `op_trailer_c` | [INTERN], default 127 |
+
+För OP1..OP8 upprepas positionerna med stride 123. Trailer-bytes är interna konstanter och ska inte exponeras som redigerbara UI-parametrar.
+
+### Drum engine-täckning
+
+Drum använder annan offsetkonvention och annan Part Common-tolkning än AWM2/FM-X/AN-X. Drum key-mappningen och Drum Part Common-fälten betraktas som fullständigt mappade för aktuell UI-täckning.
+
+| Område | Aktuell status |
+|---|---|
+| DRUM_KEY, 73 keys | 27 UI-fält per key, binärverifierade |
+| DRUM_KEY internbytes | cirka 38 internbytes per key |
+| DRUM_PART_COMMON | 27 UI-fält, binärverifierade |
+| Insertion FX | delad Part-level InsA/InsB-struktur |
+
+Drum filoffset-konversion skiljer sig från övriga engines:
+
+| Engine | audit → filoffset-konversion |
+|---|---|
+| AWM2 / AN-X / FM-X | `file_offset = audit + 687` |
+| Drum | `file_offset = audit + 669` |
+
+Drum key-zonen använder 73 keys med 68-byte stride. Key-mönstret `01 00 00 00 00 00 01 00` identifierar SW=1 och AssignMode=1. Kända key-positioner inkluderar Key 1 vid filoffset 13138, Key 36 vid 15518 och Key 73 vid 18034 i verifierad baseline-konvention.
+
+Drum-key interna icke-noll-konstanter:
+
+| Rel | Värde | Status |
+|---:|---:|---|
+| +18 | 90 | [INTERN], konstant |
+| +67 | 64 | [INTERN], konstant |
+
+Drum Part Common-fält som måste finnas kvar:
+
+| Abs | Fält | Encoding / default |
+|---:|---|---|
+| 6815 | `drumPartMainCategory` | enum, default 16 |
+| 6849 | `drumPartFilterAegAttack` | c64, default 64 |
+| 6851 | `drumPartFilterAegDecay` | c64, default 64 |
+| 6853 | `drumPartFilterAegSustain` | c64, default 64 |
+| 6855 | `drumPartFilterAegRelease` | c64, default 64 |
+| 6903 | `drumPartControlGroup` | enum, default 0 |
+
+Drum delar inte det universella AEG-offset-blocket på samma sätt som AWM2/FM-X/AN-X. För Drum gäller rel `+126..+132` som Drum AEG, och rel `+144/+146` som Drum filter cutoff/resonance. Tolkningen av Part Common rel `+126..+158` är därför engine-specifik.
+
+### Återstående testtäckningsnotering
+
+Den aktuella referensen behandlar Stride-106 och opaque/preserved regions som icke-användarredigerbara tills ett framtida kontrollerat single-edit-test visar något annat. Ingen aktuell exportväg ska modifiera dessa regioner annat än genom att kopiera dem från källan eller från verifierad baseline.
 
 # 19. Helper-funktioner (serializer-API)
 

@@ -57,7 +57,7 @@ MODX M / MONTAGE M-verktygen för `.Y2L` / `.Y2U` är reverse-engineerade från 
 
 ### Sammanfoga performances inklusive beroenden
 
-1. Ladda ner [`tools/ysfc_forge_library_builder_v14_1.html`](tools/ysfc_forge_library_builder_v14_1.html)
+1. Ladda ner [`tools/ysfc_forge_library_builder_v15_33.html`](tools/ysfc_forge_library_builder_v15_33.html)
 2. Öppna filen i din webbläsare
 3. Dra och släpp `.Y2L`- eller `.Y2U`-filer
 4. Markera de performances du vill ha
@@ -81,7 +81,7 @@ MODX M / MONTAGE M-verktygen för `.Y2L` / `.Y2U` är reverse-engineerade från 
 |Verktyg|Vad det gör|
 |-|-|
 |[**Performance Merger**](tools/ysfc_forge_performance_merger_v1_21.html)|Sammanfoga performances från flera Y2L/Y2U-filer|
-|[**Library Builder**](tools/ysfc_forge_library_builder_v14_1.html)|Sammanfoga valda performances och beroenden från Y2L/Y2U, med experimentellt stöd för legacy X7L/X8L och X2L-liknande import|
+|[**Library Builder**](tools/ysfc_forge_library_builder_v15_33.html)|Sammanfoga valda performances och beroenden från Y2L/Y2U, med experimentellt stöd för legacy X7L/X8L och X2L-liknande import|
 |[**Performance Editor**](tools/ysfc_forge_performance_editor_v5_3.html)|Redigera FM-X, AWM2 och AN-X-parametrar i webbläsaren|
 
 ### Experimentella / extra verktyg
@@ -231,7 +231,7 @@ Stödet för legacy MONTAGE/MODX `.X7L` / `.X8L` bygger delvis på, och är i vi
 ConvertWithMoss:
 https://github.com/git-moss/ConvertWithMoss
 
-ConvertWithMoss är licensierat under GNU Lesser General Public License v3.0. All YSFC Forge-kod, struktur eller logik som är härledd från ConvertWithMoss används och distribueras enligt villkoren i LGPL-3.0. Se [`LGPL-3.0.txt`](LGPL-3.0.txt).
+ConvertWithMoss är licensierat under GNU Lesser General Public License v3.0. All YSFC Forge-kod, struktur eller logik som är härledd från ConvertWithMoss används och distribueras enligt villkoren i LGPL-3.0. Se [`licenses/LGPL-3.0.txt`](licenses/LGPL-3.0.txt).
 
 `.Y2L` / `.Y2U`-research, MODX M / MONTAGE M-engine mapping, webbläsargränssnitt och icke-legacy-konverteringslogik i YSFC Forge bygger på egen reverse engineering, testning och binärjämförelse mot Yamaha-hårdvara och ESP plugin-exporter.
 
@@ -241,4 +241,32 @@ ConvertWithMoss är licensierat under GNU Lesser General Public License v3.0. Al
 
 Huvuddelen av YSFC Forge-projektet släpps under MIT License — se [LICENSE](LICENSE).
 
-Vissa legacy MONTAGE/MODX `.X7L` / `.X8L`-komponenter bygger på eller är härledda från ConvertWithMoss och distribueras under GNU Lesser General Public License v3.0. Se [`LGPL-3.0.txt`](LGPL-3.0.txt) och relevanta filheaders i källkoden.
+Vissa legacy MONTAGE/MODX `.X7L` / `.X8L`-komponenter bygger på eller är härledda från ConvertWithMoss och distribueras under GNU Lesser General Public License v3.0. Se [`licenses/LGPL-3.0.txt`](licenses/LGPL-3.0.txt) och relevanta filheaders i källkoden.
+
+
+> Step 133: classic arpeggio diagnostics now group aligned candidates into repeated 48-byte record families. Automatic arpeggio reference rewriting remains disabled until a controlled single-assignment oracle pair confirms the field offsets.
+
+
+## Steg 134
+
+Arpeggioanalysen rangordnar nu justerade offsetpositioner efter icke-standardiserade ID-värden, stöd från återkommande 48-byteposter och dominans av defaultvärden. Analysen är fortfarande endast diagnostisk; olika icke-tomma arpeggiopooler blockeras tills ett kontrollerat filpar med en enda ändrad arp-tilldelning har verifierat de skrivbara referensfälten.
+
+
+### X7L multi-source merge plan / X7L mergeplan
+
+The classic writer accepts reproducible JSON merge plans through `--merge-plan`, writes X7L 4.0.2 through `--merge-output`, and can emit a detailed manifest with `--manifest`.
+
+Schema: `ysfc-forge-x7l-merge-plan-v1`.
+
+### Classic merge preflight / Förhandskontroll
+
+Before writing a merged X7L file, a merge plan can now be validated with `--preflight REPORT.json`. The JSON report lists source versions, selected Performance names and indices, estimated output size, warnings and blocking errors. The target remains X7L 4.0.2.
+
+
+### Transaktionell merge-export
+
+Använd `--preflight-report` och `--receipt` tillsammans med `--merge-output` för att skriva en verifierad X7L 4.0.2-fil, manifest, preflight-rapport och SHA-256-kvitto. En blockerad förhandskontroll publicerar aldrig någon outputfil.
+
+## X7L/X8L-export i Performance Merger v1.22
+
+Starta först den lokala bridgen med `tools/start_x7_bridge.bat` (Windows) eller `tools/start_x7_bridge.sh`. Öppna därefter `tools/ysfc_forge_performance_merger_v1_22.html`. Classic-filer bearbetas endast lokalt och exporteras som X7L 4.0.2.
