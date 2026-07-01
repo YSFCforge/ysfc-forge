@@ -440,7 +440,7 @@
        options[i].selected) work unchanged. Rows support click / Ctrl+click /
        Shift+click multi-select that mirrors into the select. */
     .seltable-wrap {
-      height: 180px;
+      height: 251px;
       overflow: auto;
       border: 1px solid var(--border);
       border-radius: 6px;
@@ -711,6 +711,9 @@
   <button id="themeToggle" data-i18n-title="theme_toggle_title" title="Växla ljust/mörkt läge">
     <span id="themeIcon">☀</span> <span id="themeLabel">Ljust läge</span>
   </button>
+  <button id="advancedView" data-i18n-title="advanced_view_title" title="Advanced View">
+    <span id="advancedIcon">♾️</span> <span id="advancedLabel">Advanced View</span>
+  </button>
 </h1>
 
 <div class="grid-main">
@@ -787,7 +790,7 @@
         <button id="removeFileBtn" disabled class="danger" style="font-size:11px;" data-i18n="remove_file">✕ Ta bort fil</button>
         <button id="clearFilesBtn" disabled class="danger" style="font-size:11px;" data-i18n="clear_all">Rensa alla</button>
       </div>
-      <div class="hint gap-top-sm">
+      <div class="hint gap-top-sm" id="loadedFilesHints">
         <span class="badge badge-ok">OK</span> = <span data-i18n="hint_ok">EPFM/DPFM hittad.</span> &nbsp;
         <span class="badge badge-leg">LEGACY</span> = <span data-i18n="hint_legacy">saknar EPFM/DPFM.</span> &nbsp;
         <span class="badge badge-err">ERR</span> = <span data-i18n="hint_err">parse-fel.</span> &nbsp;
@@ -893,13 +896,13 @@
     </div>
 
     <!-- Dependency summary -->
-    <div class="card">
+    <div class="card" id="dependencySummary">
       <div class="card-header" data-i18n="dep_analysis">Dependency-analys (EWFM/DARP)</div>
       <div id="depSummary" data-i18n="dep_select_first">Välj performances i urval för att se beroenden.</div>
     </div>
 
     <!-- Export readiness / safety summary -->
-    <div class="card">
+    <div class="card" id="exportCheck">
       <div class="card-header" data-i18n="readiness_header">Exportkontroll</div>
       <div id="exportReadiness" data-i18n="readiness_empty">Välj performances för att se exportkontroll.</div>
     </div>
@@ -908,7 +911,7 @@
     <div class="card">
       <div class="card-header" data-i18n="export">Export</div>
 
-      <div class="section-row">
+      <div class="section-row" id="exportBaseMode">
         <div>
           <div class="label-small" data-i18n="base_file">Basfil (Y2L/Y2U container)</div>
           <select id="baseFileSelect"></select>
@@ -930,7 +933,7 @@
       </div>
 
       <div class="row gap-top export-row">
-        <div style="flex:1;">
+        <div style="flex:1;" id="includeDependenciesSelectors">
           <div class="label-small" data-i18n="include_deps">Inkludera beroenden</div>
           <label style="display:flex; align-items:center; gap:6px; font-family:var(--mono); font-size:11px; cursor:pointer;">
             <input type="checkbox" id="depWaveforms" checked/>
@@ -1428,24 +1431,110 @@ function applyI18n() {
     }
   });
 
-  // Wire toggle button after DOM is ready
+  // Elements to hide and button IDs
+  const _idsToHide = [
+    'createEmptyBtn',
+    'loadedFilesHints',
+    'perfLegend',
+    'dependencySummary',
+    'exportCheck',
+    'exportBaseMode',
+    'includeDependenciesSelectors'
+  ];
+  const _advancedBtnId = 'advancedView';
+  const _advancedIconId = 'advancedIcon';
+  const _advancedLabelId = 'advancedLabel';
+  const _storageKey = 'ysfc-advanced'; // "true" or "false"
+
+  // Wire toggle button and other DOM-dependent behavior after DOM is ready
   document.addEventListener("DOMContentLoaded", () => {
-    document.getElementById("themeToggle").addEventListener("click", () => {
-      applyTheme(currentTheme === "dark" ? "light" : "dark");
-    });
-    document.getElementById("langToggle").addEventListener("click", () => {
-      currentLang = currentLang === 'sv' ? 'en' : 'sv';
-      localStorage.setItem('ysfc-lang', currentLang);
-      applyI18n();
-      // Refresh theme label which depends on lang
-      applyTheme(currentTheme);
-      // Refresh dynamic content
-      if (typeof window.__libRefresh === 'function') window.__libRefresh();
-    });
+    // Theme toggle wiring
+    const themeToggle = document.getElementById("themeToggle");
+    if (themeToggle) {
+      themeToggle.addEventListener("click", () => {
+        applyTheme(currentTheme === "dark" ? "light" : "dark");
+      });
+    }
+
+    const langToggle = document.getElementById("langToggle");
+    if (langToggle) {
+      langToggle.addEventListener("click", () => {
+        currentLang = currentLang === 'sv' ? 'en' : 'sv';
+        localStorage.setItem('ysfc-lang', currentLang);
+        applyI18n();
+        // Refresh theme label which depends on lang
+        applyTheme(currentTheme);
+        // Refresh dynamic content
+        if (typeof window.__libRefresh === 'function') window.__libRefresh();
+      });
+    }
+
     // Apply translations now that DOM is ready
     applyI18n();
+
+    // Apply advanced/simple UI (patterned like applyTheme)
+    function applyAdvancedMode(isAdvanced) {
+      // Persist choice
+      try {
+        localStorage.setItem(_storageKey, isAdvanced ? 'true' : 'false');
+      } catch (e) {
+        // ignore storage errors
+      }
+
+      // Show/hide elements
+      _idsToHide.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.style.display = isAdvanced ? '' : 'none';
+      });
+
+      // Update button UI
+      const btn = document.getElementById(_advancedBtnId);
+      const icon = document.getElementById(_advancedIconId);
+      const label = document.getElementById(_advancedLabelId);
+      if (!btn) return;
+
+      if (isAdvanced) {
+        btn.setAttribute('title', 'Simple View');
+        btn.setAttribute('data-i18n-title', 'simple_view_title');
+        if (label) label.textContent = 'Simple View';
+        if (icon)  icon.textContent  = '🔘';
+      } else {
+        btn.setAttribute('title', 'Advanced View');
+        btn.setAttribute('data-i18n-title', 'advanced_view_title');
+        if (label) label.textContent = 'Advanced View';
+        if (icon)  icon.textContent  = '♾️';
+      }
+    }
+
+    // Determine initial advanced state from localStorage only
+    let initialAdvanced = false;
+    try {
+      const stored = localStorage.getItem(_storageKey);
+      if (stored === 'true') initialAdvanced = true;
+      else initialAdvanced = false;
+    } catch (e) {
+      // ignore storage errors and keep default false
+    }
+
+    // Apply initial state
+    applyAdvancedMode(initialAdvanced);
+
+    // Wire the button to toggle in-place (no reload, no URL changes)
+    const advBtn = document.getElementById(_advancedBtnId);
+    if (advBtn) {
+      advBtn.setAttribute('type', 'button'); // explicit non-submit behavior
+      advBtn.addEventListener('click', () => {
+        // Toggle current state and apply (read from localStorage)
+        const currentlyAdvanced = localStorage.getItem(_storageKey) === 'true';
+        const next = !currentlyAdvanced;
+        applyAdvancedMode(next);
+      });
+    }
   });
 })();
+
+
 
 (() => {
 
