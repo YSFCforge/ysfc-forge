@@ -105,8 +105,14 @@
     h1 .ver { color: var(--accent); }
     h1 .sep { color: var(--border-hi); }
     h1 .spacer { flex: 1; }
+    h1 .btn-group {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;      /* allows the buttons to wrap */
+      justify-content: flex-end; /* keeps them right-aligned */
+    }
 
-    #themeToggle, #langToggle {
+    #themeToggle, #langToggle, #advancedView {
       font-family: var(--mono);
       font-size: 11px;
       font-weight: 600;
@@ -121,7 +127,7 @@
       align-items: center;
       gap: 5px;
     }
-    #themeToggle:hover, #langToggle:hover { border-color: var(--accent); color: var(--accent); }
+    #themeToggle:hover, #langToggle:hover, #advancedView:hover { border-color: var(--accent); color: var(--accent); }
 
     .grid-main {
       display: grid;
@@ -705,15 +711,17 @@
   <span class="sep">│</span>
   Y2L · Y2U · X7L · X8L → Y2L/Y2U · X7L export
   <span class="spacer"></span>
-  <button id="langToggle" title="Switch language / Växla språk">
-    <span>🌐</span> <span id="langLabel">EN</span>
-  </button>
-  <button id="themeToggle" data-i18n-title="theme_toggle_title" title="Växla ljust/mörkt läge">
-    <span id="themeIcon">☀</span> <span id="themeLabel">Ljust läge</span>
-  </button>
-  <button id="advancedView" data-i18n-title="advanced_view_title" title="Advanced View">
-    <span id="advancedIcon">♾️</span> <span id="advancedLabel">Advanced View</span>
-  </button>
+  <div class="btn-group">
+    <button id="langToggle" title="Switch language / Växla språk">
+      <span>🌐</span> <span id="langLabel">EN</span>
+    </button>
+    <button id="themeToggle" data-i18n-title="theme_toggle_title" title="Växla ljust/mörkt läge">
+      <span id="themeIcon">☀</span> <span id="themeLabel">Ljust läge</span>
+    </button>
+    <button id="advancedView" data-i18n-title="advanced_view_title" title="Advanced View">
+      <span id="advancedIcon">♾️</span> <span id="advancedLabel">Advanced View</span>
+    </button>
+  </div>
 </h1>
 
 <div class="grid-main">
@@ -1227,7 +1235,7 @@ const LANG = {
     hint_ok: 'EPFM/DPFM found.',
     hint_legacy: 'missing EPFM/DPFM.',
     hint_err: 'parse error.',
-    hint_x7_no: 'NO X7 = the file can be read but is not supported as a source for X7L export.',
+    hint_x7_no: 'the file can be read but is not supported as a source for X7L export.',
     file_status_x7_block_classic: 'Readable classic file, but version {version} is not supported as a source for X7L export. Supported path: X7L 4.0.5 and X8L 5.0.1.',
     file_status_x7_block_modern: 'Modern Y2L/Y2U file can be read and exported to Y2L/Y2U, but is not supported as a source for X7L export.',
     perfs_in_file: 'Performances in selected file',
@@ -1246,7 +1254,7 @@ const LANG = {
     legend_w: 'Wfm = user waveforms (EWFM/DWFM)',
     legend_s: 'Sam = samples/sample data (EWIM/DWIM)',
     legend_a: 'References arpeggio data (EARP/DARP)',
-    legend_note: 'Shown only when the performance actually references the dependency. The last column shows the sound engine (AWM2 / FM-X / AN-X).',
+    legend_note: 'Only shown when the performance actually references the dependency. The Engine column shows the sound generator (AWM2 / FM-X / AN-X).',
     selection: 'Selection',
     scol_slot: 'Slot',
     scol_source: 'Source file',
@@ -1262,7 +1270,7 @@ const LANG = {
     readiness_classic_partial: 'Classic → Y2L: partial support',
     readiness_warning_drum: 'Classic Drum part found in {name}. Drum transcoding is implemented experimentally; check the sound against the original or an ESP export.',
     readiness_warning_anx: 'AN-X is supported in Y2L/Y2U, but is not normally expected in classic X7L/X8L files. If a classic source still contains unknown part type=3, it is not exported correctly yet.',
-    readiness_warning_x8_arp_play_only_silent: 'X8 test parameters in {name}: Part ARP Switch is OFF while Arp Play Only is ON. It may be correct that this Performance produces no direct keyboard sound unless the arpeggio runs.',
+    readiness_warning_x8_arp_play_only_silent: 'X8 test parameters in {name}: Part ARP Switch is OFF while Arp Play Only is ON. It might be intended for this Part/Performance to produce no direct keyboard sound and only play an arpeggio.',
     readiness_counts: 'Performances: {p} · Waveforms: {w} · Samples: {s} · Arpeggios: {a}',
     readiness_target_y2: 'Target: Y2L/Y2U modern MODX M / Montage M',
     readiness_target_x7: 'Target: X7L 4.0.5 classic Montage (experimental)',
@@ -1272,7 +1280,7 @@ const LANG = {
     confirm_x7_nonclassic_sources: 'X7L export was stopped because the selection contains modern Y2L/Y2U sources. X7L export currently supports classic X7L/X8L sources only:\n\n{list}\n\nExport these to Y2L/Y2U instead.',
     readiness_x7_unsupported_version_warning: 'Source version {version} in {file} is not supported for experimental X7L export. Currently supported path: X7L 4.0.5 and X8L 5.0.1 → X7L 4.0.5.',
     confirm_x7_unsupported_versions: 'The X7L export contains performance(s) from source file versions that are not supported by the X7L writer:\n\n{list}\n\nExport was stopped. Export to Y2L/Y2U instead, or use X7L 4.0.5 / X8L 5.0.1 sources for X7L export.',
-    alert_x7_blocked_x8_versions: 'X7L export was blocked because the selection contains X8L 5.0.x sources that are not exactly the verified 5.0.1 version:\n\n{list}\n\nThese files must not be written raw into an X7L 4.0.5 container because the result may become corrupt/Illegal file. Export to Y2L/Y2U instead, or test with verified X8L 5.0.1.',
+    alert_x7_blocked_x8_versions: 'X7L export was blocked because the selection contains X8L 5.0.x sources that do not match the verified 5.0.1 version:\n\n{list}\n\nThese files should not be written into an X7L 4.0.5 container because the output might be a corrupted/Illegal file. Export to Y2L/Y2U instead, or test with verified X8L 5.0.1.',
     err_x7_blocked_x8_version: 'X7L export blocked: X8L source version {version} in {file} is not verified. Only X8L 5.0.1 is down-converted to X7L 4.0.5.',
     confirm_x7_skipped_dependencies: 'WARNING: {n} dependency entries could not be read and will be skipped. The file may still load, but the sound may be incorrect or miss samples/waveforms/arpeggios. Continue export anyway?',
     confirm_partial: 'This export contains classic AN-X / unknown part type=3. AN-X is supported in Y2L/Y2U, but is not normally expected in classic X7L/X8L files and is not exported correctly yet. Continue export?',
