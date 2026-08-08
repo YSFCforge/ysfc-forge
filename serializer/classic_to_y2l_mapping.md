@@ -240,3 +240,15 @@ The build stamp at header offset `0x3c` is also embedded in entry records and mu
 The modern Y2L/Y2U research and MONTAGE M/MODX M engine mapping in YSFC Forge are based on independent analysis and ESP/hardware comparisons.
 
 Legacy X7L/X8L support is partly informed by, and in some areas derived from, ConvertWithMoss by Jürgen Moßgraber. ConvertWithMoss-derived code, structures, tables, formulas, parsing logic or conversion logic are distributed under LGPL-3.0 terms. See the repository `NOTICE.md` and `licenses/LGPL-3.0.txt`.
+
+
+## Verified Y2L Insertion Connection Type
+
+Controlled MODX M / ESP exports (2026-08-08) established the Part Common routing field independently of the InsA/InsB effect blocks:
+
+- Part Common relative offset **+232** (Part 1 blob absolute offset 6933)
+- `0` = `Parallel`
+- `1` = `A_to_B`
+- `2` = `B_to_A`
+
+This is binary-verified from three otherwise-identical `Init Normal` Y2L files. The classic-source byte/index for this field has **not** yet been identified, so the classic→Y2L transcoder must not guess it.

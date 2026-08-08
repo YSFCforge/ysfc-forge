@@ -926,3 +926,8 @@ EC-känsliga hash-bytes (vid Element Count-ändringar):
 
 För Drum-specifik testning, filtrera även:
 `{filoffset 680-720, filoffset 7380-7400}` (DPFM sub-blob header brus)
+
+
+## Insertion Connection Type (Y2L)
+
+Binärt verifierad i MODX M/ESP Y2L (2026-08-08): Part Common rel `+232` (Part 1 abs `6933`), u8. Värden: `0=Parallel`, `1=A_to_B`, `2=B_to_A`. Fältet styr routingen *mellan* InsA och InsB och är skilt från elementets `elem_connect`. Classic-källmappningen är fortfarande ej verifierad.

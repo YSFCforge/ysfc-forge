@@ -153,7 +153,7 @@ Verifieringen ovan gäller de fyra synthesengines:arnas användarredigerbara par
 
 | Sektion | Täckning | Notering |
 |---|---|---|
-| Insertion FX | ✅ Verifierad | 57 verifierade FX-typer |
+| Insertion FX | ✅ Verifierad | 57 verifierade FX-typer; Part Common +232 routing: 0=Parallel, 1=A→B, 2=B→A |
 | Motion Sequencer (4 lanes × 884 bytes) | ✅ Verifierad | 116 fält |
 | Arp Common | ✅ Verifierad | 34 fält |
 | Common Control Assign (32 slots × 22 bytes) | ✅ Verifierad | abs 2452..3155 |

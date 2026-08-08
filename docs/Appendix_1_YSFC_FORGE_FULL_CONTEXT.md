@@ -2133,6 +2133,10 @@ All varying bytes are either UI-mapped or belong to Insertion FX / other univers
 
 ---
 
+# 13.9.1 Insertion Connection Type — binary verified ★★★★★
+
+Y2L Part Common rel `+232` (Part 1 abs `6933`) stores the routing between the two insertion blocks: `0=Parallel`, `1=A_to_B`, `2=B_to_A`. This was isolated with three otherwise-identical MODX M/ESP `Init Normal` Y2L exports on 2026-08-08. It is distinct from per-element `elem_connect`. The classic-source mapping is still unknown and must not be guessed.
+
 # 14. Insertion FX — COMPLETE (57 types) ★★★★★ / ★★★★☆
 
 Insertion FX (InsA and InsB) is engine-independent.

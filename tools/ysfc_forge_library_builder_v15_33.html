@@ -4780,6 +4780,11 @@ function applyI18n() {
     if (m.length > 11) w(222, g(m, 11));                         // portamentoMode_rel
     if (m.length > 53) w(238, g(m, 53));                         // partEqLowFreq_rel
 
+    // Per-part insertion routing: Y2L Part Common rel+232 is binary-verified
+    // (0=Parallel, 1=Ins A→B, 2=Ins B→A). The corresponding classic
+    // manyParameters source index is NOT yet verified, so classic transcode
+    // deliberately preserves the Init/template value instead of guessing.
+    //
     // Per-part insertion FX A/B. Offsets come from Y2L Part Common insertion
     // map: InsA rel+282/+283 + params at +286..+314; InsB rel+338/+339 +
     // params at +342..+370. Classic values sit in manyParameters in the

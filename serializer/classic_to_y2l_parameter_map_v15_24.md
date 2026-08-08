@@ -77,6 +77,7 @@ Mapped Y2L Part Common fields:
 | 214 | pitch bend lower | part header pbLower |
 | 220 | portamento time | manyParameters[10] |
 | 222 | portamento mode | manyParameters[11] |
+| **232** | **Insertion Connection Type** | **Y2L verified: 0=Parallel, 1=A_to_B, 2=B_to_A; classic source mapping not yet identified** |
 | 238 | part EQ low frequency | manyParameters[53] |
 | 282..314 | Insertion A type/subtype/params | manyParameters[139..177] sparse mapping |
 | 338..370 | Insertion B type/subtype/params | manyParameters[197..235] sparse mapping |

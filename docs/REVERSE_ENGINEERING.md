@@ -153,7 +153,7 @@ The verification above applies to the four synthesis engines' user-editable para
 
 | Section | Coverage | Notes |
 |---|---|---|
-| Insertion FX | ✅ Verified | 57 verified FX types |
+| Insertion FX | ✅ Verified | 57 verified FX types; Part Common +232 routing: 0=Parallel, 1=A→B, 2=B→A |
 | Motion Sequencer (4 lanes × 884 bytes) | ✅ Verified | 116 fields |
 | Arp Common | ✅ Verified | 34 fields |
 | Common Control Assign (32 slots × 22 bytes) | ✅ Verified | abs 2452..3155 |

@@ -313,6 +313,9 @@ ANX_AEG_BASE = 12565 # +0:Attack u8, +2:Decay u8, +4:Sustain u16LE, +6:Release u
 
 PART_COMMON = dict(
     monoPoly=6751, volume=6843, pan=6845,
+    # Insertion Connection Type — binary verified with three ESP/MODX M Y2L exports:
+    # 0=Parallel, 1=Ins A→B, 2=Ins B→A. Part Common rel +232 (Part 1 abs 6933).
+    insertionConnection=6933,
     # OBS: Tidigare adresser för AEG/FEG-offsets här (6861-6875) var FELAKTIGA för AWM2.
     # (Part Common rel +144..+158). Se PART_COMMON_REL nedan för korrekta AWM2-adresser:
     #   awm2PartAegOffsetAttack_rel = 144 → abs 6845
@@ -1006,6 +1009,10 @@ PART_COMMON_REL = dict(
     elementCount_rel = 196,  # 6897 i payload, abs 7588 i 38985-fil
     # Legato Slope — Part-level Legato Slope, u8 0..7
     legatoSlope_rel = 226,  # 6927
+    # Insertion Connection Type ★★★★★ — binary verified 2026-08-08 using three
+    # otherwise-identical Init Normal Y2L exports from MODX M/ESP.
+    # 0=Parallel, 1=Ins A→B, 2=Ins B→A.
+    insertionConnection_rel = 232,  # 6933
     pbRangeUpper_rel = 212, # 6913
     pbRangeLower_rel = 214, # 6915
     detune_rel = 216, # 6917
@@ -1082,6 +1089,18 @@ def get_part_common_field(sub_blob_start: int, field_name: str) -> int:
 # Param-defaults är 0 men fylls in när Type sätts.
 # Param-betydelser varierar med InsA Type.
 
+# Insertion A/B routing is stored separately from the two FX blocks.
+# Binary verified in Y2L Part Common: rel +232 (Part 1 abs 6933).
+PER_PART_INSERTION_CONNECTION_REL = 232
+INSERTION_CONNECTION_PARALLEL = 0
+INSERTION_CONNECTION_A_TO_B = 1
+INSERTION_CONNECTION_B_TO_A = 2
+INSERTION_CONNECTION_NAMES = {
+    INSERTION_CONNECTION_PARALLEL: 'Parallel',
+    INSERTION_CONNECTION_A_TO_B: 'A_to_B',
+    INSERTION_CONNECTION_B_TO_A: 'B_to_A',
+}
+
 PER_PART_INSERTION_REL_BASE = 282  # rel inom sub-blob för Part 1 = abs 6983
 PER_PART_INSERTION_TYPE_REL = 282
 PER_PART_INSERTION_SUBTYPE_REL = 283
@@ -1108,6 +1127,14 @@ INSERTION_TYPE_KNOWN = {
     80: 'Gated-Reverb / Slice (Tech)',
     # ... fler finns i Section 14
 }
+
+def get_part_insertion_connection(sub_blob_start: int) -> int:
+    """Get abs address of Insertion Connection Type for any Part.
+
+    Stored as u8: 0=Parallel, 1=A_to_B, 2=B_to_A.
+    """
+    return sub_blob_start + PER_PART_INSERTION_CONNECTION_REL
+
 
 def get_part_insertion_a_type(sub_blob_start: int) -> int:
     """Get abs address of InsA Type byte for any Part."""

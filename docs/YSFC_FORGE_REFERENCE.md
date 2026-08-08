@@ -925,3 +925,8 @@ EC-sensitive hash bytes (when Element Count changes):
 
 For Drum-specific testing, also filter:
 `{filoffset 680-720, filoffset 7380-7400}` (DPFM sub-blob header noise)
+
+
+## Insertion Connection Type (Y2L)
+
+Binary verified in MODX M/ESP Y2L (2026-08-08): Part Common rel `+232` (Part 1 abs `6933`), u8. Values: `0=Parallel`, `1=A_to_B`, `2=B_to_A`. This field controls the routing *between* InsA and InsB and is distinct from per-element `elem_connect`. Classic-source mapping remains unverified.

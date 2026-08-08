@@ -1006,6 +1006,16 @@ fält blir relevanta (märkta "ext-only" i tabellen):
 Dessa fält finns i blob även när Part Mode = Internal (defaults bibehålls),
 men UI visar dem bara när External är aktiverat.
 
+**Insertion Connection Type (Part Common rel +232) ★★★★★ — binärt verifierad 2026-08-08:**
+
+- rel `+232` (Part 1 abs `6933`) = Insertion Connection Type, u8
+- `0` = Parallel
+- `1` = Ins A → B
+- `2` = Ins B → A
+- Verifierad med tre i övrigt identiska `Init Normal`-Y2L exporterade från MODX M/ESP.
+- Detta är separat från elementets `elem_connect`, som väljer om elementet går in i InsA eller InsB.
+- Motsvarande classic-YSFC-källindex är ännu inte identifierat; classic→Y2L får därför inte gissa värdet.
+
 **Per-Part Insertion FX struktur (rel +282..+314) ★★★★★:**
 
 InsA/InsB är **PART-NIVÅ** (inte per-element). Element ROUTAS till InsA/InsB

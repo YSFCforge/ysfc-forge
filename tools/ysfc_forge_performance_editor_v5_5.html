@@ -2809,15 +2809,19 @@ function renderDrumKey() {
 function renderFX() {
   const headline = `<div class="content-headline">
     <h2>Insertion FX</h2>
-    <div class="sub">InsA and InsB effect type selection · Part ${S.currentPart}</div>
+    <div class="sub">InsA/InsB effect type and routing · Part ${S.currentPart}</div>
   </div>`;
 
   const pd = partDelta(S.currentPart);
   const INSA_LO = PART_BASE + 275 + pd, INSA_HI = PART_BASE + 276 + pd;
   const INSB_LO = PART_BASE + 332 + pd, INSB_HI = PART_BASE + 333 + pd;
+  // Binary-verified Y2L Part Common rel +232 = blob abs 6933 for Part 1.
+  // Editor PART_BASE is 6708, hence +225 here. Values: 0=Parallel, 1=A→B, 2=B→A.
+  const INS_CONNECTION = PART_BASE + 225 + pd;
 
   const insAType = fxFromBytes(S.perfBytes[INSA_LO], S.perfBytes[INSA_HI]);
   const insBType = fxFromBytes(S.perfBytes[INSB_LO], S.perfBytes[INSB_HI]);
+  const insConnection = S.perfBytes[INS_CONNECTION] ?? 1;
 
   function fxSelector(label, currentIdx, abs_lo, abs_hi) {
     let opts = '';
@@ -2831,7 +2835,18 @@ function renderFX() {
     </div>`;
   }
 
-  const body = fxSelector('Insertion FX A', insAType, INSA_LO, INSA_HI) +
+  const routeNames = ['Parallel', 'Ins A → B', 'Ins B → A'];
+  const routeOpts = routeNames.map((name, idx) =>
+    `<option value="${idx}" ${idx===insConnection?'selected':''}>${name}</option>`
+  ).join('');
+  const routeSelector = `<div class="srow">
+    <div class="srow-hdr"><span class="sname">Insertion Connection</span>
+      <span class="sval">${routeNames[insConnection] || 'Unknown ('+insConnection+')'}</span></div>
+    <select onchange="writeByte(${INS_CONNECTION},+this.value,'Insertion Connection');renderContent();">${routeOpts}</select>
+  </div>`;
+
+  const body = routeSelector +
+    fxSelector('Insertion FX A', insAType, INSA_LO, INSA_HI) +
     fxSelector('Insertion FX B', insBType, INSB_LO, INSB_HI);
 
   return headline +
