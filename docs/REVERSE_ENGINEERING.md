@@ -1,5 +1,9 @@
 # Reverse Engineering Status
 
+> **FM-X completion checkpoint — 2026-08-11 / parser v1.0.77**  
+> The Soundmondo→Y2L FM-X mapping represented by `FMX_COVERAGE_MATRIX_v177.csv` is now complete for 153 tracked Yamaha-documented parameter points and has an ESP-verified lineage. Important correction: OP-relative `+62/+64` are Pitch/Level Controller Sensitivity and `+66/+68/+70` are 1st-LFO destination depth ratios. Older text that labels `+66/+68/+70` as internal trailer bytes is superseded. The FM-X 2nd-LFO depth matrix is no longer partial. Smart Morph **transport/preservation** is verified, while generic reconstruction/interpolation-table editing remains a separate open problem.
+
+
 This document contains the detailed reverse engineering status and methodology for YSFC Forge. For an overview, see the main [README](../README.md).
 
 ## Table of Contents
@@ -98,7 +102,7 @@ The verification above applies to the four synthesis engines' user-editable para
 | Insertion FX / Motion Sequencer / Arp / Control Assign | ✅ Mapped (see [Coverage by Section](#coverage-by-section)) |
 | Scene snapshots | ⚠️ Structure verified, ~10 fields/scene UI-confirmed — see [What is Not Yet Mapped](#what-is-not-yet-mapped) |
 | Smart Morph interpolation tables | ⚠️ Not yet mapped — see [What is Not Yet Mapped](#what-is-not-yet-mapped) |
-| FM-X 2nd LFO depth matrix | ⚠️ Partial mapping — see [What is Not Yet Mapped](#what-is-not-yet-mapped) |
+| FM-X 2nd LFO depth matrix | ✅ Fully mapped / ESP-verified lineage |
 
 ---
 
@@ -108,7 +112,7 @@ The verification above applies to the four synthesis engines' user-editable para
 
 | Section | Fields | Coverage | Notes |
 |---|---:|---|---|
-| Operators (8 × 22 fields) | 176 | ✅ Verified | OP1@12676, stride 123 bytes |
+| Operators (8 × complete tracked field set) | 8 operators | ✅ Verified | OP1@12676, stride 123 bytes |
 | Pre-OP (PEG, LFO, Algo, Filter) | 23 | ✅ Verified | |
 | Part Common | 15 | ✅ Verified | Algorithm, Feedback, Filter, FM Color, Volume |
 | Per-OP 2nd LFO modulation | 16 | ✅ Verified | rel +58 (PitchMod), rel +60 (AmpMod) per OP |
@@ -153,7 +157,7 @@ The verification above applies to the four synthesis engines' user-editable para
 
 | Section | Coverage | Notes |
 |---|---|---|
-| Insertion FX | ✅ Verified | 57 verified FX types; Part Common +232 routing: 0=Parallel, 1=A→B, 2=B→A |
+| Insertion FX | ✅ Verified | 57 verified FX types |
 | Motion Sequencer (4 lanes × 884 bytes) | ✅ Verified | 116 fields |
 | Arp Common | ✅ Verified | 34 fields |
 | Common Control Assign (32 slots × 22 bytes) | ✅ Verified | abs 2452..3155 |
@@ -303,7 +307,7 @@ The interpolation tables and FM-X morphing state are not mapped.
 
 ### FM-X 2nd LFO depth matrix
 
-Partial mapping at `abs=12547+`. Needs more test files.
+Completed in the v1.0.64 lineage: global Pitch/Amp/Filter modulation depths and per-operator Pitch/Amp depths are mapped and ESP-verified.
 
 ### Performance Editor tool (UI gap)
 

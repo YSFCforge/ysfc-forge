@@ -1,5 +1,9 @@
 # YSFC Forge — Full Context
 
+> **FM-X completion checkpoint — 2026-08-11 / parser v1.0.77**  
+> Soundmondo→Y2L-mappningen för FM-X i `FMX_COVERAGE_MATRIX_v177.csv` är nu komplett för 153 spårade Yamaha-dokumenterade parameterpunkter och har en ESP-verifierad kedja. Viktig korrigering: OP-relativ `+62/+64` är Pitch/Level Controller Sensitivity och `+66/+68/+70` är 1st-LFO destination depth ratios. Äldre text som beskriver `+66/+68/+70` som interna trailerbytes är ersatt. FM-X 2nd-LFO depth-matrisen är inte längre partiell. Smart Morph **transport/preservation** är verifierad, medan generisk rekonstruktion/redigering av interpolationstabeller fortfarande är ett separat öppet område.
+
+
 *MODX M8 firmware 3.0 + ESP Plugin v3.0*
 *Underlag: 2010+ binärverifierade testfiler*
 
@@ -1005,16 +1009,6 @@ fält blir relevanta (märkta "ext-only" i tabellen):
 
 Dessa fält finns i blob även när Part Mode = Internal (defaults bibehålls),
 men UI visar dem bara när External är aktiverat.
-
-**Insertion Connection Type (Part Common rel +232) ★★★★★ — binärt verifierad 2026-08-08:**
-
-- rel `+232` (Part 1 abs `6933`) = Insertion Connection Type, u8
-- `0` = Parallel
-- `1` = Ins A → B
-- `2` = Ins B → A
-- Verifierad med tre i övrigt identiska `Init Normal`-Y2L exporterade från MODX M/ESP.
-- Detta är separat från elementets `elem_connect`, som väljer om elementet går in i InsA eller InsB.
-- Motsvarande classic-YSFC-källindex är ännu inte identifierat; classic→Y2L får därför inte gissa värdet.
 
 **Per-Part Insertion FX struktur (rel +282..+314) ★★★★★:**
 
@@ -3299,7 +3293,7 @@ FM-X betraktas som fullständigt mappad för aktuell användarredigerbar täckni
 | Kategori | Aktuell tolkning |
 |---|---|
 | UI-mappade fält | 141 fält |
-| Interna bytes | 863 firmware-/internbytes inklusive OP-trailers |
+| Interna bytes | firmware-/internbytes (OP +62..+70 excluded; these are now mapped UI/modulation fields) |
 | Kvarvarande varierande omappade bytes | 0 kända |
 
 Viktiga FM-X-fält som måste finnas kvar i referensen/serializern:
@@ -3316,11 +3310,13 @@ FM-X OP-stride är 123 bytes. Per-OP-tilläggen är:
 |---:|---|---|
 | +58 | `op_2nd_lfo_pitch_mod_dest` | UI-fält |
 | +60 | `op_2nd_lfo_amp_mod_dest` | UI-fält |
-| +66 | `op_trailer_a` | [INTERN], default 127 |
-| +68 | `op_trailer_b` | [INTERN], default 127 |
-| +70 | `op_trailer_c` | [INTERN], default 127 |
+| +62 | `op_pitch_controller_sensitivity` | UI/control field; neutral 0 |
+| +64 | `op_level_controller_sensitivity` | UI/control field; neutral 0 |
+| +66 | `op_1st_lfo_dest1_depth_ratio` | UI/modulation field; default 127 |
+| +68 | `op_1st_lfo_dest2_depth_ratio` | UI/modulation field; default 127 |
+| +70 | `op_1st_lfo_dest3_depth_ratio` | UI/modulation field; default 127 |
 
-För OP1..OP8 upprepas positionerna med stride 123. Trailer-bytes är interna konstanter och ska inte exponeras som redigerbara UI-parametrar.
+För OP1..OP8 upprepas positionerna med stride 123. Dessa +62..+70-fält är verifierade användar-/modulationsparametrar och ska inte klassas som interna trailerbytes.
 
 ### Drum engine-täckning
 

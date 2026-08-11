@@ -1,5 +1,9 @@
 # YSFC Forge — Full Context
 
+> **FM-X completion checkpoint — 2026-08-11 / parser v1.0.77**  
+> The Soundmondo→Y2L FM-X mapping represented by `FMX_COVERAGE_MATRIX_v177.csv` is now complete for 153 tracked Yamaha-documented parameter points and has an ESP-verified lineage. Important correction: OP-relative `+62/+64` are Pitch/Level Controller Sensitivity and `+66/+68/+70` are 1st-LFO destination depth ratios. Older text that labels `+66/+68/+70` as internal trailer bytes is superseded. The FM-X 2nd-LFO depth matrix is no longer partial. Smart Morph **transport/preservation** is verified, while generic reconstruction/interpolation-table editing remains a separate open problem.
+
+
 *MODX M8 firmware 3.0 + ESP Plugin v3.0*
 *Foundation: 2010+ binary-verified test files*
 
@@ -2132,10 +2136,6 @@ The ESP UI's "Key" selector only changes navigation, not data. Per-key data is s
 All varying bytes are either UI-mapped or belong to Insertion FX / other universal Part Common fields. 4934 of 4964 drum-key bytes are firmware constants ([INTERN]).
 
 ---
-
-# 13.9.1 Insertion Connection Type — binary verified ★★★★★
-
-Y2L Part Common rel `+232` (Part 1 abs `6933`) stores the routing between the two insertion blocks: `0=Parallel`, `1=A_to_B`, `2=B_to_A`. This was isolated with three otherwise-identical MODX M/ESP `Init Normal` Y2L exports on 2026-08-08. It is distinct from per-element `elem_connect`. The classic-source mapping is still unknown and must not be guessed.
 
 # 14. Insertion FX — COMPLETE (57 types) ★★★★★ / ★★★★☆
 

@@ -1,5 +1,9 @@
 # Reverse Engineering Status
 
+> **FM-X completion checkpoint — 2026-08-11 / parser v1.0.77**  
+> Soundmondo→Y2L-mappningen för FM-X i `FMX_COVERAGE_MATRIX_v177.csv` är nu komplett för 153 spårade Yamaha-dokumenterade parameterpunkter och har en ESP-verifierad kedja. Viktig korrigering: OP-relativ `+62/+64` är Pitch/Level Controller Sensitivity och `+66/+68/+70` är 1st-LFO destination depth ratios. Äldre text som beskriver `+66/+68/+70` som interna trailerbytes är ersatt. FM-X 2nd-LFO depth-matrisen är inte längre partiell. Smart Morph **transport/preservation** är verifierad, medan generisk rekonstruktion/redigering av interpolationstabeller fortfarande är ett separat öppet område.
+
+
 Detta dokument innehåller den detaljerade reverse-engineering-statusen och metodiken för YSFC Forge. För en översikt, se huvuddokumentet [README](../README.md).
 
 ## Innehåll
@@ -98,7 +102,7 @@ Verifieringen ovan gäller de fyra synthesengines:arnas användarredigerbara par
 | Insertion FX / Motion Sequencer / Arp / Control Assign | ✅ Kartlagd (se [Täckning per sektion](#täckning-per-sektion)) |
 | Scene-snapshots | ⚠️ Struktur verifierad, ~10 fält/scen UI-bekräftade — se [Vad som inte är kartlagt ännu](#vad-som-inte-är-kartlagt-ännu) |
 | Smart Morph-interpolationstabeller | ⚠️ Inte kartlagda än — se [Vad som inte är kartlagt ännu](#vad-som-inte-är-kartlagt-ännu) |
-| FM-X 2nd LFO depth-matris | ⚠️ Partiell mappning — se [Vad som inte är kartlagt ännu](#vad-som-inte-är-kartlagt-ännu) |
+| FM-X 2nd LFO depth matrix | ✅ Fully mapped / ESP-verified lineage |
 
 ---
 
@@ -153,7 +157,7 @@ Verifieringen ovan gäller de fyra synthesengines:arnas användarredigerbara par
 
 | Sektion | Täckning | Notering |
 |---|---|---|
-| Insertion FX | ✅ Verifierad | 57 verifierade FX-typer; Part Common +232 routing: 0=Parallel, 1=A→B, 2=B→A |
+| Insertion FX | ✅ Verifierad | 57 verifierade FX-typer |
 | Motion Sequencer (4 lanes × 884 bytes) | ✅ Verifierad | 116 fält |
 | Arp Common | ✅ Verifierad | 34 fält |
 | Common Control Assign (32 slots × 22 bytes) | ✅ Verifierad | abs 2452..3155 |
@@ -301,9 +305,9 @@ Scene-strukturen är verifierad (8 × 71 bytes Common vid abs 1710, 8 × 84 byte
 
 Interpolationstabellerna och FM-X morphing-state är ej kartlagda.
 
-### FM-X 2nd LFO depth-matris
+### FM-X 2nd LFO depth matrix
 
-Partiell mappning vid `abs=12547+`. Behöver fler testfiler.
+Completed in the v1.0.64 lineage: global Pitch/Amp/Filter modulation depths and per-operator Pitch/Amp depths are mapped and ESP-verified.
 
 ### Performance Editor-verktyg (UI-lucka)
 

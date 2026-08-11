@@ -1,5 +1,9 @@
 # YSFC Forge — Kompakt referens
 
+> **FM-X completion checkpoint — 2026-08-11 / parser v1.0.77**  
+> Soundmondo→Y2L-mappningen för FM-X i `FMX_COVERAGE_MATRIX_v177.csv` är nu komplett för 153 spårade Yamaha-dokumenterade parameterpunkter och har en ESP-verifierad kedja. Viktig korrigering: OP-relativ `+62/+64` är Pitch/Level Controller Sensitivity och `+66/+68/+70` är 1st-LFO destination depth ratios. Äldre text som beskriver `+66/+68/+70` som interna trailerbytes är ersatt. FM-X 2nd-LFO depth-matrisen är inte längre partiell. Smart Morph **transport/preservation** är verifierad, medan generisk rekonstruktion/redigering av interpolationstabeller fortfarande är ett separat öppet område.
+
+
 Patch-editor och reverse-engineering-projekt för Yamaha MODX M / Montage M binärformatet (Y2L/Y2U).
 
 **Hårdvara:** MODX M8 firmware 3.0, ESP Plugin v3.0<br>
@@ -573,9 +577,11 @@ Per-OP fält-layout (offsets relativa till OP_BASE):
 | +56 | level_vel | u8 | 7 |
 | +58 | second_lfo_pitch_mod_dest | enum 0..7 | 3 |
 | +60 | second_lfo_amp_mod_dest | enum 0..7 | 3 |
-| +66 | trailer_a | u8 | 127 [INTERN] |
-| +68 | trailer_b | u8 | 127 [INTERN] |
-| +70 | trailer_c | u8 | 127 [INTERN] |
+| +62 | pitch_controller_sensitivity | centered source code 7 | 0 |
+| +64 | level_controller_sensitivity | centered source code 7 | 0 |
+| +66 | first_lfo_dest1_depth_ratio | u8 | 127 |
+| +68 | first_lfo_dest2_depth_ratio | u8 | 127 |
+| +70 | first_lfo_dest3_depth_ratio | u8 | 127 |
 
 Per-OP-fälten `second_lfo_pitch_mod_dest` (+58) och `second_lfo_amp_mod_dest` (+60) är replicerade över alla 8 operatorer med stride 123. De tre trailer-bytes per OP är firmware-konstanter av samma kategori som AN-X filter-trailers.
 
@@ -926,8 +932,3 @@ EC-känsliga hash-bytes (vid Element Count-ändringar):
 
 För Drum-specifik testning, filtrera även:
 `{filoffset 680-720, filoffset 7380-7400}` (DPFM sub-blob header brus)
-
-
-## Insertion Connection Type (Y2L)
-
-Binärt verifierad i MODX M/ESP Y2L (2026-08-08): Part Common rel `+232` (Part 1 abs `6933`), u8. Värden: `0=Parallel`, `1=A_to_B`, `2=B_to_A`. Fältet styr routingen *mellan* InsA och InsB och är skilt från elementets `elem_connect`. Classic-källmappningen är fortfarande ej verifierad.

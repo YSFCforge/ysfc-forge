@@ -1,5 +1,9 @@
 # YSFC Forge — Compact Reference
 
+> **FM-X completion checkpoint — 2026-08-11 / parser v1.0.77**  
+> The Soundmondo→Y2L FM-X mapping represented by `FMX_COVERAGE_MATRIX_v177.csv` is now complete for 153 tracked Yamaha-documented parameter points and has an ESP-verified lineage. Important correction: OP-relative `+62/+64` are Pitch/Level Controller Sensitivity and `+66/+68/+70` are 1st-LFO destination depth ratios. Older text that labels `+66/+68/+70` as internal trailer bytes is superseded. The FM-X 2nd-LFO depth matrix is no longer partial. Smart Morph **transport/preservation** is verified, while generic reconstruction/interpolation-table editing remains a separate open problem.
+
+
 Patch editor and reverse engineering project for the Yamaha MODX M / Montage M binary format (Y2L/Y2U).
 
 **Hardware:** MODX M8 firmware 3.0, ESP Plugin v3.0<br>
@@ -572,11 +576,13 @@ Per-OP field layout (offsets relative to OP_BASE):
 | +56 | level_vel | u8 | 7 |
 | +58 | second_lfo_pitch_mod_dest | enum 0..7 | 3 |
 | +60 | second_lfo_amp_mod_dest | enum 0..7 | 3 |
-| +66 | trailer_a | u8 | 127 [INTERN] |
-| +68 | trailer_b | u8 | 127 [INTERN] |
-| +70 | trailer_c | u8 | 127 [INTERN] |
+| +62 | pitch_controller_sensitivity | centered source code 7 | 0 |
+| +64 | level_controller_sensitivity | centered source code 7 | 0 |
+| +66 | first_lfo_dest1_depth_ratio | u8 | 127 |
+| +68 | first_lfo_dest2_depth_ratio | u8 | 127 |
+| +70 | first_lfo_dest3_depth_ratio | u8 | 127 |
 
-Per-OP fields `second_lfo_pitch_mod_dest` (+58) and `second_lfo_amp_mod_dest` (+60) are replicated across all 8 operators with stride 123. The three trailer bytes per OP are firmware constants of the same category as the AN-X filter trailers.
+Per-OP fields `second_lfo_pitch_mod_dest` (+58) and `second_lfo_amp_mod_dest` (+60) are replicated across all 8 operators with stride 123. OP-relative +62/+64 and +66/+68/+70 are user-editable FM-X control/modulation fields verified in the v1.0.72–v1.0.76 ESP-tested lineage; they must not be treated as firmware trailers.
 
 ---
 
@@ -925,8 +931,3 @@ EC-sensitive hash bytes (when Element Count changes):
 
 For Drum-specific testing, also filter:
 `{filoffset 680-720, filoffset 7380-7400}` (DPFM sub-blob header noise)
-
-
-## Insertion Connection Type (Y2L)
-
-Binary verified in MODX M/ESP Y2L (2026-08-08): Part Common rel `+232` (Part 1 abs `6933`), u8. Values: `0=Parallel`, `1=A_to_B`, `2=B_to_A`. This field controls the routing *between* InsA and InsB and is distinct from per-element `elem_connect`. Classic-source mapping remains unverified.

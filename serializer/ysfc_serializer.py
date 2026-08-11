@@ -313,9 +313,6 @@ ANX_AEG_BASE = 12565 # +0:Attack u8, +2:Decay u8, +4:Sustain u16LE, +6:Release u
 
 PART_COMMON = dict(
     monoPoly=6751, volume=6843, pan=6845,
-    # Insertion Connection Type — binary verified with three ESP/MODX M Y2L exports:
-    # 0=Parallel, 1=Ins A→B, 2=Ins B→A. Part Common rel +232 (Part 1 abs 6933).
-    insertionConnection=6933,
     # OBS: Tidigare adresser för AEG/FEG-offsets här (6861-6875) var FELAKTIGA för AWM2.
     # (Part Common rel +144..+158). Se PART_COMMON_REL nedan för korrekta AWM2-adresser:
     #   awm2PartAegOffsetAttack_rel = 144 → abs 6845
@@ -1009,10 +1006,6 @@ PART_COMMON_REL = dict(
     elementCount_rel = 196,  # 6897 i payload, abs 7588 i 38985-fil
     # Legato Slope — Part-level Legato Slope, u8 0..7
     legatoSlope_rel = 226,  # 6927
-    # Insertion Connection Type ★★★★★ — binary verified 2026-08-08 using three
-    # otherwise-identical Init Normal Y2L exports from MODX M/ESP.
-    # 0=Parallel, 1=Ins A→B, 2=Ins B→A.
-    insertionConnection_rel = 232,  # 6933
     pbRangeUpper_rel = 212, # 6913
     pbRangeLower_rel = 214, # 6915
     detune_rel = 216, # 6917
@@ -1089,18 +1082,6 @@ def get_part_common_field(sub_blob_start: int, field_name: str) -> int:
 # Param-defaults är 0 men fylls in när Type sätts.
 # Param-betydelser varierar med InsA Type.
 
-# Insertion A/B routing is stored separately from the two FX blocks.
-# Binary verified in Y2L Part Common: rel +232 (Part 1 abs 6933).
-PER_PART_INSERTION_CONNECTION_REL = 232
-INSERTION_CONNECTION_PARALLEL = 0
-INSERTION_CONNECTION_A_TO_B = 1
-INSERTION_CONNECTION_B_TO_A = 2
-INSERTION_CONNECTION_NAMES = {
-    INSERTION_CONNECTION_PARALLEL: 'Parallel',
-    INSERTION_CONNECTION_A_TO_B: 'A_to_B',
-    INSERTION_CONNECTION_B_TO_A: 'B_to_A',
-}
-
 PER_PART_INSERTION_REL_BASE = 282  # rel inom sub-blob för Part 1 = abs 6983
 PER_PART_INSERTION_TYPE_REL = 282
 PER_PART_INSERTION_SUBTYPE_REL = 283
@@ -1127,14 +1108,6 @@ INSERTION_TYPE_KNOWN = {
     80: 'Gated-Reverb / Slice (Tech)',
     # ... fler finns i Section 14
 }
-
-def get_part_insertion_connection(sub_blob_start: int) -> int:
-    """Get abs address of Insertion Connection Type for any Part.
-
-    Stored as u8: 0=Parallel, 1=A_to_B, 2=B_to_A.
-    """
-    return sub_blob_start + PER_PART_INSERTION_CONNECTION_REL
-
 
 def get_part_insertion_a_type(sub_blob_start: int) -> int:
     """Get abs address of InsA Type byte for any Part."""
@@ -2282,10 +2255,14 @@ FMX_OP_FIELDS = {
     56: ('op_level_vel',           'u8',      '7 (FM-X_00_Part1_OP1_LevelVel_+7.Y2L)'),
     58: ('op_2nd_lfo_pitch_mod_dest','u8 enum','3 (FMX_00_Init_2ndLFO_PitchMod_Matrix.Y2L; stride 123 OP1-8 verifierat)'),
     60: ('op_2nd_lfo_amp_mod_dest', 'u8 enum','3 (FMX_00_Init_2ndLFO_AmpMod_Matrix.Y2L; stride 123 OP1-8 verifierat)'),
-    # SESSION 2: per-OP trailer-bytes ★★★★★ [INTERN] default 127 (samma som AN-X Filter-trailers)
-    66: ('op_trailer_a',           'u8',      '127 ([INTERN] OP-trailer; stride 123 verifierat alla 8 OP)'),
-    68: ('op_trailer_b',           'u8',      '127 ([INTERN] OP-trailer)'),
-    70: ('op_trailer_c',           'u8',      '127 ([INTERN] OP-trailer)'),
+    # FM-X completion checkpoint v1.0.77 (2026-08-11) ★★★★★
+    # +62/+64 were previously unmapped; +66/+68/+70 were incorrectly classified as [INTERN] trailers.
+    # Soundmondo→Y2L mapping and ESP acceptance now verify the following semantics.
+    62: ('op_pitch_controller_sensitivity', 'u8 c7', '0 (source code 7 = UI 0; v1.0.76 ESP_VERIFIED)'),
+    64: ('op_level_controller_sensitivity', 'u8 c7', '0 (source code 7 = UI 0; v1.0.76 ESP_VERIFIED)'),
+    66: ('op_1st_lfo_dest1_depth_ratio', 'u8', '127 (v1.0.72 ESP_VERIFIED)'),
+    68: ('op_1st_lfo_dest2_depth_ratio', 'u8', '127 (v1.0.72 ESP_VERIFIED)'),
+    70: ('op_1st_lfo_dest3_depth_ratio', 'u8', '127 (v1.0.72 ESP_VERIFIED)'),
 }
 
 def get_fmx_op_addr(op_idx: int) -> int:
@@ -3428,7 +3405,7 @@ PART_SUBTABLE = dict(
     partEqHighGain=243, # u8 center=64 default=0dB ✅ (MIDI 0x26)
 )
 FMX_OP_LAYOUT = dict(
-    # OP1_BASE=12676, stride=123 — COMPLETE 21/21 fält ★★★★★ (v4.0)
+    # OP1_BASE=12676, stride=123 — FM-X completion checkpoint v1.0.77 ★★★★★
     # PRE-OP block (relativt OP1_BASE, negativa offsets)
     keyOnReset=-4, # u8 bool default=1=On ★★★★★
     freqMode=-2, # u8 enum 0=Ratio,1=Fixed ★★★★☆
@@ -3468,7 +3445,10 @@ FMX_OP_LAYOUT = dict(
     # 2nd LFO modulation depth (per OP) — NEW★★★★★
     secondLfoPitchModDepth=58, # u8 direct default=3, abs OP1=12734
     secondLfoAmpModDepth=60, # u8 direct default=3, abs OP1=12736
-    # 1st LFO destination Ratio (per OP × 3 destinations) — NEW★★★★★
+    # Controller sensitivity — v1.0.76 ESP_VERIFIED ★★★★★
+    pitchControllerSensitivity=62, # u8 centered source code 7 -> Y2L neutral 0
+    levelControllerSensitivity=64, # u8 centered source code 7 -> Y2L neutral 0
+    # 1st LFO destination Ratio (per OP × 3 destinations) — v1.0.72 ESP_VERIFIED ★★★★★
     firstLfoDest1Ratio=66, # u8 direct default=127, abs OP1=12742
     firstLfoDest2Ratio=68, # u8 direct default=127, abs OP1=12744
     firstLfoDest3Ratio=70, # u8 direct default=127, abs OP1=12746
