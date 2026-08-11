@@ -246,31 +246,3 @@ ConvertWithMoss är licensierat under GNU Lesser General Public License v3.0. Al
 Huvuddelen av YSFC Forge-projektet släpps under MIT License — se [LICENSE](LICENSE).
 
 Vissa legacy MONTAGE/MODX `.X7L` / `.X8L`-komponenter bygger på eller är härledda från ConvertWithMoss och distribueras under GNU Lesser General Public License v3.0. Se [`licenses/LGPL-3.0.txt`](licenses/LGPL-3.0.txt) och relevanta filheaders i källkoden.
-
-
-> Step 133: classic arpeggio diagnostics now group aligned candidates into repeated 48-byte record families. Automatic arpeggio reference rewriting remains disabled until a controlled single-assignment oracle pair confirms the field offsets.
-
-
-## Steg 134
-
-Arpeggioanalysen rangordnar nu justerade offsetpositioner efter icke-standardiserade ID-värden, stöd från återkommande 48-byteposter och dominans av defaultvärden. Analysen är fortfarande endast diagnostisk; olika icke-tomma arpeggiopooler blockeras tills ett kontrollerat filpar med en enda ändrad arp-tilldelning har verifierat de skrivbara referensfälten.
-
-
-### X7L multi-source merge plan / X7L mergeplan
-
-The classic writer accepts reproducible JSON merge plans through `--merge-plan`, writes X7L 4.0.2 through `--merge-output`, and can emit a detailed manifest with `--manifest`.
-
-Schema: `ysfc-forge-x7l-merge-plan-v1`.
-
-### Classic merge preflight / Förhandskontroll
-
-Before writing a merged X7L file, a merge plan can now be validated with `--preflight REPORT.json`. The JSON report lists source versions, selected Performance names and indices, estimated output size, warnings and blocking errors. The target remains X7L 4.0.2.
-
-
-### Transaktionell merge-export
-
-Använd `--preflight-report` och `--receipt` tillsammans med `--merge-output` för att skriva en verifierad X7L 4.0.2-fil, manifest, preflight-rapport och SHA-256-kvitto. En blockerad förhandskontroll publicerar aldrig någon outputfil.
-
-## X7L/X8L-export i Performance Merger v1.22
-
-Starta först den lokala bridgen med `tools/start_x7_bridge.bat` (Windows) eller `tools/start_x7_bridge.sh`. Öppna därefter `tools/ysfc_forge_performance_merger_v1_22.html`. Classic-filer bearbetas endast lokalt och exporteras som X7L 4.0.2.
