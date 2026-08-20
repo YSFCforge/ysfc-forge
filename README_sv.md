@@ -1,9 +1,5 @@
 # YSFC Forge
 
-> **FM-X completion checkpoint — 2026-08-11 / parser v1.0.77**  
-> Soundmondo→Y2L-mappningen för FM-X i `FMX_COVERAGE_MATRIX_v177.csv` är nu komplett för 153 spårade Yamaha-dokumenterade parameterpunkter och har en ESP-verifierad kedja. Viktig korrigering: OP-relativ `+62/+64` är Pitch/Level Controller Sensitivity och `+66/+68/+70` är 1st-LFO destination depth ratios. Äldre text som beskriver `+66/+68/+70` som interna trailerbytes är ersatt. FM-X 2nd-LFO depth-matrisen är inte längre partiell. Smart Morph **transport/preservation** är verifierad, medan generisk rekonstruktion/redigering av interpolationstabeller fortfarande är ett separat öppet område.
-
-
 > 🇬🇧 **English:** [README.md](README.md)
 
 [![License: MIT + LGPL-3.0 components](https://img.shields.io/badge/License-MIT%20%2B%20LGPL--3.0%20components-blue.svg)](#licens)
