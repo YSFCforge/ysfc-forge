@@ -1,0 +1,806 @@
+{
+  "source": "Yamaha MODX M Data List, firmware 3.00, MIDI Data Table / Bulk Dump Block, pp. 219-222",
+  "group": "7F 1C",
+  "model_id": "0D",
+  "rules": [
+    {
+      "category": "performance",
+      "name": "Performance Part Bulk Header",
+      "pattern": "04 04 01 nn",
+      "data_length": 0,
+      "captures": {
+        "nn": [
+          0,
+          127
+        ]
+      }
+    },
+    {
+      "category": "performance",
+      "name": "Performance Common Bulk Header",
+      "pattern": "04 04 02 00",
+      "data_length": 0
+    },
+    {
+      "category": "performance",
+      "name": "Performance Bulk Header",
+      "pattern": "04 ll mm nn",
+      "data_length": 0
+    },
+    {
+      "category": "performance",
+      "name": "Performance Part Bulk Footer",
+      "pattern": "05 04 01 nn",
+      "data_length": 0,
+      "captures": {
+        "nn": [
+          0,
+          127
+        ]
+      }
+    },
+    {
+      "category": "performance",
+      "name": "Performance Common Bulk Footer",
+      "pattern": "05 04 02 00",
+      "data_length": 0
+    },
+    {
+      "category": "performance",
+      "name": "Performance Bulk Footer",
+      "pattern": "05 ll mm nn",
+      "data_length": 0
+    },
+    {
+      "category": "performance",
+      "name": "Soundmondo Format Version",
+      "pattern": "00 00 7F 00",
+      "data_length": 6
+    },
+    {
+      "category": "performance_common",
+      "name": "Performance Name",
+      "pattern": "06 00 00 00",
+      "data_length": 20,
+      "text": "ascii"
+    },
+    {
+      "category": "performance_common",
+      "name": "Performance Common 1byte param",
+      "pattern": "06 00 01 00",
+      "data_length": 29
+    },
+    {
+      "category": "performance_common",
+      "name": "Performance Common 2byte param",
+      "pattern": "06 00 02 00",
+      "data_length": 86,
+      "soundmondo_lengths": {
+        "1.0.0": 84
+      }
+    },
+    {
+      "category": "performance_common",
+      "name": "Performance Common Controller",
+      "pattern": "06 00 03 00",
+      "data_length": 86,
+      "soundmondo_lengths": {
+        "1.0.0": 84
+      }
+    },
+    {
+      "category": "performance_common",
+      "name": "Insertion A for A/D",
+      "pattern": "06 00 04 00",
+      "data_length": 52
+    },
+    {
+      "category": "performance_common",
+      "name": "Insertion B for A/D",
+      "pattern": "06 00 05 00",
+      "data_length": 52
+    },
+    {
+      "category": "performance_common",
+      "name": "Arpeggio Common",
+      "pattern": "06 00 06 00",
+      "data_length": 14
+    },
+    {
+      "category": "performance_common",
+      "name": "Reverb",
+      "pattern": "06 00 07 00",
+      "data_length": 52
+    },
+    {
+      "category": "performance_common",
+      "name": "Variation",
+      "pattern": "06 00 08 00",
+      "data_length": 52
+    },
+    {
+      "category": "performance_common",
+      "name": "VCM Rotary Speaker",
+      "pattern": "06 00 09 00",
+      "data_length": 68
+    },
+    {
+      "category": "performance_common",
+      "name": "Master EQ",
+      "pattern": "06 00 0A 00",
+      "data_length": 34
+    },
+    {
+      "category": "performance_common",
+      "name": "Master Effect",
+      "pattern": "06 00 0B 00",
+      "data_length": 52
+    },
+    {
+      "category": "performance_common",
+      "name": "Motion Seq Common Settings",
+      "pattern": "06 00 0C 00",
+      "data_length": 12
+    },
+    {
+      "category": "performance_common",
+      "name": "Super Knob Settings",
+      "pattern": "06 00 0D 00",
+      "data_length": 90
+    },
+    {
+      "category": "performance_common",
+      "name": "Audio In Parts (A/D)",
+      "pattern": "06 00 0E 00",
+      "data_length": 42
+    },
+    {
+      "category": "performance_common",
+      "name": "Audio In Parts (USB)",
+      "pattern": "06 00 0F 00",
+      "data_length": 14
+    },
+    {
+      "category": "performance_common",
+      "name": "FM-X Smart Morph Data (File Dump)",
+      "pattern": "06 00 10 00",
+      "data_length": 3004
+    },
+    {
+      "category": "performance_common",
+      "name": "FM-X Smart Morph PNG Data (File Dump)",
+      "pattern": "06 00 11 00",
+      "data_length": 3000
+    },
+    {
+      "category": "performance_common",
+      "name": "Super Knob Lane Settings",
+      "pattern": "06 00 12 00",
+      "data_length": 20
+    },
+    {
+      "category": "performance_common",
+      "name": "AN-X Smart Morph Data (File Dump)",
+      "pattern": "06 00 20 00",
+      "data_length": 3004
+    },
+    {
+      "category": "performance_common",
+      "name": "AN-X Smart Morph PNG Data (File Dump)",
+      "pattern": "06 00 21 00",
+      "data_length": 3000
+    },
+    {
+      "category": "performance_common",
+      "name": "Super Knob Sequence",
+      "pattern": "06 01 0m 00",
+      "data_length": 102,
+      "captures": {
+        "m": [
+          0,
+          7
+        ]
+      }
+    },
+    {
+      "category": "performance_common",
+      "name": "Scene 1-8 Common 1byte",
+      "pattern": "06 02 0c 00",
+      "data_length": 19,
+      "captures": {
+        "c": [
+          0,
+          7
+        ]
+      },
+      "soundmondo_lengths": {
+        "1.0.0": 18
+      }
+    },
+    {
+      "category": "performance_common",
+      "name": "Scene 1-8 Common 2byte",
+      "pattern": "06 03 0c 00",
+      "data_length": 44,
+      "captures": {
+        "c": [
+          0,
+          7
+        ]
+      }
+    },
+    {
+      "category": "performance_common",
+      "name": "Assignable Knob Name",
+      "pattern": "06 04 0k 00",
+      "data_length": 16,
+      "captures": {
+        "k": [
+          0,
+          7
+        ]
+      },
+      "text": "ascii"
+    },
+    {
+      "category": "performance_common",
+      "name": "Common/AD Controller Box 1-32",
+      "pattern": "06 05 bb 00",
+      "data_length": 16,
+      "captures": {
+        "bb": [
+          0,
+          31
+        ]
+      },
+      "soundmondo_lengths": {
+        "1.2.0": 18,
+        "1.0.0": 18
+      }
+    },
+    {
+      "category": "performance_common",
+      "name": "Motion Seq AD Part Lane Settings 1byte",
+      "pattern": "06 06 L0 00",
+      "data_length": 4,
+      "captures": {
+        "L": [
+          0,
+          3
+        ]
+      }
+    },
+    {
+      "category": "performance_common",
+      "name": "Motion Seq AD Part Lane Settings 2byte",
+      "pattern": "06 07 L0 00",
+      "data_length": 20,
+      "captures": {
+        "L": [
+          0,
+          3
+        ]
+      }
+    },
+    {
+      "category": "performance_common",
+      "name": "Motion Seq AD Part Lane Sequence",
+      "pattern": "06 08 Lm 00",
+      "data_length": 102,
+      "captures": {
+        "L": [
+          0,
+          3
+        ],
+        "m": [
+          0,
+          7
+        ]
+      }
+    },
+    {
+      "category": "performance_common",
+      "name": "Performance Flag",
+      "pattern": "06 09 00 00",
+      "data_length": 8
+    },
+    {
+      "category": "performance_part",
+      "name": "Performance Part Name",
+      "pattern": "1p 00 00 00",
+      "data_length": 20,
+      "captures": {
+        "p": [
+          0,
+          15
+        ]
+      },
+      "text": "ascii"
+    },
+    {
+      "category": "performance_part",
+      "name": "Performance Part 1byte",
+      "pattern": "1p 00 01 00",
+      "data_length": 81,
+      "captures": {
+        "p": [
+          0,
+          15
+        ]
+      }
+    },
+    {
+      "category": "performance_part",
+      "name": "Performance Part 2byte",
+      "pattern": "1p 00 02 00",
+      "data_length": 94,
+      "captures": {
+        "p": [
+          0,
+          15
+        ]
+      }
+    },
+    {
+      "category": "performance_part",
+      "name": "Performance Part 2byte Pitch/Effect",
+      "pattern": "1p 00 03 00",
+      "data_length": 62,
+      "captures": {
+        "p": [
+          0,
+          15
+        ]
+      }
+    },
+    {
+      "category": "performance_part",
+      "name": "Insertion A",
+      "pattern": "1p 00 04 00",
+      "data_length": 52,
+      "captures": {
+        "p": [
+          0,
+          15
+        ]
+      }
+    },
+    {
+      "category": "performance_part",
+      "name": "Insertion B",
+      "pattern": "1p 00 05 00",
+      "data_length": 52,
+      "captures": {
+        "p": [
+          0,
+          15
+        ]
+      }
+    },
+    {
+      "category": "performance_part",
+      "name": "Arpeggio Part",
+      "pattern": "1p 00 06 00",
+      "data_length": 100,
+      "captures": {
+        "p": [
+          0,
+          15
+        ]
+      },
+      "soundmondo_lengths": {
+        "1.0.0": 84
+      }
+    },
+    {
+      "category": "performance_part",
+      "name": "LFO",
+      "pattern": "1p 00 07 00",
+      "data_length": 68,
+      "captures": {
+        "p": [
+          0,
+          15
+        ]
+      }
+    },
+    {
+      "category": "performance_part",
+      "name": "Zone Setting",
+      "pattern": "1p 00 08 00",
+      "data_length": 26,
+      "captures": {
+        "p": [
+          0,
+          15
+        ]
+      }
+    },
+    {
+      "category": "performance_part",
+      "name": "Key Controller Box",
+      "pattern": "1p 00 09 00",
+      "data_length": 64,
+      "captures": {
+        "p": [
+          0,
+          15
+        ]
+      }
+    },
+    {
+      "category": "performance_part",
+      "name": "Scene Part",
+      "pattern": "1p 03 0c 00",
+      "data_length": 80,
+      "captures": {
+        "p": [
+          0,
+          15
+        ],
+        "c": [
+          0,
+          7
+        ]
+      },
+      "soundmondo_lengths": {
+        "1.0.0": 64
+      }
+    },
+    {
+      "category": "performance_part",
+      "name": "Assignable Knob Name",
+      "pattern": "1p 04 0k 00",
+      "data_length": 16,
+      "captures": {
+        "p": [
+          0,
+          15
+        ],
+        "k": [
+          0,
+          7
+        ]
+      },
+      "text": "ascii"
+    },
+    {
+      "category": "performance_part",
+      "name": "Controller 1-32",
+      "pattern": "1p 05 bb 00",
+      "data_length": 18,
+      "captures": {
+        "p": [
+          0,
+          15
+        ],
+        "bb": [
+          0,
+          31
+        ]
+      }
+    },
+    {
+      "category": "performance_part",
+      "name": "Motion Seq Part/Lane Settings 1byte",
+      "pattern": "1p 06 L0 00",
+      "data_length": 4,
+      "captures": {
+        "p": [
+          0,
+          15
+        ],
+        "L": [
+          0,
+          3
+        ]
+      }
+    },
+    {
+      "category": "performance_part",
+      "name": "Motion Seq Part/Lane Settings 2byte",
+      "pattern": "1p 07 L0 00",
+      "data_length": 20,
+      "captures": {
+        "p": [
+          0,
+          15
+        ],
+        "L": [
+          0,
+          3
+        ]
+      }
+    },
+    {
+      "category": "performance_part",
+      "name": "Motion Seq Lane Sequence",
+      "pattern": "1p 08 Lm 00",
+      "data_length": 102,
+      "captures": {
+        "p": [
+          0,
+          15
+        ],
+        "L": [
+          0,
+          3
+        ],
+        "m": [
+          0,
+          7
+        ]
+      }
+    },
+    {
+      "category": "normal_part_element",
+      "name": "Element 1byte",
+      "pattern": "2p 00 ee 00",
+      "data_length": 36,
+      "captures": {
+        "p": [
+          0,
+          15
+        ],
+        "ee": [
+          0,
+          127
+        ]
+      },
+      "soundmondo_lengths": {
+        "1.2.0": 43,
+        "1.0.0": 43
+      }
+    },
+    {
+      "category": "normal_part_element",
+      "name": "Oscillator",
+      "pattern": "2p 01 ee 00",
+      "data_length": 40,
+      "captures": {
+        "p": [
+          0,
+          15
+        ],
+        "ee": [
+          0,
+          127
+        ]
+      }
+    },
+    {
+      "category": "normal_part_element",
+      "name": "Amplitude",
+      "pattern": "2p 02 ee 00",
+      "data_length": 54,
+      "captures": {
+        "p": [
+          0,
+          15
+        ],
+        "ee": [
+          0,
+          127
+        ]
+      }
+    },
+    {
+      "category": "normal_part_element",
+      "name": "Pitch",
+      "pattern": "2p 03 ee 00",
+      "data_length": 48,
+      "captures": {
+        "p": [
+          0,
+          15
+        ],
+        "ee": [
+          0,
+          127
+        ]
+      }
+    },
+    {
+      "category": "normal_part_element",
+      "name": "Filter + EQ + LFO",
+      "pattern": "2p 04 ee 00",
+      "data_length": 106,
+      "captures": {
+        "p": [
+          0,
+          15
+        ],
+        "ee": [
+          0,
+          127
+        ]
+      },
+      "soundmondo_lengths": {
+        "1.2.0": 108,
+        "1.0.0": 108
+      }
+    },
+    {
+      "category": "drum_part_key",
+      "name": "Key",
+      "pattern": "2p 10 kk 00",
+      "data_length": 64,
+      "captures": {
+        "p": [
+          0,
+          15
+        ],
+        "kk": [
+          0,
+          72
+        ]
+      }
+    },
+    {
+      "category": "fmx_part",
+      "name": "FM-X Part Common",
+      "pattern": "3p 00 00 00",
+      "data_length": 82,
+      "captures": {
+        "p": [
+          0,
+          15
+        ]
+      }
+    },
+    {
+      "category": "fmx_part",
+      "name": "FM-X Filter",
+      "pattern": "3p 00 01 00",
+      "data_length": 70,
+      "captures": {
+        "p": [
+          0,
+          15
+        ]
+      }
+    },
+    {
+      "category": "fmx_part",
+      "name": "FM-X Controller Box Switch",
+      "pattern": "3p 01 0o 00",
+      "data_length": 39,
+      "captures": {
+        "p": [
+          0,
+          15
+        ],
+        "o": [
+          0,
+          7
+        ]
+      },
+      "soundmondo_lengths": {
+        "1.0.0": 36
+      }
+    },
+    {
+      "category": "fmx_part",
+      "name": "FM-X Operator",
+      "pattern": "3p 02 0o 00",
+      "data_length": 76,
+      "captures": {
+        "p": [
+          0,
+          15
+        ],
+        "o": [
+          0,
+          7
+        ]
+      },
+      "soundmondo_lengths": {
+        "1.0.0": 70
+      }
+    },
+    {
+      "category": "anx_part",
+      "name": "AN-X Part Common",
+      "pattern": "4p 00 00 00",
+      "data_length": 110,
+      "captures": {
+        "p": [
+          0,
+          15
+        ]
+      }
+    },
+    {
+      "category": "anx_part",
+      "name": "AN-X Oscillator Controller Box Switch",
+      "pattern": "4p 01 0o 00",
+      "data_length": 39,
+      "captures": {
+        "p": [
+          0,
+          15
+        ],
+        "o": [
+          0,
+          2
+        ]
+      },
+      "soundmondo_lengths": {
+        "1.0.0": 36
+      }
+    },
+    {
+      "category": "anx_part",
+      "name": "AN-X Oscillator",
+      "pattern": "4p 02 0o 00",
+      "data_length": 78,
+      "captures": {
+        "p": [
+          0,
+          15
+        ],
+        "o": [
+          0,
+          2
+        ]
+      },
+      "soundmondo_lengths": {
+        "1.0.0": 72
+      }
+    },
+    {
+      "category": "anx_part",
+      "name": "AN-X Filter Controller Box Switch",
+      "pattern": "4p 03 0f 00",
+      "data_length": 39,
+      "captures": {
+        "p": [
+          0,
+          15
+        ],
+        "f": [
+          0,
+          1
+        ]
+      },
+      "soundmondo_lengths": {
+        "1.0.0": 36
+      }
+    },
+    {
+      "category": "anx_part",
+      "name": "AN-X Filter",
+      "pattern": "4p 04 0f 00",
+      "data_length": 30,
+      "captures": {
+        "p": [
+          0,
+          15
+        ],
+        "f": [
+          0,
+          1
+        ]
+      },
+      "soundmondo_lengths": {
+        "1.0.0": 24
+      }
+    },
+    {
+      "category": "anx_part",
+      "name": "AN-X Wave Folder",
+      "pattern": "4p 05 00 00",
+      "data_length": 34,
+      "captures": {
+        "p": [
+          0,
+          15
+        ]
+      }
+    }
+  ],
+  "notes": [
+    "documented data_length values come from Yamaha MODX M Data List firmware 3.00 Bulk Dump Block table",
+    "soundmondo_lengths are empirical overrides observed consistently in the supplied Soundmondo test corpus; they are kept separate from Yamaha documented sizes"
+  ]
+}

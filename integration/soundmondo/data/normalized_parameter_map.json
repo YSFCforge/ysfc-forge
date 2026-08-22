@@ -1,0 +1,291 @@
+{
+  "schema_version": 1,
+  "notes": "Selected Yamaha-documented parameters normalized across legacy 3-byte and M-generation 4-byte SysEx profiles.",
+  "profiles": {
+    "legacy": {
+      "performance": [
+        {
+          "field": "name",
+          "pattern": "30 40 00",
+          "offset": 0,
+          "size": 20,
+          "codec": "ascii"
+        },
+        {
+          "field": "pan",
+          "pattern": "30 40 00",
+          "offset": 31,
+          "size": 1,
+          "codec": "pan_l63_r63"
+        },
+        {
+          "field": "tempo",
+          "pattern": "30 40 00",
+          "offset": 44,
+          "size": 2,
+          "codec": "u14"
+        },
+        {
+          "field": "volume",
+          "pattern": "30 40 00",
+          "offset": 56,
+          "size": 1,
+          "codec": "u7"
+        },
+        {
+          "field": "arp_master_on",
+          "pattern": "30 47 00",
+          "offset": 3,
+          "size": 1,
+          "codec": "bool"
+        },
+        {
+          "field": "motion_seq_master_on",
+          "pattern": "30 48 00",
+          "offset": 0,
+          "size": 1,
+          "codec": "bool"
+        }
+      ],
+      "part": [
+        {
+          "field": "name",
+          "pattern": "31 0p 00",
+          "offset": 0,
+          "size": 20,
+          "codec": "ascii"
+        },
+        {
+          "field": "main_category",
+          "pattern": "31 0p 00",
+          "offset": 20,
+          "size": 1,
+          "codec": "u7"
+        },
+        {
+          "field": "sub_category",
+          "pattern": "31 0p 00",
+          "offset": 21,
+          "size": 1,
+          "codec": "u7"
+        },
+        {
+          "field": "enabled",
+          "pattern": "31 0p 00",
+          "offset": 22,
+          "size": 1,
+          "codec": "bool"
+        },
+        {
+          "field": "keyboard_control",
+          "pattern": "31 0p 00",
+          "offset": 23,
+          "size": 1,
+          "codec": "bool"
+        },
+        {
+          "field": "mute",
+          "pattern": "31 0p 00",
+          "offset": 24,
+          "size": 1,
+          "codec": "bool"
+        },
+        {
+          "field": "velocity_low",
+          "pattern": "31 0p 00",
+          "offset": 28,
+          "size": 1,
+          "codec": "u7"
+        },
+        {
+          "field": "velocity_high",
+          "pattern": "31 0p 00",
+          "offset": 29,
+          "size": 1,
+          "codec": "u7"
+        },
+        {
+          "field": "note_low",
+          "pattern": "31 0p 00",
+          "offset": 30,
+          "size": 1,
+          "codec": "note"
+        },
+        {
+          "field": "note_high",
+          "pattern": "31 0p 00",
+          "offset": 31,
+          "size": 1,
+          "codec": "note"
+        },
+        {
+          "field": "volume",
+          "pattern": "31 0p 00",
+          "offset": 36,
+          "size": 1,
+          "codec": "u7"
+        },
+        {
+          "field": "pan",
+          "pattern": "31 0p 00",
+          "offset": 37,
+          "size": 1,
+          "codec": "pan_l63_r63"
+        }
+      ]
+    },
+    "m_generation": {
+      "performance": [
+        {
+          "field": "name",
+          "pattern": "06 00 00 00",
+          "offset": 0,
+          "size": 20,
+          "codec": "ascii"
+        },
+        {
+          "field": "arp_master_on",
+          "pattern": "06 00 01 00",
+          "offset": 9,
+          "size": 1,
+          "codec": "bool"
+        },
+        {
+          "field": "motion_seq_master_on",
+          "pattern": "06 00 01 00",
+          "offset": 10,
+          "size": 1,
+          "codec": "bool"
+        },
+        {
+          "field": "main_category",
+          "pattern": "06 00 02 00",
+          "offset": 0,
+          "size": 2,
+          "codec": "u14"
+        },
+        {
+          "field": "sub_category",
+          "pattern": "06 00 02 00",
+          "offset": 2,
+          "size": 2,
+          "codec": "u14"
+        },
+        {
+          "field": "volume",
+          "pattern": "06 00 02 00",
+          "offset": 6,
+          "size": 2,
+          "codec": "u14"
+        },
+        {
+          "field": "pan",
+          "pattern": "06 00 02 00",
+          "offset": 8,
+          "size": 2,
+          "codec": "pan_u14_l63_r63"
+        },
+        {
+          "field": "tempo",
+          "pattern": "06 00 02 00",
+          "offset": 30,
+          "size": 2,
+          "codec": "u14"
+        }
+      ],
+      "part": [
+        {
+          "field": "name",
+          "pattern": "1p 00 00 00",
+          "offset": 0,
+          "size": 20,
+          "codec": "ascii"
+        },
+        {
+          "field": "enabled",
+          "pattern": "1p 00 01 00",
+          "offset": 0,
+          "size": 1,
+          "codec": "bool"
+        },
+        {
+          "field": "mode",
+          "pattern": "1p 00 01 00",
+          "offset": 1,
+          "size": 1,
+          "codec": "part_mode"
+        },
+        {
+          "field": "keyboard_control",
+          "pattern": "1p 00 01 00",
+          "offset": 2,
+          "size": 1,
+          "codec": "bool"
+        },
+        {
+          "field": "mute",
+          "pattern": "1p 00 01 00",
+          "offset": 3,
+          "size": 1,
+          "codec": "bool"
+        },
+        {
+          "field": "main_category",
+          "pattern": "1p 00 02 00",
+          "offset": 0,
+          "size": 2,
+          "codec": "u14"
+        },
+        {
+          "field": "sub_category",
+          "pattern": "1p 00 02 00",
+          "offset": 2,
+          "size": 2,
+          "codec": "u14"
+        },
+        {
+          "field": "velocity_low",
+          "pattern": "1p 00 02 00",
+          "offset": 4,
+          "size": 2,
+          "codec": "u14"
+        },
+        {
+          "field": "velocity_high",
+          "pattern": "1p 00 02 00",
+          "offset": 6,
+          "size": 2,
+          "codec": "u14"
+        },
+        {
+          "field": "note_low",
+          "pattern": "1p 00 02 00",
+          "offset": 8,
+          "size": 2,
+          "codec": "note_u14"
+        },
+        {
+          "field": "note_high",
+          "pattern": "1p 00 02 00",
+          "offset": 10,
+          "size": 2,
+          "codec": "note_u14"
+        },
+        {
+          "field": "volume",
+          "pattern": "1p 00 02 00",
+          "offset": 16,
+          "size": 2,
+          "codec": "u14"
+        },
+        {
+          "field": "pan",
+          "pattern": "1p 00 02 00",
+          "offset": 18,
+          "size": 2,
+          "codec": "pan_u14_l63_r63"
+        }
+      ]
+    }
+  }
+}

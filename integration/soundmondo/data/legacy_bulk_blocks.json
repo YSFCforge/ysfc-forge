@@ -1,0 +1,521 @@
+{
+  "source": "Yamaha MONTAGE/MODX/MODX+ Data List - MIDI Data Table / Bulk Dump Block",
+  "group": "7F 1C",
+  "model_ids": [
+    "02",
+    "07"
+  ],
+  "address_bytes": 3,
+  "rules": [
+    {
+      "pattern": "00 7F 00",
+      "name": "Soundmondo metadata (semantics undocumented)",
+      "category": "soundmondo_metadata",
+      "data_length": 4,
+      "source_status": "observed_undocumented"
+    },
+    {
+      "pattern": "0E mm nn",
+      "name": "Performance Bulk Header",
+      "category": "bulk_header",
+      "data_length": 0,
+      "source_status": "yamaha_documented"
+    },
+    {
+      "pattern": "0F mm nn",
+      "name": "Performance Bulk Footer",
+      "category": "bulk_footer",
+      "data_length": 0,
+      "source_status": "yamaha_documented"
+    },
+    {
+      "pattern": "30 40 00",
+      "name": "Performance Common",
+      "category": "performance_common",
+      "data_length": 94,
+      "text": "ascii",
+      "text_slice": [
+        0,
+        20
+      ],
+      "decoded_field": "performance_name",
+      "source_status": "yamaha_documented"
+    },
+    {
+      "pattern": "30 41 00",
+      "name": "Reverb",
+      "category": "performance_common",
+      "data_length": 71,
+      "source_status": "yamaha_documented"
+    },
+    {
+      "pattern": "30 42 00",
+      "name": "Variation",
+      "category": "performance_common",
+      "data_length": 72,
+      "source_status": "yamaha_documented"
+    },
+    {
+      "pattern": "30 43 00",
+      "name": "Insertion A for A/D",
+      "category": "performance_common",
+      "data_length": 68,
+      "source_status": "yamaha_documented"
+    },
+    {
+      "pattern": "30 44 00",
+      "name": "Insertion B for A/D",
+      "category": "performance_common",
+      "data_length": 68,
+      "source_status": "yamaha_documented"
+    },
+    {
+      "pattern": "30 45 00",
+      "name": "Master EQ",
+      "category": "performance_common",
+      "data_length": 21,
+      "source_status": "yamaha_documented"
+    },
+    {
+      "pattern": "30 46 00",
+      "name": "Master Effect",
+      "category": "performance_common",
+      "data_length": 72,
+      "source_status": "yamaha_documented"
+    },
+    {
+      "pattern": "30 47 00",
+      "name": "Arpeggio Common",
+      "category": "performance_common",
+      "data_length": 13,
+      "source_status": "yamaha_documented"
+    },
+    {
+      "pattern": "30 48 00",
+      "name": "Motion Seq Common Settings",
+      "category": "performance_common",
+      "data_length": 6,
+      "source_status": "yamaha_documented"
+    },
+    {
+      "pattern": "30 49 00",
+      "name": "Motion Seq AD Part Lane Settings",
+      "category": "performance_common",
+      "data_length": 64,
+      "source_status": "yamaha_documented"
+    },
+    {
+      "pattern": "30 4A 00",
+      "name": "Super Knob Lane Settings",
+      "category": "performance_common",
+      "data_length": 15,
+      "source_status": "yamaha_documented"
+    },
+    {
+      "pattern": "30 4B 00",
+      "name": "Super Knob Settings",
+      "category": "performance_common",
+      "data_length": 28,
+      "source_status": "yamaha_documented"
+    },
+    {
+      "pattern": "30 4C 00",
+      "name": "Scene Common",
+      "category": "performance_common",
+      "data_length": 128,
+      "source_status": "yamaha_documented"
+    },
+    {
+      "pattern": "30 4D 00",
+      "name": "Audition",
+      "category": "performance_common",
+      "data_length": 4,
+      "source_status": "yamaha_documented"
+    },
+    {
+      "pattern": "30 4E 00",
+      "name": "Audio In Part1 (A/D)",
+      "category": "performance_common",
+      "data_length": 28,
+      "source_status": "yamaha_documented"
+    },
+    {
+      "pattern": "30 4F 00",
+      "name": "Audio In Part2 (USB)",
+      "category": "performance_common",
+      "data_length": 23,
+      "source_status": "yamaha_documented"
+    },
+    {
+      "pattern": "30 50 00",
+      "name": "Assignable Knob Name",
+      "category": "performance_common",
+      "data_length": 128,
+      "source_status": "yamaha_documented"
+    },
+    {
+      "pattern": "30 51 00",
+      "name": "Common/AD Controller 1-13",
+      "category": "performance_common",
+      "data_length": 117,
+      "source_status": "yamaha_documented"
+    },
+    {
+      "pattern": "30 52 00",
+      "name": "Common/AD Controller 14-16",
+      "category": "performance_common",
+      "data_length": 27,
+      "source_status": "yamaha_documented"
+    },
+    {
+      "pattern": "30 lm 00",
+      "name": "Motion Seq AD Part Lane Sequence",
+      "category": "performance_common",
+      "data_length": 50,
+      "captures": {
+        "l": [
+          0,
+          3
+        ],
+        "m": [
+          0,
+          7
+        ]
+      },
+      "source_status": "yamaha_documented"
+    },
+    {
+      "pattern": "30 6m 00",
+      "name": "Super Knob Sequence",
+      "category": "performance_common",
+      "data_length": 50,
+      "captures": {
+        "m": [
+          0,
+          7
+        ]
+      },
+      "source_status": "yamaha_documented"
+    },
+    {
+      "pattern": "31 0p 00",
+      "name": "Performance Part",
+      "category": "performance_part",
+      "data_length": 121,
+      "captures": {
+        "p": [
+          0,
+          15
+        ]
+      },
+      "source_status": "yamaha_documented"
+    },
+    {
+      "pattern": "31 1p 00",
+      "name": "Motion Seq Part/Lane Settings",
+      "category": "performance_part",
+      "data_length": 64,
+      "captures": {
+        "p": [
+          0,
+          15
+        ]
+      },
+      "source_status": "yamaha_documented"
+    },
+    {
+      "pattern": "31 2p 00",
+      "name": "Insertion A",
+      "category": "performance_part",
+      "data_length": 68,
+      "captures": {
+        "p": [
+          0,
+          15
+        ]
+      },
+      "source_status": "yamaha_documented"
+    },
+    {
+      "pattern": "31 3p 00",
+      "name": "Insertion B",
+      "category": "performance_part",
+      "data_length": 68,
+      "captures": {
+        "p": [
+          0,
+          15
+        ]
+      },
+      "source_status": "yamaha_documented"
+    },
+    {
+      "pattern": "31 4p 00",
+      "name": "LFO",
+      "category": "performance_part",
+      "data_length": 39,
+      "captures": {
+        "p": [
+          0,
+          15
+        ]
+      },
+      "source_status": "yamaha_documented"
+    },
+    {
+      "pattern": "31 5p 00",
+      "name": "Zone Setting",
+      "category": "performance_part",
+      "data_length": 17,
+      "captures": {
+        "p": [
+          0,
+          15
+        ]
+      },
+      "source_status": "yamaha_documented"
+    },
+    {
+      "pattern": "31 6p 00",
+      "name": "Arpeggio Part",
+      "category": "performance_part",
+      "data_length": 92,
+      "captures": {
+        "p": [
+          0,
+          15
+        ]
+      },
+      "source_status": "yamaha_documented"
+    },
+    {
+      "pattern": "37 0p 00",
+      "name": "Assignable Knob Name",
+      "category": "performance_part",
+      "data_length": 128,
+      "captures": {
+        "p": [
+          0,
+          15
+        ]
+      },
+      "source_status": "yamaha_documented"
+    },
+    {
+      "pattern": "38 0p 00",
+      "name": "Controller 1-13",
+      "category": "performance_part",
+      "data_length": 117,
+      "captures": {
+        "p": [
+          0,
+          15
+        ]
+      },
+      "source_status": "yamaha_documented"
+    },
+    {
+      "pattern": "38 1p 00",
+      "name": "Controller 14-16",
+      "category": "performance_part",
+      "data_length": 27,
+      "captures": {
+        "p": [
+          0,
+          15
+        ]
+      },
+      "source_status": "yamaha_documented"
+    },
+    {
+      "pattern": "32 sp 00",
+      "name": "Motion Seq Lane 1 Sequence",
+      "category": "performance_part",
+      "data_length": 50,
+      "captures": {
+        "s": [
+          0,
+          7
+        ],
+        "p": [
+          0,
+          15
+        ]
+      },
+      "source_status": "yamaha_documented"
+    },
+    {
+      "pattern": "33 sp 00",
+      "name": "Motion Seq Lane 2 Sequence",
+      "category": "performance_part",
+      "data_length": 50,
+      "captures": {
+        "s": [
+          0,
+          7
+        ],
+        "p": [
+          0,
+          15
+        ]
+      },
+      "source_status": "yamaha_documented"
+    },
+    {
+      "pattern": "34 sp 00",
+      "name": "Motion Seq Lane 3 Sequence",
+      "category": "performance_part",
+      "data_length": 50,
+      "captures": {
+        "s": [
+          0,
+          7
+        ],
+        "p": [
+          0,
+          15
+        ]
+      },
+      "source_status": "yamaha_documented"
+    },
+    {
+      "pattern": "35 sp 00",
+      "name": "Motion Seq Lane 4 Sequence",
+      "category": "performance_part",
+      "data_length": 50,
+      "captures": {
+        "s": [
+          0,
+          7
+        ],
+        "p": [
+          0,
+          15
+        ]
+      },
+      "source_status": "yamaha_documented"
+    },
+    {
+      "pattern": "36 cp 00",
+      "name": "Scene Part",
+      "category": "performance_part",
+      "data_length": 26,
+      "captures": {
+        "c": [
+          0,
+          7
+        ],
+        "p": [
+          0,
+          15
+        ]
+      },
+      "source_status": "yamaha_documented"
+    },
+    {
+      "pattern": "41 ep 00",
+      "name": "Oscillator + Amplitude + Pitch",
+      "category": "normal_part_element",
+      "data_length": 103,
+      "captures": {
+        "e": [
+          0,
+          7
+        ],
+        "p": [
+          0,
+          15
+        ]
+      },
+      "source_status": "yamaha_documented"
+    },
+    {
+      "pattern": "42 ep 00",
+      "name": "Filter + EQ + LFO",
+      "category": "normal_part_element",
+      "data_length": 70,
+      "captures": {
+        "e": [
+          0,
+          7
+        ],
+        "p": [
+          0,
+          15
+        ]
+      },
+      "source_status": "yamaha_documented"
+    },
+    {
+      "pattern": "5p kk 00",
+      "name": "Drum Key",
+      "category": "drum_part_key",
+      "data_length": 47,
+      "captures": {
+        "p": [
+          0,
+          15
+        ],
+        "kk": [
+          0,
+          72
+        ]
+      },
+      "source_status": "yamaha_documented"
+    },
+    {
+      "pattern": "48 0p 00",
+      "name": "FM-X Common",
+      "category": "fmx_part",
+      "data_length": 86,
+      "captures": {
+        "p": [
+          0,
+          15
+        ]
+      },
+      "source_status": "yamaha_documented"
+    },
+    {
+      "pattern": "49 op 00",
+      "name": "FM-X Operator",
+      "category": "fmx_part",
+      "data_length": 47,
+      "captures": {
+        "o": [
+          0,
+          7
+        ],
+        "p": [
+          0,
+          15
+        ]
+      },
+      "source_status": "yamaha_documented"
+    },
+    {
+      "pattern": "30 70 00",
+      "name": "Performance Common extension 70 (semantics undocumented)",
+      "category": "performance_common_extension",
+      "data_length": 4,
+      "source_status": "observed_undocumented"
+    },
+    {
+      "pattern": "30 71 00",
+      "name": "Performance Common extension 71 (semantics undocumented)",
+      "category": "performance_common_extension",
+      "data_length": 4,
+      "source_status": "observed_undocumented"
+    }
+  ],
+  "source_documents": [
+    "Yamaha MONTAGE Data List (MIDI Data Format pp. 190-193; MIDI Data Table/Bulk Dump around pp. 194-196)",
+    "Yamaha MODX Data List (MIDI Data Format pp. 186-189; MIDI Data Table/Bulk Dump around pp. 190-192)",
+    "Yamaha MODX+ Data List (MIDI Data Format pp. 186-189; MIDI Data Table/Bulk Dump around pp. 190-192)"
+  ],
+  "notes": [
+    "Model ID 02 (MONTAGE) and 07 (MODX/MODX+) use three address bytes ah/am/al.",
+    "The supplied MONTAGE, MODX and MODX+ Data Lists document the same Performance block address families used by this table.",
+    "Rules marked observed_undocumented occur in all supplied MODX+ Soundmondo test files but are not named in the supplied MODX+ Data List."
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "bridge_schema_version": 1,
+  "kind": "ysfc_performance_intermediate",
+  "source": {
+    "file": "example.syx",
+    "profile": "MODX/MODX+",
+    "model_id": "07",
+    "normalized_schema_version": 4
+  },
+  "performance": {
+    "name": "Example",
+    "common": {},
+    "parts": [],
+    "scenes": [],
+    "provenance": {}
+  },
+  "dependencies": [],
+  "coverage": {
+    "semantics": "partial_but_provenance_preserving"
+  },
+  "target_assessment": {
+    "classic_x7l_4_0_5": {
+      "bridge_status": "candidate",
+      "serializer_integration": "not_connected"
+    },
+    "modx_m_y2l": {
+      "bridge_status": "candidate",
+      "serializer_integration": "not_connected"
+    }
+  }
+}
