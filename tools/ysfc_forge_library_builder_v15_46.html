@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>YSFC Forge Library Builder v15.33 — Y2L/Y2U Merge (+ X7L/X8L transcode) för MODX M / Montage M</title>
+  <title>YSFC Forge Library Builder v15.46 — Y2L/Y2U Merge (+ X7L/X8L transcode) för MODX M / Montage M</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
 
@@ -700,14 +700,25 @@
     .section-row { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; }
     .section-row > * { flex: 1; min-width: 140px; }
     .section-row > .no-grow { flex: 0 0 auto; }
-  </style>
+  
+    /* v15.45 stable UI: diagnostic controls from v15.36–v15.44 remain
+       in the DOM for regression safety but are hidden in normal use. */
+    #diagnosticTools { display: none !important; }
+    .row:has(#stampDiagMode),
+    .row:has(#masterSourceSelect),
+    .row:has(#dpfmOrderMode),
+    .row:has(#slotOrderMode),
+    .row:has(#epfmPhysicalOrder) {
+      display: none !important;
+    }
+</style>
 </head>
 <body>
 
 <h1>
   YSFC Forge Library Builder
   <span class="sep">│</span>
-  <span class="ver">v15.33</span>
+  <span class="ver">v15.46</span>
   <span class="sep">│</span>
   Y2L · Y2U · X7L · X8L → Y2L/Y2U · X7L export
   <span class="spacer"></span>
@@ -816,6 +827,7 @@
         <input id="filterInput" type="text" data-i18n-placeholder="filter_names" placeholder="Filtrera namn…" disabled style="flex:1;"/>
         <button id="pickSelectedBtn" disabled data-i18n="add_selection">➕ Lägg till urval</button>
         <button id="pickAllBtn" disabled data-i18n-title="add_all_title" title="Lägg till alla performances i listan" data-i18n="add_all">➕ Alla</button>
+        <button id="addAllFilesBtn" disabled class="primary" data-i18n="add_all_files" data-i18n-title="add_all_files_title" title="Lägg till alla performances från alla inlästa OK-filer i Urval">➕ Alla från alla filer</button>
       </div>
       <div class="perflist-wrap">
         <table id="perfList" class="perftable" tabindex="0" aria-disabled="true" role="listbox" aria-multiselectable="true">
@@ -901,6 +913,41 @@
         <button id="removeFromSelectionBtn" disabled class="danger" data-i18n="remove">➖ Ta bort</button>
         <button id="clearSelectionBtn" disabled class="danger" data-i18n="clear">Rensa</button>
       </div>
+
+      <div class="gap-top-sm" id="diagnosticTools" style="border-top:1px solid var(--border);padding-top:8px;">
+        <div class="label-small" data-i18n="diag_title">Diagnostik · binärsökning</div>
+        <div class="row">
+          <button id="diagFirstBtn" disabled data-i18n="diag_first">◐ Första halvan</button>
+          <button id="diagSecondBtn" disabled data-i18n="diag_second">◑ Andra halvan</button>
+          <button id="diagUndoBtn" disabled data-i18n="diag_undo">↶ Ångra delning</button>
+          <button id="diagResetBtn" disabled data-i18n="diag_reset">↺ Återställ ursprung</button>
+        </div>
+        <div class="hint gap-top-sm" id="diagInfo" aria-live="polite"></div>
+        <div class="hint gap-top-sm" data-i18n="diag_hint">Halvera Urval och exportera testfilen. Behåll sedan den halva som fortfarande ger Illegal file och halvera igen.</div>
+
+        <div class="label-small gap-top" data-i18n="diag_combo_title">Kombinationstest (3 performances)</div>
+        <div class="row">
+          <button id="diagCombo12Btn" disabled data-i18n="diag_combo_12">1 + 2</button>
+          <button id="diagCombo13Btn" disabled data-i18n="diag_combo_13">1 + 3</button>
+          <button id="diagCombo23Btn" disabled data-i18n="diag_combo_23">2 + 3</button>
+          <span style="width:8px;"></span>
+          <button id="diagCombo1Btn" disabled data-i18n="diag_combo_1">1</button>
+          <button id="diagCombo2Btn" disabled data-i18n="diag_combo_2">2</button>
+          <button id="diagCombo3Btn" disabled data-i18n="diag_combo_3">3</button>
+        </div>
+        <div class="hint gap-top-sm" data-i18n="diag_combo_hint">När ursprungsurvalet innehåller exakt 3 performances kan du skapa par eller singlar direkt.</div>
+
+        <div class="label-small gap-top" data-i18n="perm_title">Ordningstest (3 performances)</div>
+        <div class="row">
+          <button id="perm123Btn" disabled>1 → 2 → 3</button>
+          <button id="perm132Btn" disabled>1 → 3 → 2</button>
+          <button id="perm213Btn" disabled>2 → 1 → 3</button>
+          <button id="perm231Btn" disabled>2 → 3 → 1</button>
+          <button id="perm312Btn" disabled>3 → 1 → 2</button>
+          <button id="perm321Btn" disabled>3 → 2 → 1</button>
+        </div>
+        <div class="hint gap-top-sm" data-i18n="perm_hint">Testa alla sex möjliga EPFM-/performanceordningar för samma tre ursprungliga performances.</div>
+      </div>
     </div>
 
     <!-- Dependency summary -->
@@ -937,6 +984,62 @@
         <div style="flex:1;">
           <div class="label-small" data-i18n="export_filename">Filnamn (utan ändelse)</div>
           <input id="exportFilename" type="text" data-i18n-placeholder="export_filename_placeholder" placeholder="merge_4_performances" style="width:100%;font-family:var(--mono);font-size:11px;padding:6px 8px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;color:var(--text);"/>
+        </div>
+      </div>
+
+      <div class="row gap-top-sm">
+        <div style="flex:1;">
+          <div class="label-small" data-i18n="stamp_diag_label">Stampdiagnostik</div>
+          <select id="stampDiagMode">
+            <option value="current" data-i18n="stamp_diag_current">Current — nuvarande beteende</option>
+            <option value="preserve" data-i18n="stamp_diag_preserve">Preserve source — behåll källans record-stamps</option>
+            <option value="template" data-i18n="stamp_diag_template">Template/common — använd template-stamp</option>
+          </select>
+          <div class="hint gap-top-sm" data-i18n="stamp_diag_hint">Diagnostik för Illegal file: exportera exakt samma Urval med de tre lägena och testa i ESP.</div>
+        </div>
+      </div>
+
+      <div class="row gap-top-sm">
+        <div style="flex:1;">
+          <div class="label-small" data-i18n="master_diag_label">Metadata-master</div>
+          <select id="masterSourceSelect">
+            <option value="template" data-i18n="master_diag_template">Template/current — nuvarande fasta metadata</option>
+          </select>
+          <div class="hint gap-top-sm" data-i18n="master_diag_hint">Diagnostik: välj vilken källfil som ska leverera header + 0x1050-byte library-info till den syntetiska Y2L-filen. Performanceordningen ändras inte.</div>
+        </div>
+      </div>
+
+      <div class="row gap-top-sm">
+        <div style="flex:1;">
+          <div class="label-small" data-i18n="dpfm_order_label">Fysisk DPFM-ordning</div>
+          <select id="dpfmOrderMode">
+            <option value="normal" data-i18n="dpfm_order_normal">Normal — samma ordning som Urval</option>
+            <option value="reverse" data-i18n="dpfm_order_reverse">Omvänd — skriv DPFM-blobbar baklänges</option>
+          </select>
+          <div class="hint gap-top-sm" data-i18n="dpfm_order_hint">Diagnostik: EPFM/Urval behåller samma performanceordning. Endast den fysiska ordningen på DPFM-blobbarna ändras; offsets räknas om automatiskt.</div>
+        </div>
+      </div>
+
+      <div class="row gap-top-sm">
+        <div style="flex:1;">
+          <div class="label-small" data-i18n="slot_order_label">Intern slotordning</div>
+          <select id="slotOrderMode">
+            <option value="normal" data-i18n="slot_order_normal">Normal — slot 0, 1, 2…</option>
+            <option value="reverse" data-i18n="slot_order_reverse">Omvänd — slotnumren baklänges</option>
+          </select>
+          <div class="hint gap-top-sm" data-i18n="slot_order_hint">Diagnostik: performanceordningen i EPFM/Urval ändras inte. Endast destinationsslot i EPFM-posterna skrivs om.</div>
+        </div>
+      </div>
+
+      <div class="row gap-top-sm">
+        <div style="flex:1;">
+          <div class="label-small" data-i18n="epfm_phys_label">Fysisk EPFM-recordordning</div>
+          <select id="epfmPhysicalOrder">
+            <option value="normal" data-i18n="epfm_phys_normal">Normal — 1 → 2 → 3</option>
+            <option value="231" data-i18n="epfm_phys_231">Diagnostik — 2 → 3 → 1</option>
+            <option value="321" data-i18n="epfm_phys_321">Diagnostik — 3 → 2 → 1</option>
+          </select>
+          <div class="hint gap-top-sm" data-i18n="epfm_phys_hint">Urvalets logiska slotordning ändras inte. Endast ordningen på EPFM-recorden i filen ändras; varje record behåller sin ursprungliga destinationsslot och pekar på rätt DPFM-blob.</div>
         </div>
       </div>
 
@@ -1060,6 +1163,13 @@ const LANG = {
     pcol_engine: 'Motor',
     add_selection: '➕ Lägg till urval',
     add_all: '➕ Alla',
+    add_all_files: '➕ Alla från alla filer',
+    add_all_files_title: 'Lägg till alla performances från alla inlästa OK-filer i Urval',
+    status_bulk_added: '{added} performances från {files} filer tillagda i Urval.',
+    status_bulk_added_with_dupes: '{added} performances tillagda från {files} filer, {dupes} dubletter hoppades över.',
+    status_bulk_none: 'Inga nya performances kunde läggas till från de inlästa filerna.',
+    readiness_y2_too_many: 'Y2L/Y2U kan innehålla högst 640 performances. Urvalet innehåller {n}. Dela upp exporten i flera filer.',
+    tt_y2_too_many: 'Y2L/Y2U stöder högst 640 performances per fil. Dela upp urvalet.',
     perf_hint_default: 'Markera en OK-fil ovan för att se performances.',
     perf_hint_count: '{n} performances — Klick, Ctrl/Cmd+klick (toggle), Shift+klick (intervall), dubbelklick (lägg till direkt). Ctrl+A = markera alla.',
     perf_hint_legacy: '{notes} — Taggar: {tags}',
@@ -1071,6 +1181,54 @@ const LANG = {
     legend_a: 'Refererar arpeggio-data (EARP/DARP)',
     legend_note: 'Visas endast när performancen faktiskt refererar beroendet. Engine-kolumnen visar ljudmotorn.',
     selection: 'Urval',
+    diag_title: 'Diagnostik · binärsökning',
+    diag_first: '◐ Första halvan',
+    diag_second: '◑ Andra halvan',
+    diag_undo: '↶ Ångra delning',
+    diag_reset: '↺ Återställ ursprung',
+    diag_hint: 'Halvera Urval och exportera testfilen. Behåll sedan den halva som fortfarande ger Illegal file och halvera igen.',
+    diag_idle: 'Redo — {n} performances i Urval.',
+    diag_split_first: 'Diagnostik: {before} → {after} performances · första halvan.',
+    diag_split_second: 'Diagnostik: {before} → {after} performances · andra halvan.',
+    diag_undo_status: 'Diagnostik: föregående urval återställt ({n} performances).',
+    diag_reset_status: 'Diagnostik: ursprungligt urval återställt ({n} performances).',
+    diag_combo_title: 'Kombinationstest (3 performances)',
+    diag_combo_hint: 'När ursprungsurvalet innehåller exakt 3 performances kan du skapa par eller singlar direkt.',
+    diag_combo_12: '1 + 2',
+    diag_combo_13: '1 + 3',
+    diag_combo_23: '2 + 3',
+    diag_combo_1: '1',
+    diag_combo_2: '2',
+    diag_combo_3: '3',
+    diag_combo_status: 'Diagnostik: testar kombination {combo} ({n} performances).',
+    diag_combo_need_three: 'Kombinationstest kräver ett ursprungsurval med exakt 3 performances.',
+    stamp_diag_label: 'Stampdiagnostik',
+    stamp_diag_current: 'Current — nuvarande beteende',
+    stamp_diag_preserve: 'Preserve source — behåll källans record-stamps',
+    stamp_diag_template: 'Template/common — använd template-stamp',
+    stamp_diag_hint: 'Diagnostik för Illegal file: exportera exakt samma Urval med de tre lägena och testa i ESP.',
+    master_diag_label: 'Metadata-master',
+    master_diag_template: 'Template/current — nuvarande fasta metadata',
+    master_diag_source: 'Källa {n}: {name}',
+    master_diag_hint: 'Diagnostik: välj vilken källfil som ska leverera header + 0x1050-byte library-info till den syntetiska Y2L-filen. Performanceordningen ändras inte.',
+    dpfm_order_label: 'Fysisk DPFM-ordning',
+    dpfm_order_normal: 'Normal — samma ordning som Urval',
+    dpfm_order_reverse: 'Omvänd — skriv DPFM-blobbar baklänges',
+    dpfm_order_hint: 'Diagnostik: EPFM/Urval behåller samma performanceordning. Endast den fysiska ordningen på DPFM-blobbarna ändras; offsets räknas om automatiskt.',
+    slot_order_label: 'Intern slotordning',
+    slot_order_normal: 'Normal — slot 0, 1, 2…',
+    slot_order_reverse: 'Omvänd — slotnumren baklänges',
+    slot_order_hint: 'Diagnostik: performanceordningen i EPFM/Urval ändras inte. Endast destinationsslot i EPFM-posterna skrivs om.',
+    perm_title: 'Ordningstest (3 performances)',
+    perm_hint: 'Testa alla sex möjliga EPFM-/performanceordningar för samma tre ursprungliga performances.',
+    perm_status: 'Diagnostik: ordning {order}.',
+    perm_need_three: 'Ordningstest kräver ett ursprungsurval med exakt 3 performances.',
+    epfm_phys_label: 'Fysisk EPFM-recordordning',
+    epfm_phys_normal: 'Normal — 1 → 2 → 3',
+    epfm_phys_231: 'Diagnostik — 2 → 3 → 1',
+    epfm_phys_321: 'Diagnostik — 3 → 2 → 1',
+    epfm_phys_hint: 'Urvalets logiska slotordning ändras inte. Endast ordningen på EPFM-recorden i filen ändras; varje record behåller sin ursprungliga destinationsslot och pekar på rätt DPFM-blob.',
+    epfm_tail_fixed: 'EPFM-sanitizer: {n} record(s) hade ogiltig 1–3 byte noll-rest efter namn/referenser och korrigerades automatiskt.',
     scol_slot: 'Slot',
     scol_source: 'Källfil',
     scol_name: 'Performance',
@@ -1245,6 +1403,13 @@ const LANG = {
     pcol_engine: 'Engine',
     add_selection: '➕ Add selected',
     add_all: '➕ All',
+    add_all_files: '➕ All from all files',
+    add_all_files_title: 'Add all performances from all loaded OK files to Selection',
+    status_bulk_added: '{added} performances from {files} files added to Selection.',
+    status_bulk_added_with_dupes: '{added} performances added from {files} files, {dupes} duplicates skipped.',
+    status_bulk_none: 'No new performances could be added from the loaded files.',
+    readiness_y2_too_many: 'Y2L/Y2U can contain at most 640 performances. The selection contains {n}. Split the export into multiple files.',
+    tt_y2_too_many: 'Y2L/Y2U supports at most 640 performances per file. Split the selection.',
     perf_hint_default: 'Select an OK file above to see performances.',
     perf_hint_count: '{n} performances — Click, Ctrl/Cmd+click (toggle), Shift+click (range), double-click (add directly). Ctrl+A = select all.',
     perf_hint_legacy: '{notes} — Tags: {tags}',
@@ -1256,6 +1421,54 @@ const LANG = {
     legend_a: 'References arpeggio data (EARP/DARP)',
     legend_note: 'Only shown when the performance actually references the dependency. The Engine column shows the sound generator (AWM2 / FM-X / AN-X).',
     selection: 'Selection',
+    diag_title: 'Diagnostics · binary search',
+    diag_first: '◐ First half',
+    diag_second: '◑ Second half',
+    diag_undo: '↶ Undo split',
+    diag_reset: '↺ Restore original',
+    diag_hint: 'Halve the Selection and export the test file. Keep the half that still gives Illegal file, then halve again.',
+    diag_idle: 'Ready — {n} performances in Selection.',
+    diag_split_first: 'Diagnostics: {before} → {after} performances · first half.',
+    diag_split_second: 'Diagnostics: {before} → {after} performances · second half.',
+    diag_undo_status: 'Diagnostics: previous selection restored ({n} performances).',
+    diag_reset_status: 'Diagnostics: original selection restored ({n} performances).',
+    diag_combo_title: 'Combination test (3 performances)',
+    diag_combo_hint: 'When the original selection contains exactly 3 performances, create pairs or singles directly.',
+    diag_combo_12: '1 + 2',
+    diag_combo_13: '1 + 3',
+    diag_combo_23: '2 + 3',
+    diag_combo_1: '1',
+    diag_combo_2: '2',
+    diag_combo_3: '3',
+    diag_combo_status: 'Diagnostics: testing combination {combo} ({n} performances).',
+    diag_combo_need_three: 'Combination test requires an original selection of exactly 3 performances.',
+    stamp_diag_label: 'Stamp diagnostics',
+    stamp_diag_current: 'Current — existing behavior',
+    stamp_diag_preserve: 'Preserve source — keep source record stamps',
+    stamp_diag_template: 'Template/common — use template stamp',
+    stamp_diag_hint: 'Illegal-file diagnostic: export the exact same Selection in all three modes and test in ESP.',
+    master_diag_label: 'Metadata master',
+    master_diag_template: 'Template/current — existing fixed metadata',
+    master_diag_source: 'Source {n}: {name}',
+    master_diag_hint: 'Diagnostic: choose which source file supplies the header + 0x1050-byte library-info block to the synthetic Y2L file. Performance order is unchanged.',
+    dpfm_order_label: 'Physical DPFM order',
+    dpfm_order_normal: 'Normal — same order as Selection',
+    dpfm_order_reverse: 'Reverse — write DPFM blobs backwards',
+    dpfm_order_hint: 'Diagnostic: EPFM/Selection keeps the same performance order. Only the physical DPFM blob order changes; offsets are recalculated automatically.',
+    slot_order_label: 'Internal slot order',
+    slot_order_normal: 'Normal — slots 0, 1, 2…',
+    slot_order_reverse: 'Reverse — slot numbers backwards',
+    slot_order_hint: 'Diagnostic: EPFM/Selection performance order is unchanged. Only destination slots in the EPFM records are rewritten.',
+    perm_title: 'Order test (3 performances)',
+    perm_hint: 'Test all six possible EPFM/performance orders for the same three original performances.',
+    perm_status: 'Diagnostics: order {order}.',
+    perm_need_three: 'Order test requires an original selection with exactly 3 performances.',
+    epfm_phys_label: 'Physical EPFM record order',
+    epfm_phys_normal: 'Normal — 1 → 2 → 3',
+    epfm_phys_231: 'Diagnostic — 2 → 3 → 1',
+    epfm_phys_321: 'Diagnostic — 3 → 2 → 1',
+    epfm_phys_hint: 'The logical Selection/slot order is unchanged. Only EPFM record order in the file changes; each record keeps its original destination slot and still points to the correct DPFM blob.',
+    epfm_tail_fixed: 'EPFM sanitizer: {n} record(s) had an invalid 1–3 byte zero remainder after the name/references and were corrected automatically.',
     scol_slot: 'Slot',
     scol_source: 'Source file',
     scol_name: 'Performance',
@@ -1546,6 +1759,7 @@ function applyI18n() {
 
 (() => {
 
+  // v15.46: ESP_VERIFIED packed EPFM Performance IDs for 5 × 128 = 640 slots.
   // v15.33: rollback of v15.26 FX/scene experiment. Stable base is v15.25
   // + keep global User Arp id fix, Arp Master 0x26, and element/cutoff parameter map.
   const $ = id => document.getElementById(id);
@@ -1628,6 +1842,37 @@ function applyI18n() {
   // ── Low-level helpers ──────────────────────────────────────
   function u32be(view, off) { return view.getUint32(off, false); }
   function setU32be(view, off, val) { view.setUint32(off, val >>> 0, false); }
+
+
+  // v15.46 — ESP_VERIFIED 2026-08-22:
+  // Modern Y2L supports 640 Performance slots as 5 banks × 128 slots.
+  // EPFM recPayload[8:12] is NOT a linear base+index value.
+  // Encoding:
+  //   bank = floor(index / 128)  (0..4)
+  //   slot = index % 128         (0..127)
+  //   ID   = 0x00400000 | (bank << 8) | slot
+  //
+  // Verified in MODX M ESP:
+  //   128 Performance file loads;
+  //   old/raw-u8 encoding fails at 129 with "Illegal file";
+  //   packed-128 files with 129, 130, 256 and 414 Performances all load.
+  function modernPerformanceEntryId(index) {
+    if (!Number.isInteger(index) || index < 0 || index >= 640) {
+      throw new Error(`Invalid modern Y2L Performance index ${index}; expected 0..639`);
+    }
+    const bank = Math.floor(index / 128);
+    const slot = index % 128;
+    return (0x00400000 | (bank << 8) | slot) >>> 0;
+  }
+
+  function writeModernPerformanceEntryId(recPayload, index) {
+    if (!recPayload || recPayload.length < 12) {
+      throw new Error(`EPFM record too short for Performance ID at index ${index}`);
+    }
+    const dv = new DataView(recPayload.buffer, recPayload.byteOffset, recPayload.byteLength);
+    setU32be(dv, 8, modernPerformanceEntryId(index));
+    return recPayload;
+  }
 
   function decodeCstr(u8) {
     let end = u8.indexOf(0);
@@ -2960,9 +3205,57 @@ function applyI18n() {
     return bits || 0x01;
   }
 
+  // v15.44 — EPFM trailing-byte sanitizer.
+  //
+  // Modern Y2L EPFM records store the NUL-terminated name at rel 27 followed
+  // by zero or more 32-bit program references. Therefore the tail after the
+  // terminating NUL must be a multiple of four bytes.
+  //
+  // Several one-performance source files in the user's corpus contain 1–3
+  // extra ZERO padding bytes at the end of the record. ESP tolerates this when
+  // the malformed record is the final record, but reports "Illegal file" when
+  // another Entr follows it. This exactly explains the observed permutation
+  // behaviour (e.g. NL2 works only when placed last).
+  //
+  // We remove ONLY the non-word-aligned zero remainder. Complete 4-byte words
+  // are preserved verbatim, including 00000000, because they may be legitimate
+  // program-reference slots/padding used by Yamaha.
+  function sanitizeModernEPFMRecordTail(recPayload) {
+    if (!recPayload || isClassicEPFMRec(recPayload) || recPayload.length <= 27) {
+      return { payload: recPayload, trimmed: 0, unsafe: false };
+    }
+
+    let nul = -1;
+    for (let i = 27; i < recPayload.length; i++) {
+      if (recPayload[i] === 0) { nul = i; break; }
+    }
+    if (nul < 0) return { payload: recPayload, trimmed: 0, unsafe: false };
+
+    const tailStart = nul + 1;
+    const tailLen = recPayload.length - tailStart;
+    const rem = tailLen & 3;
+    if (rem === 0) return { payload: recPayload, trimmed: 0, unsafe: false };
+
+    // Never discard unknown non-zero data. The observed corrupting remainder
+    // bytes are all zero. Mark anything else unsafe and preserve it.
+    for (let i = recPayload.length - rem; i < recPayload.length; i++) {
+      if (recPayload[i] !== 0) {
+        return { payload: recPayload, trimmed: 0, unsafe: true };
+      }
+    }
+
+    return {
+      payload: recPayload.slice(0, recPayload.length - rem),
+      trimmed: rem,
+      unsafe: false
+    };
+  }
+
   function estimateExportRecPayloadLength(entry) {
     if (!entry || !entry.recPayload) return 0;
-    if (!isClassicEPFMRec(entry.recPayload)) return entry.recPayload.length;
+    if (!isClassicEPFMRec(entry.recPayload)) {
+      return sanitizeModernEPFMRecordTail(entry.recPayload).payload.length;
+    }
     const display = entry.name || 'Init AWM2';
     const idxShort = classicRecIdxShort(entry.recPayload);
     const nameStr = idxShort ? `${idxShort}:${display}`
@@ -2982,17 +3275,14 @@ function applyI18n() {
 
     // Modern Y2L EPFM fixed header (rel 8..26), verified byte-exact against
     // ESP ground truth (Montage_Expanded.X7L → MONTAGE_Expanded.Y2L):
-    //   [8]=00 [9]=40 [10]=00 [11]=slot
+    //   [8:12] = packed Performance ID (5 banks × 128 slots)
     //   [12..14] = 00 00 00; [15] = engine bitmask (01 AWM2/Drum, 02 FM-X, 03 mixed)
     //   [16] = 0x02 for single-part, 0x00 for multi-part
     //   [17] = 00
     //   [18] = active-part bitmask = (1<<nParts)-1   (1→01, 4→0f, 6→3f)
     //   [19..24] = 00
     //   [25..26] = per-file build stamp low word (patched in export)
-    out[8]  = 0x00;
-    out[9]  = 0x40;
-    out[10] = 0x00;
-    out[11] = destSlot & 0xff;
+    writeModernPerformanceEntryId(out, destSlot);
     out[12] = 0x00;
     out[13] = 0x00;
     out[14] = 0x00;
@@ -3016,24 +3306,182 @@ function applyI18n() {
     recPayload[26] = v & 0xff;
   }
 
+
+  function getTemplateStamp3c() {
+    const tplU8 = getInitTemplateBytes();
+    if (!tplU8 || tplU8.length < 0x40) return 0;
+    return ((tplU8[0x3c] << 24) | (tplU8[0x3d] << 16) | (tplU8[0x3e] << 8) | tplU8[0x3f]) >>> 0;
+  }
+
+  function getStampDiagMode() {
+    const el = $("stampDiagMode");
+    return el ? el.value : "current";
+  }
+
+  function getDPFMOrderMode() {
+    const el = $("dpfmOrderMode");
+    return el ? el.value : "normal";
+  }
+
+  function getSlotOrderMode() {
+    const el = $("slotOrderMode");
+    return el ? el.value : "normal";
+  }
+
+  function getEPFMPhysicalOrderMode() {
+    const el = $("epfmPhysicalOrder");
+    return el ? el.value : "normal";
+  }
+
+  function getEPFMPhysicalLogicalIndices(count) {
+    const normal = Array.from({ length: count }, (_, i) => i);
+    if (count !== 3) return normal;
+
+    const mode = getEPFMPhysicalOrderMode();
+    if (mode === "231") return [1, 2, 0];
+    if (mode === "321") return [2, 1, 0];
+    return normal;
+  }
+
+  function getMasterSourceFileIdx() {
+    const el = $("masterSourceSelect");
+    if (!el || el.value === "template" || el.value === "") return null;
+    const idx = Number(el.value);
+    return Number.isInteger(idx) && idx >= 0 && idx < files.length ? idx : null;
+  }
+
+  function getSelectionSourceFileIndices() {
+    const seen = new Set();
+    const out = [];
+    for (const s of selection) {
+      if (!s || !Number.isInteger(s.fileIdx) || seen.has(s.fileIdx)) continue;
+      const f = files[s.fileIdx];
+      if (!f || !f.ok || f.synthetic || f.family !== "y2") continue;
+      seen.add(s.fileIdx);
+      out.push(s.fileIdx);
+    }
+    return out;
+  }
+
+  function refreshMasterSourceSelect() {
+    const sel = $("masterSourceSelect");
+    if (!sel) return;
+    const prev = sel.value || "template";
+    const idxs = getSelectionSourceFileIndices();
+
+    sel.innerHTML = "";
+    const tpl = document.createElement("option");
+    tpl.value = "template";
+    tpl.textContent = t("master_diag_template");
+    sel.appendChild(tpl);
+
+    idxs.forEach((fi, pos) => {
+      const opt = document.createElement("option");
+      opt.value = String(fi);
+      opt.textContent = t("master_diag_source", { n: pos + 1, name: files[fi]?.name || `#${fi}` });
+      sel.appendChild(opt);
+    });
+
+    const allowed = new Set(Array.from(sel.options).map(o => o.value));
+    sel.value = allowed.has(prev) ? prev : "template";
+  }
+
+  function getMasterMetadataFile() {
+    const fi = getMasterSourceFileIdx();
+    return fi === null ? null : files[fi];
+  }
+
+  function getMasterHeaderBytes() {
+    const f = getMasterMetadataFile();
+    const u = f?.ysfc?.u8;
+    const dirOff = f?.ysfc?.dirUsedOff;
+    if (!u || !Number.isInteger(dirOff) || dirOff < 0x40 || u.length < dirOff) return null;
+    return u.slice(0, dirOff);
+  }
+
+  function getMasterLibraryInfoBytes() {
+    const f = getMasterMetadataFile();
+    const y = f?.ysfc;
+    const u = y?.u8;
+    if (!y || !u || !y.view) return null;
+
+    const catSize = u32be(y.view, 0x20);
+    const libSize = u32be(y.view, 0x30);
+    if (libSize !== 0x1050) return null;
+
+    const start = y.dirUsedOff + catSize;
+    const end = start + libSize;
+    if (start < 0 || end > u.length) return null;
+    return u.slice(start, end);
+  }
+
+  function diagnosticHeaderStamp(sourceStamp3c) {
+    const mode = getStampDiagMode();
+    if (mode === "template") {
+      const tplStamp = getTemplateStamp3c();
+      if (tplStamp && tplStamp !== 0xffffffff) return tplStamp;
+    }
+    return sourceStamp3c;
+  }
+
+  function applyEPFMStampPolicy(recPayload, fileStamp3c, recIndex, recCount) {
+    // preserve: cloneAndPatchOffLen() already kept bytes 25..26 from each
+    // native source EPFM record. Do not normalize them.
+    if (getStampDiagMode() === "preserve") return recPayload;
+    patchEPFMRecordStamp(recPayload, fileStamp3c, recIndex, recCount);
+    return recPayload;
+  }
+
+  function applyDependencyStampPolicy(recPayload, fileStamp3c, sectionTag) {
+    // Native dependency records keep their original stamps in preserve mode.
+    if (getStampDiagMode() === "preserve") return recPayload;
+    return patchDependencyRecordStamp(recPayload, fileStamp3c, sectionTag);
+  }
+
   function cloneAndPatchOffLen(recPayload, newOff, newLen, blob, destSlot) {
     if (isClassicEPFMRec(recPayload)) {
       return buildModernEPFMRecFromClassic(recPayload, newOff, newLen, blob, destSlot || 0);
     }
 
-    const out = new Uint8Array(recPayload);
+    const _san = sanitizeModernEPFMRecordTail(recPayload);
+    const out = new Uint8Array(_san.payload);
     if (out.length >= 8) {
       const dv = new DataView(out.buffer);
       // [0:4]=blob_size, [4:8]=dp_off — update for new pool layout.
       setU32be(dv, 0, newLen);
       setU32be(dv, 4, newOff);
     }
-    // byte [11] = destination program/slot index. Renumber to
-    // compact destination slot so MODX accepts the file.
-    if (out.length >= 12 && destSlot != null && destSlot >= 0 && destSlot <= 0xFF) {
-      out[11] = destSlot & 0xFF;
+    // Rewrite the complete packed Performance ID.
+    // Patching only byte [11] works only inside bank 0 (indices 0..127)
+    // and makes libraries with 129+ Performances fail as "Illegal file".
+    if (out.length >= 12 && destSlot != null && destSlot >= 0) {
+      writeModernPerformanceEntryId(out, destSlot);
     }
     return out;
+  }
+
+
+  function validateModernEPFMPerformanceIds(records) {
+    if (!Array.isArray(records)) throw new Error('EPFM validation: records array missing');
+    if (records.length > 640) {
+      throw new Error(`EPFM validation: ${records.length} Performances exceeds Y2L limit 640`);
+    }
+    for (let i = 0; i < records.length; i++) {
+      const r = records[i];
+      if (!r || r.length < 12) {
+        throw new Error(`EPFM validation: record ${i + 1} is too short`);
+      }
+      const dv = new DataView(r.buffer, r.byteOffset, r.byteLength);
+      const got = u32be(dv, 8);
+      const expected = modernPerformanceEntryId(i);
+      if (got !== expected) {
+        throw new Error(
+          `EPFM Performance ID mismatch at index ${i}: ` +
+          `0x${got.toString(16).padStart(8,'0')} != ` +
+          `0x${expected.toString(16).padStart(8,'0')}`
+        );
+      }
+    }
   }
 
   // ── EPFM build (v9: korrigerat universellt format) ─────────
@@ -3054,6 +3502,7 @@ function applyI18n() {
   // = 12 + len(rec1) + 8*(N-1) + sum(i≥2): len(reci)
   function buildEPFMPayload(epfmInfo, newRecPayloads) {
     const N = newRecPayloads.length;
+    validateModernEPFMPerformanceIds(newRecPayloads);
 
     // Beräkna total payload-storlek
     let totalSize = 4 + 4;  // count + global 'Entr'
@@ -3399,8 +3848,17 @@ function applyI18n() {
     const u8 = new Uint8Array(buf);
     const dv = new DataView(buf);
 
-    // ── 1. Kopiera HELA headern (0..dirOff) från mallen ───────
-    u8.set(tpl.slice(0, dirOff), 0);
+    // ── 1. Header metadata ─────────────────────────────────────
+    // Default/current behavior copies the Init-template header.
+    // v15.39 diagnostic mode can instead copy the complete header prefix
+    // from one selected Y2L source file while keeping the newly generated
+    // catalogue/chunk layout.
+    const masterHeader = getMasterHeaderBytes();
+    if (masterHeader && masterHeader.length >= dirOff) {
+      u8.set(masterHeader.slice(0, dirOff), 0);
+    } else {
+      u8.set(tpl.slice(0, dirOff), 0);
+    }
 
     // catSize (0x20) and libSize (0x30) are written in section 2 below,
     // after the catalog and library regions are laid out.
@@ -3443,7 +3901,17 @@ function applyI18n() {
     const LIB_INFO_TEMPLATE_B64 = "//////////////////////////8AEAEQAhADEAQQABQBFAIUAxQEFP//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////AhBSb2xhbmQgSnVubyAxMDY6AAAAAoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP8AH/AABOoQAAAAPr0AFFNlcXVlbnRpYWwgT0I2IE1vbnRhZ2U6AAAAAoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP8AEpAAA7YAAAAAPsYA";
     const libInfoTemplate = decodeBase64ToBytes(LIB_INFO_TEMPLATE_B64);
     if (libInfoTemplate.length !== LIB_SIZE) throw new Error("LIB_INFO_TEMPLATE size mismatch");
-    u8.set(libInfoTemplate, libRegionStart);
+
+    // v15.39 metadata-master diagnostic:
+    // use the exact 0x1050-byte library-info block from the chosen source
+    // when available; otherwise retain the proven fixed template.
+    const masterLibInfo = getMasterLibraryInfoBytes();
+    if (masterLibInfo && masterLibInfo.length === LIB_SIZE) {
+      u8.set(masterLibInfo, libRegionStart);
+    } else {
+      u8.set(libInfoTemplate, libRegionStart);
+    }
+
     // Set catSize (0x20) and libSize (0x30) header fields.
     setU32be(dv, 0x20, CAT_SIZE);
     setU32be(dv, 0x30, LIB_SIZE);
@@ -3618,14 +4086,26 @@ function applyI18n() {
     // Classic files use 0xffffffff as save_ctr, which ESP Plugin rejects.
     // Fall back to stamp from base file if no Y2L source found.
     let sourceStamp3c = 1;  // safe default
-    for (const s of sel) {
-      const f = files[s.fileIdx];
-      if (!f || !f.ok || !f.ysfc || !f.ysfc.u8) continue;
-      if (f.ysfc.isClassic) continue;  // skip classic — they have 0xffffffff
-      const u = f.ysfc.u8;
-      if (u.length >= 0x40) {
-        const v = ((u[0x3c] << 24) | (u[0x3d] << 16) | (u[0x3e] << 8) | u[0x3f]) >>> 0;
-        if (v !== 0xffffffff) { sourceStamp3c = v; break; }
+
+    // v15.39: if a metadata-master source is explicitly selected, its
+    // build stamp follows the copied header/library-info metadata.
+    const masterMeta = getMasterMetadataFile();
+    const mu = masterMeta?.ysfc?.u8;
+    if (mu && mu.length >= 0x40) {
+      const mv = ((mu[0x3c] << 24) | (mu[0x3d] << 16) | (mu[0x3e] << 8) | mu[0x3f]) >>> 0;
+      if (mv !== 0xffffffff) sourceStamp3c = mv;
+    }
+
+    if (sourceStamp3c === 1) {
+      for (const s of sel) {
+        const f = files[s.fileIdx];
+        if (!f || !f.ok || !f.ysfc || !f.ysfc.u8) continue;
+        if (f.ysfc.isClassic) continue;  // skip classic — they have 0xffffffff
+        const u = f.ysfc.u8;
+        if (u.length >= 0x40) {
+          const v = ((u[0x3c] << 24) | (u[0x3d] << 16) | (u[0x3e] << 8) | u[0x3f]) >>> 0;
+          if (v !== 0xffffffff) { sourceStamp3c = v; break; }
+        }
       }
     }
     // If no Y2L source found (all-classic selection), use base file stamp.
@@ -3754,6 +4234,168 @@ function applyI18n() {
   // ── App state ──────────────────────────────────────────────
   const files = [];
   const selection = []; // { fileIdx, perfIdx, name, origSlot }
+  const MAX_Y2_PERFORMANCES = 640;
+
+  // v15.36 diagnostic binary-search state.
+  // The original selection is captured on the first split. Every further split
+  // adds an undo snapshot, so a problematic subset can be narrowed repeatedly.
+  let diagnosticOriginal = null;
+  const diagnosticUndo = [];
+  let diagnosticMessageKey = null;
+  let diagnosticMessageVars = null;
+
+  function cloneSelectionItems(items) {
+    return items.map(s => ({ ...s }));
+  }
+
+  function resetDiagnosticSession() {
+    diagnosticOriginal = null;
+    diagnosticUndo.length = 0;
+    diagnosticMessageKey = null;
+    diagnosticMessageVars = null;
+    updateDiagnosticControls();
+  }
+
+  function updateDiagnosticControls() {
+    const first = $("diagFirstBtn");
+    const second = $("diagSecondBtn");
+    const undo = $("diagUndoBtn");
+    const reset = $("diagResetBtn");
+    const info = $("diagInfo");
+    const comboBtns = [
+      $("diagCombo12Btn"), $("diagCombo13Btn"), $("diagCombo23Btn"),
+      $("diagCombo1Btn"), $("diagCombo2Btn"), $("diagCombo3Btn")
+    ];
+    const permBtns = [
+      $("perm123Btn"), $("perm132Btn"), $("perm213Btn"),
+      $("perm231Btn"), $("perm312Btn"), $("perm321Btn")
+    ];
+    if (!first || !second || !undo || !reset || !info) return;
+
+    const canSplit = selection.length >= 2;
+    first.disabled = !canSplit;
+    second.disabled = !canSplit;
+    undo.disabled = diagnosticUndo.length === 0;
+    reset.disabled = diagnosticOriginal === null;
+
+    const comboSourceOk =
+      (diagnosticOriginal && diagnosticOriginal.length === 3) ||
+      (!diagnosticOriginal && selection.length === 3);
+    for (const btn of comboBtns) {
+      if (btn) btn.disabled = !comboSourceOk;
+    }
+    for (const btn of permBtns) {
+      if (btn) btn.disabled = !comboSourceOk;
+    }
+
+    if (diagnosticMessageKey) {
+      info.textContent = t(diagnosticMessageKey, diagnosticMessageVars || {});
+    } else {
+      info.textContent = t('diag_idle', { n: selection.length });
+    }
+  }
+
+  function applyDiagnosticSubset(which) {
+    const before = selection.length;
+    if (before < 2) return;
+
+    if (diagnosticOriginal === null) {
+      diagnosticOriginal = cloneSelectionItems(selection);
+    }
+    diagnosticUndo.push({
+      items: cloneSelectionItems(selection),
+      messageKey: diagnosticMessageKey,
+      messageVars: diagnosticMessageVars ? { ...diagnosticMessageVars } : null
+    });
+
+    const mid = Math.ceil(before / 2);
+    const subset = which === 'first'
+      ? selection.slice(0, mid)
+      : selection.slice(mid);
+
+    selection.splice(0, selection.length, ...cloneSelectionItems(subset));
+    diagnosticMessageKey = which === 'first' ? 'diag_split_first' : 'diag_split_second';
+    diagnosticMessageVars = { before, after: selection.length };
+
+    refreshSelectionList();
+    updateBars();
+    updateDepSummary();
+    updateExportReadiness();
+    updateDiagnosticControls();
+  }
+
+
+  function getDiagnosticThreeSource() {
+    // Prefer the captured original diagnostic selection.
+    // If no diagnostic session exists yet, allow the current 3-item selection
+    // to become the stable source for the combination tests.
+    if (diagnosticOriginal && diagnosticOriginal.length === 3) {
+      return diagnosticOriginal;
+    }
+    if (selection.length === 3) {
+      diagnosticOriginal = cloneSelectionItems(selection);
+      diagnosticUndo.length = 0;
+      return diagnosticOriginal;
+    }
+    return null;
+  }
+
+  function applyDiagnosticCombination(indices, comboLabel) {
+    const source = getDiagnosticThreeSource();
+    if (!source) {
+      diagnosticMessageKey = 'diag_combo_need_three';
+      diagnosticMessageVars = {};
+      updateDiagnosticControls();
+      return;
+    }
+
+    diagnosticUndo.push({
+      items: cloneSelectionItems(selection),
+      messageKey: diagnosticMessageKey,
+      messageVars: diagnosticMessageVars ? { ...diagnosticMessageVars } : null
+    });
+
+    const subset = indices.map(i => source[i]).filter(Boolean);
+    selection.splice(0, selection.length, ...cloneSelectionItems(subset));
+
+    diagnosticMessageKey = 'diag_combo_status';
+    diagnosticMessageVars = { combo: comboLabel, n: selection.length };
+
+    refreshSelectionList();
+    updateBars();
+    updateDepSummary();
+    updateExportReadiness();
+    updateDiagnosticControls();
+  }
+
+
+  function applyDiagnosticPermutation(indices, label) {
+    const source = getDiagnosticThreeSource();
+    if (!source) {
+      diagnosticMessageKey = 'perm_need_three';
+      diagnosticMessageVars = {};
+      updateDiagnosticControls();
+      return;
+    }
+
+    diagnosticUndo.push({
+      items: cloneSelectionItems(selection),
+      messageKey: diagnosticMessageKey,
+      messageVars: diagnosticMessageVars ? { ...diagnosticMessageVars } : null
+    });
+
+    const reordered = indices.map(i => source[i]).filter(Boolean);
+    selection.splice(0, selection.length, ...cloneSelectionItems(reordered));
+
+    diagnosticMessageKey = 'perm_status';
+    diagnosticMessageVars = { order: label };
+
+    refreshSelectionList();
+    updateBars();
+    updateDepSummary();
+    updateExportReadiness();
+    updateDiagnosticControls();
+  }
 
   function supportedFiles() { return files.filter(f => f.ok); }
 
@@ -5375,6 +6017,7 @@ function applyI18n() {
     $("fileCountBadge").textContent = files.length;
     $("removeFileBtn").disabled = files.length === 0;
     $("clearFilesBtn").disabled = files.length === 0;
+    $("addAllFilesBtn").disabled = !supportedFiles().some(f => !f.synthetic && f.epfm && f.epfm.entries && f.epfm.entries.length);
     updatePerfEnabled();
   }
 
@@ -5386,6 +6029,7 @@ function applyI18n() {
     $("perfList").setAttribute("aria-disabled", String(!ok));
     $("pickSelectedBtn").disabled = !ok;
     $("pickAllBtn").disabled = !ok;
+    $("addAllFilesBtn").disabled = !supportedFiles().some(f => !f.synthetic && f.epfm && f.epfm.entries && f.epfm.entries.length);
     $("removeFileBtn").disabled = files.length === 0;
     $("clearFilesBtn").disabled = files.length === 0;
     $("perfHint").textContent = ok
@@ -5630,8 +6274,10 @@ function applyI18n() {
     $("moveUpBtn").disabled = !has;
     $("moveDownBtn").disabled = !has;
     $("selCountBadge").textContent = t('sel_count',{n: selection.length});
+    refreshMasterSourceSelect();
     updateExportBtn();
     updateExportReadiness();
+    updateDiagnosticControls();
   }
 
   // Selection-table row click → mirror into the hidden <select multiple>.
@@ -6088,6 +6734,9 @@ function applyI18n() {
     const fmt = ($('exportFormat')?.value || 'Y2L').toUpperCase();
     const extraWarnings = [];
     let hasX8Source = false;
+    if (fmt !== 'X7L' && selection.length > MAX_Y2_PERFORMANCES) {
+      extraWarnings.push(t('readiness_y2_too_many', { n: selection.length }));
+    }
     if (fmt === 'X7L') {
       for (const s of selection) {
         const f = files[s.fileIdx];
@@ -6111,7 +6760,10 @@ function applyI18n() {
       lines.push(`<div class="readiness-line"><span class="status-chip ${cls}">${item.status === 'warn' ? (item.statusLabel || 'WARN') : 'OK'}</span> ${escapeHtml(item.name)} — ${escapeHtml(item.engine || '')} — ${escapeHtml(item.statusText)}</div>`);
     }
     if (r.items.length > 6) lines.push(`<div class="readiness-line readiness-muted">… ${r.items.length - 6} more</div>`);
-    // v15.5: Do not repeat warning details as separate lines. The selected
+    for (const w of Array.from(new Set(extraWarnings))) {
+      lines.push(`<div class="readiness-line readiness-warn">⚠ ${escapeHtml(w)}</div>`);
+    }
+    // v15.34: Global/export-format warnings are shown explicitly. Per-performance
     // performance rows above already include the relevant warning text, and
     // the Selection table carries the NO X7/WARN status chip. This keeps
     // the export check readable when one unsupported source version is selected.
@@ -6155,12 +6807,16 @@ function applyI18n() {
     // v8: Vi tillåter export även utan Y2-bas — då auto-skapas en syntetisk
     // container i exportMergeToY2L. Vi tillåter också "overflow" mot vald bas
     // eftersom vi auto-uppgraderar till en större syntetisk om så krävs.
-    // Knappen blockeras endast om det inte finns något urval.
+    // Knappen blockeras om det inte finns något urval eller om en modern
+    // Y2L/Y2U-export skulle överskrida Yamahas maxgräns på 640 performances.
+    const fmt = ($('exportFormat')?.value || 'Y2L').toUpperCase();
+    const tooManyForY2 = fmt !== 'X7L' && selection.length > MAX_Y2_PERFORMANCES;
 
-    btn.disabled = !hasSelection;
+    btn.disabled = !hasSelection || tooManyForY2;
 
     if (!hasBase && !hasSelection) btn.title = t('tt_no_base_no_sel');
     else if (!hasSelection) btn.title = t('tt_no_sel');
+    else if (tooManyForY2) btn.title = t('tt_y2_too_many');
     else if (!hasBase) btn.title = "";  // Vi auto-skapar — ingen blocker
     else btn.title = "";
 
@@ -6214,6 +6870,7 @@ function applyI18n() {
   function exportMergeToY2L() {
     const baseIdxStr = $("baseFileSelect").value;
     const mode = $("modeSelect").value;
+    const stampDiagMode = getStampDiagMode();
     const doWfm = $("depWaveforms").checked;
     const doSam = $("depSamples").checked;
     const doArp = $("depArps").checked;
@@ -6315,7 +6972,7 @@ function applyI18n() {
     if (needsAuto || needsUpgrade) {
       const dims = calcSyntheticDimensions(selection);
       const displayName = t('synthetic_name',{slots: dims.slotCount, pool: fmtBytes(dims.dpfmPayloadSize)});
-      const synthetic = createSyntheticBaseFile(dims.slotCount, dims.dpfmPayloadSize, displayName, dims.depSizes, dims.epfmPayloadSize, dims.sourceStamp3c);
+      const synthetic = createSyntheticBaseFile(dims.slotCount, dims.dpfmPayloadSize, displayName, dims.depSizes, dims.epfmPayloadSize, diagnosticHeaderStamp(dims.sourceStamp3c));
       synthetic.idx = files.length;
       files.push(synthetic);
       refreshFileList();
@@ -6338,7 +6995,7 @@ function applyI18n() {
     if (hasClassicSelection2 && baseLibLen !== 0x1050) {
       const dims = calcSyntheticDimensions(selection);
       const displayName = t('synthetic_name',{slots: dims.slotCount, pool: fmtBytes(dims.dpfmPayloadSize)});
-      const synthetic = createSyntheticBaseFile(dims.slotCount, dims.dpfmPayloadSize, displayName, dims.depSizes, dims.epfmPayloadSize, dims.sourceStamp3c);
+      const synthetic = createSyntheticBaseFile(dims.slotCount, dims.dpfmPayloadSize, displayName, dims.depSizes, dims.epfmPayloadSize, diagnosticHeaderStamp(dims.sourceStamp3c));
       synthetic.idx = files.length;
       files.push(synthetic);
       refreshFileList();
@@ -6358,6 +7015,18 @@ function applyI18n() {
     // Clone buffer BEFORE parsing — avoids DataView mutation race
     const outBuf = base.ysfc.buf.slice(0);
     const outU8 = new Uint8Array(outBuf);
+
+    // v15.38 stamp diagnostics:
+    // Template/common mode forces header 0x3c to the verified Init-template
+    // stamp even when an existing base container was selected.
+    if (stampDiagMode === "template") {
+      const tplStamp = getTemplateStamp3c();
+      if (tplStamp && tplStamp !== 0xffffffff && outU8.length >= 0x40) {
+        const odv = new DataView(outBuf);
+        setU32be(odv, 0x3c, tplStamp >>> 0);
+      }
+    }
+
     // Parse the clone (not the original) so our writes don't corrupt parsed structures
     const outYSFC = parseYSFC(outBuf);
     const outEPFM = parseEPFM(outYSFC);
@@ -6540,24 +7209,79 @@ function applyI18n() {
       _finalArpRefsByFile.set(it.fileIdx, set);
     }
 
-    // Bygg DPFM-payload med korrekta per-blob offsets
-    const dpfmResult = buildDPFMPayload(outDPFM, chosenBlobs);
-    const newDPFMPayload = dpfmResult.payload;
-    const blobOffsets = dpfmResult.blobOffsets;
+    // Bygg DPFM-payload med korrekta per-blob offsets.
+    //
+    // v15.40 diagnostic: EPFM keeps the logical Selection order, while
+    // DPFM blobs may be written in reverse physical order. The EPFM offsets
+    // are then mapped back to the correct logical performance.
+    const dpfmOrderMode = getDPFMOrderMode();
+    const physicalLogicalIndices = Array.from({ length: chosenBlobs.length }, (_, i) => i);
+    if (dpfmOrderMode === "reverse") physicalLogicalIndices.reverse();
 
-    // Patcha EPFM-rec-payloads med korrekta nya dp_off-värden
+    const physicalBlobs = physicalLogicalIndices.map(i => chosenBlobs[i]);
+    const dpfmResult = buildDPFMPayload(outDPFM, physicalBlobs);
+    const newDPFMPayload = dpfmResult.payload;
+
+    const blobOffsets = new Array(chosenBlobs.length);
+    for (let physicalIdx = 0; physicalIdx < physicalLogicalIndices.length; physicalIdx++) {
+      const logicalIdx = physicalLogicalIndices[physicalIdx];
+      blobOffsets[logicalIdx] = dpfmResult.blobOffsets[physicalIdx];
+    }
+
+    // Patcha EPFM-rec-payloads med korrekta nya dp_off-värden.
+    //
+    // v15.43 separates logical slot assignment from the physical record order.
+    // First build one record per logical Selection item. Then reorder only the
+    // record array written to EPFM. This lets us test Yamaha/ESP record-order
+    // constraints without changing which performance belongs to slot 0/1/2.
     const outStamp3c = ((outU8[0x3c] << 24) | (outU8[0x3d] << 16) | (outU8[0x3e] << 8) | outU8[0x3f]) >>> 0;
-    const newRecPayloads = chosen.map((it, ci) => {
+    const logicalRecPayloads = chosen.map((it, ci) => {
       const srcE = chosenSrcEs[ci];
       const srcBlob = chosenBlobs[ci];
       const recTemplate = srcE.recPayload;
-      const r = cloneAndPatchOffLen(recTemplate, blobOffsets[ci], srcBlob.length, srcBlob, ci);
-      patchEPFMRecordStamp(r, outStamp3c, ci, chosen.length);
+      const destSlot = getSlotOrderMode() === "reverse"
+        ? (chosen.length - 1 - ci)
+        : ci;
+      return cloneAndPatchOffLen(recTemplate, blobOffsets[ci], srcBlob.length, srcBlob, destSlot);
+    });
+
+    // Count source records that required the v15.44 tail correction.
+    let epfmTailFixCount = 0;
+    for (let ci = 0; ci < chosenSrcEs.length; ci++) {
+      const srcRec = chosenSrcEs[ci]?.recPayload;
+      if (!srcRec || isClassicEPFMRec(srcRec)) continue;
+      const sr = sanitizeModernEPFMRecordTail(srcRec);
+      if (sr.unsafe) {
+        throw new Error(`EPFM record contains a non-zero partial 4-byte tail: ${chosen[ci]?.name || ci}`);
+      }
+      if (sr.trimmed) epfmTailFixCount++;
+    }
+
+    const epfmPhysicalLogicalIndices = getEPFMPhysicalLogicalIndices(chosen.length);
+    const newRecPayloads = epfmPhysicalLogicalIndices.map((logicalIdx, physicalIdx) => {
+      const r = logicalRecPayloads[logicalIdx];
+      // Current/template stamp normalization is position-sensitive, so apply
+      // it after physical record ordering. Preserve mode remains untouched.
+      applyEPFMStampPolicy(r, outStamp3c, physicalIdx, chosen.length);
       return r;
     });
 
     // Bygg EPFM-payload
     const newEPFMPayload = buildEPFMPayload(outEPFM, newRecPayloads);
+
+    // v15.44 invariant: every modern record tail after the NUL-terminated
+    // name must consist of whole 32-bit words.
+    for (let i = 0; i < newRecPayloads.length; i++) {
+      const rec = newRecPayloads[i];
+      if (!rec || isClassicEPFMRec(rec) || rec.length <= 27) continue;
+      let nul = -1;
+      for (let p = 27; p < rec.length; p++) {
+        if (rec[p] === 0) { nul = p; break; }
+      }
+      if (nul >= 0 && ((rec.length - (nul + 1)) & 3) !== 0) {
+        throw new Error(`Internal EPFM alignment error after sanitize at record ${i + 1}`);
+      }
+    }
 
     outU8.set(newEPFMPayload, outEPFM.sec.payloadStart);
     outU8.set(newDPFMPayload, outDPFM.sec.payloadStart);
@@ -6611,7 +7335,7 @@ function applyI18n() {
             if (!blob) continue;
             // Rewrite recPayload[10:12] to the new sequential id
             // when selective (nd.newId set); otherwise copy verbatim.
-            const rec = patchDependencyRecordStamp(exportDepRecPayload(sf, e, nd.newId, outStamp3c), outStamp3c, 'EWFM');
+            const rec = applyDependencyStampPolicy(exportDepRecPayload(sf, e, nd.newId, outStamp3c), outStamp3c, 'EWFM');
             wfmRecs.push(rec);
             wfmBlobs.push(blob);
             newWfmCount++;
@@ -6709,7 +7433,7 @@ function applyI18n() {
             const e = sf.wim.entries[nd.idx];
             const blob = extractDepBlob(sf.wim, e);
             if (!blob) continue;
-            const rec = patchDependencyRecordStamp(exportDepRecPayload(sf, e, nd.newId, outStamp3c), outStamp3c, 'EWIM');
+            const rec = applyDependencyStampPolicy(exportDepRecPayload(sf, e, nd.newId, outStamp3c), outStamp3c, 'EWIM');
             wimRecs.push(rec);
             wimBlobs.push(blob);
             newWimCount++;
@@ -6773,7 +7497,7 @@ function applyI18n() {
               const e = sf.arp.entries[nd.idx];
               const blob = extractDepBlob(sf.arp, e);
               if (!blob) continue;
-              const rec = patchDependencyRecordStamp(exportDepRecPayload(sf, e, nd.newId, outStamp3c), outStamp3c, 'EARP');
+              const rec = applyDependencyStampPolicy(exportDepRecPayload(sf, e, nd.newId, outStamp3c), outStamp3c, 'EARP');
               arpRecs.push(rec);
               arpBlobs.push(blob);
               newArpCount++;
@@ -6783,7 +7507,7 @@ function applyI18n() {
             for (const e of sf.arp.entries) {
               const blob = extractDepBlob(sf.arp, e);
               if (!blob) continue;
-              arpRecs.push(patchDependencyRecordStamp(exportDepRecPayload(sf, e, null, outStamp3c), outStamp3c, 'EARP'));
+              arpRecs.push(applyDependencyStampPolicy(exportDepRecPayload(sf, e, null, outStamp3c), outStamp3c, 'EARP'));
               arpBlobs.push(blob);
               newArpCount++;
             }
@@ -7790,7 +8514,7 @@ function applyI18n() {
       ? calcSyntheticDimensions(selection)
       : { slotCount: 128, dpfmPayloadSize: 8 + 14969 + 65536 * 4 };  // 128 slots, Init + ~256KB pool default
     const displayName = t('synthetic_name',{slots: dims.slotCount, pool: fmtBytes(dims.dpfmPayloadSize)});
-    const synthetic = createSyntheticBaseFile(dims.slotCount, dims.dpfmPayloadSize, displayName, dims.depSizes, dims.epfmPayloadSize, dims.sourceStamp3c);
+    const synthetic = createSyntheticBaseFile(dims.slotCount, dims.dpfmPayloadSize, displayName, dims.depSizes, dims.epfmPayloadSize, diagnosticHeaderStamp(dims.sourceStamp3c));
     synthetic.idx = files.length;
     files.push(synthetic);
     refreshAll();
@@ -7801,8 +8525,46 @@ function applyI18n() {
     setStatus(t('status_synthetic_created'), displayName, "ok");
   });
 
+  // Add ALL performances from ALL loaded OK files — with duplicate guard.
+  // Synthetic containers are intentionally ignored; they are export targets, not source libraries.
+  $("addAllFilesBtn").addEventListener("click", () => {
+    resetDiagnosticSession();
+    const existing = new Set(selection.map(s => `${s.fileIdx}:${s.perfIdx}`));
+    let added = 0, dupes = 0, sourceFiles = 0;
+
+    for (let fi = 0; fi < files.length; fi++) {
+      const f = files[fi];
+      if (!f || !f.ok || f.synthetic || !f.epfm || !Array.isArray(f.epfm.entries)) continue;
+      sourceFiles++;
+
+      for (let pi = 0; pi < f.epfm.entries.length; pi++) {
+        const key = `${fi}:${pi}`;
+        if (existing.has(key)) {
+          dupes++;
+          continue;
+        }
+        const name = f.epfm.entries[pi]?.name || t('unknown_name');
+        selection.push({ fileIdx: fi, perfIdx: pi, name, origSlot: pi });
+        existing.add(key);
+        added++;
+      }
+    }
+
+    let msg;
+    if (!added) msg = t('status_bulk_none');
+    else if (dupes > 0) msg = t('status_bulk_added_with_dupes', { added, files: sourceFiles, dupes });
+    else msg = t('status_bulk_added', { added, files: sourceFiles });
+
+    setStatus(msg, "", added ? "ok" : "warn");
+    refreshSelectionList();
+    updateBars();
+    updateDepSummary();
+    updateExportReadiness();
+  });
+
   // Add selected performances — with duplicate guard
   $("pickSelectedBtn").addEventListener("click", () => {
+    resetDiagnosticSession();
     const fi = parseInt($("fileList").value || "0", 10);
     if (isNaN(fi) || !files[fi] || !files[fi].ok) return;
     const selected = getPerfListSelectedIndices();
@@ -7822,6 +8584,7 @@ function applyI18n() {
 
   // Add ALL visible performances in perf list — with duplicate guard
   $("pickAllBtn").addEventListener("click", () => {
+    resetDiagnosticSession();
     const fi = parseInt($("fileList").value || "0", 10);
     if (isNaN(fi) || !files[fi] || !files[fi].ok) return;
     const allOptions = Array.from($("perfList").querySelectorAll('.perflist-row'))
@@ -7843,7 +8606,95 @@ function applyI18n() {
     updateExportReadiness();
   });
 
+  $("diagFirstBtn").addEventListener("click", () => {
+    applyDiagnosticSubset('first');
+  });
+
+  $("diagSecondBtn").addEventListener("click", () => {
+    applyDiagnosticSubset('second');
+  });
+
+  $("diagUndoBtn").addEventListener("click", () => {
+    const snap = diagnosticUndo.pop();
+    if (!snap) return;
+    selection.splice(0, selection.length, ...cloneSelectionItems(snap.items));
+    diagnosticMessageKey = 'diag_undo_status';
+    diagnosticMessageVars = { n: selection.length };
+    refreshSelectionList();
+    updateBars();
+    updateDepSummary();
+    updateExportReadiness();
+    updateDiagnosticControls();
+  });
+
+  $("diagResetBtn").addEventListener("click", () => {
+    if (diagnosticOriginal === null) return;
+    const original = cloneSelectionItems(diagnosticOriginal);
+    selection.splice(0, selection.length, ...original);
+    diagnosticUndo.length = 0;
+    diagnosticOriginal = null;
+    diagnosticMessageKey = 'diag_reset_status';
+    diagnosticMessageVars = { n: selection.length };
+    refreshSelectionList();
+    updateBars();
+    updateDepSummary();
+    updateExportReadiness();
+    updateDiagnosticControls();
+  });
+
+  $("masterSourceSelect").addEventListener("change", () => {
+    updateExportReadiness();
+    updateExportBtn();
+  });
+
+  $("dpfmOrderMode").addEventListener("change", () => {
+    updateExportReadiness();
+    updateExportBtn();
+  });
+
+  $("slotOrderMode").addEventListener("change", () => {
+    updateExportReadiness();
+    updateExportBtn();
+  });
+
+  $("epfmPhysicalOrder").addEventListener("change", () => {
+    updateExportReadiness();
+    updateExportBtn();
+  });
+
+  $("perm123Btn").addEventListener("click", () => applyDiagnosticPermutation([0,1,2], "1 → 2 → 3"));
+  $("perm132Btn").addEventListener("click", () => applyDiagnosticPermutation([0,2,1], "1 → 3 → 2"));
+  $("perm213Btn").addEventListener("click", () => applyDiagnosticPermutation([1,0,2], "2 → 1 → 3"));
+  $("perm231Btn").addEventListener("click", () => applyDiagnosticPermutation([1,2,0], "2 → 3 → 1"));
+  $("perm312Btn").addEventListener("click", () => applyDiagnosticPermutation([2,0,1], "3 → 1 → 2"));
+  $("perm321Btn").addEventListener("click", () => applyDiagnosticPermutation([2,1,0], "3 → 2 → 1"));
+
+  $("diagCombo12Btn").addEventListener("click", () => {
+    applyDiagnosticCombination([0, 1], '1 + 2');
+  });
+
+  $("diagCombo13Btn").addEventListener("click", () => {
+    applyDiagnosticCombination([0, 2], '1 + 3');
+  });
+
+  $("diagCombo23Btn").addEventListener("click", () => {
+    applyDiagnosticCombination([1, 2], '2 + 3');
+  });
+
+  $("diagCombo1Btn").addEventListener("click", () => {
+    applyDiagnosticCombination([0], '1');
+  });
+
+  $("diagCombo2Btn").addEventListener("click", () => {
+    applyDiagnosticCombination([1], '2');
+  });
+
+  $("diagCombo3Btn").addEventListener("click", () => {
+    applyDiagnosticCombination([2], '3');
+  });
+
   $("removeFromSelectionBtn").addEventListener("click", () => {
+    resetDiagnosticSession();
     const idxs = Array.from($("selectionList").selectedOptions).map(o => parseInt(o.value, 10))
       .filter(Number.isInteger).sort((a,b) => b - a);
     for (const i of idxs) selection.splice(i, 1);
@@ -7851,10 +8702,12 @@ function applyI18n() {
   });
 
   $("clearSelectionBtn").addEventListener("click", () => {
+    resetDiagnosticSession();
     selection.length = 0; refreshSelectionList(); updateBars(); updateDepSummary();
   });
 
   $("moveUpBtn").addEventListener("click", () => {
+    resetDiagnosticSession();
     const idxs = Array.from($("selectionList").selectedOptions).map(o => parseInt(o.value, 10))
       .filter(Number.isInteger).sort((a,b) => a - b);
     if (!idxs.length || idxs[0] === 0) return;
@@ -7866,6 +8719,7 @@ function applyI18n() {
   });
 
   $("moveDownBtn").addEventListener("click", () => {
+    resetDiagnosticSession();
     const idxs = Array.from($("selectionList").selectedOptions).map(o => parseInt(o.value, 10))
       .filter(Number.isInteger).sort((a,b) => b - a);
     if (!idxs.length || idxs[0] === selection.length - 1) return;
