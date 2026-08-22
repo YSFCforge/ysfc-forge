@@ -2869,19 +2869,64 @@ def write_save_counter(file_data: bytearray, value: int) -> None:
 #   [0..4]    u32be: pointer/storlek till DPFM payload
 #   [4..8]    u32be: 0x0000000C (konstant, performance type)
 #   [8..12]   u32be: 0x00400000 (konstant)
-#   [12..16]  u32be: 0x00000004 (konstant)
-#   [16..18]  bytes: 0x02 0x00
-#   [18]      u8: PART-ACTIVE BITMASK = (1<<max_active_part) - 1
+#   [12..16]  u32be: engine-specific EPFM/Entr selector (must be supplied explicitly)
+#   [16]      u8: topology marker: 0x02 for single-Part, 0x00 for verified contiguous multi-Part
+#   [17]      u8: 0x00
+#   [18]      u8: PART-ACTIVE BITMASK = (1<<max_active_part) - 1 (verified for contiguous Parts 1..8)
 #   [19..22]  bytes: 0x00 × 3 (padding)
 #   [23..27]  u32be: inner save counter (= file[60:64] - 1)
 #   [27..]    ASCII: "256:<perf_name>:<part1_name>\0"
 ENTR_PART_BITMASK_OFFSET = 18  # relativt Entr payload start
 ENTR_INNER_COUNTER_OFFSET = 23
 
+# EPFM/Entr engine selector is distinct from blob[6700].
+# ESP-verified values:
+ENTR_ENGINE_AWM2 = 0x00000001
+ENTR_ENGINE_DRUM = 0x00000001
+ENTR_ENGINE_FMX  = 0x00000002
+ENTR_ENGINE_ANX  = 0x00000004
+# Drum is independently verified from Drum_init.Y2L and shares value 0x00000001
+# with AWM2 in this EPFM/Entr field. This field is therefore better treated as
+# an engine/family selector rather than a one-to-one engine enum.
+
+
+def validate_epfm_entr_tail(record: bytes, *, name_offset: int = 27) -> None:
+    """Validate modern EPFM Entr tail integrity.
+
+    The NUL-terminated Performance/Category Search text begins at ``name_offset``.
+    Everything after the terminating NUL must consist of complete 32-bit words.
+
+    Fresh Python-generated Entr records normally have a zero-byte tail.  This
+    validator is deliberately fail-closed: it never guesses or trims non-zero
+    source data.  The v1.24 JavaScript runtime additionally sanitizes a legacy
+    template-rewrite path by removing only a trailing 1-3 byte ZERO remainder.
+    """
+    if len(record) <= name_offset:
+        raise ValueError(f"EPFM Entr record too short: {len(record)} bytes")
+
+    try:
+        name_end = record.index(0, name_offset)
+    except ValueError as exc:
+        raise ValueError("EPFM performance name is not NUL terminated") from exc
+
+    tail_len = len(record) - (name_end + 1)
+    if tail_len % 4:
+        raise ValueError(
+            f"Invalid EPFM tail length: {tail_len} bytes after NUL-terminated "
+            "name (must be a multiple of 4)"
+        )
+
+
 def build_entr_payload(perf_name: str, part1_name: str,
                        max_active_part: int, save_counter: int,
-                       dpfm_size: int) -> bytearray:
-    """Konstruerar Entr-record payload för EPFM-chunken."""
+                       dpfm_size: int, *,
+                       engine_selector: int) -> bytearray:
+    """Konstruerar Entr-record payload för EPFM-chunken.
+
+    ``engine_selector`` is mandatory because EPFM/Entr metadata is
+    engine-specific. Never hard-code the AN-X value for an AWM2/FM-X/Drum
+    performance.
+    """
     import struct
     name_str = f"256:{perf_name}:{part1_name}\x00"
     name_bytes = name_str.encode('latin-1')
@@ -2890,12 +2935,26 @@ def build_entr_payload(perf_name: str, part1_name: str,
     payload[0:4]   = struct.pack('>I', dpfm_size)
     payload[4:8]   = struct.pack('>I', 0x0000000C)
     payload[8:12]  = struct.pack('>I', 0x00400000)
-    payload[12:16] = struct.pack('>I', 0x00000004)
-    payload[16:18] = b'\x02\x00'
+    if engine_selector not in (ENTR_ENGINE_AWM2, ENTR_ENGINE_DRUM, ENTR_ENGINE_FMX, ENTR_ENGINE_ANX):
+        raise ValueError(
+            f"Unsupported/unverified EPFM Entr engine selector: {engine_selector!r}"
+        )
+    payload[12:16] = struct.pack('>I', engine_selector)
+    if not 1 <= max_active_part <= 8:
+        raise ValueError(
+            f"Unsupported/unverified contiguous Entr topology for max_active_part={max_active_part}; "
+            "verified generic generation currently covers contiguous Parts 1..8 only."
+        )
+    # ESP-verified 2026-08-17:
+    #   single Part      -> rel16..18 = 02 00 01
+    #   contiguous 1..N -> rel16..18 = 00 00 ((1<<N)-1), N=2..8
+    payload[16]    = 0x02 if max_active_part == 1 else 0x00
+    payload[17]    = 0x00
     payload[18]    = get_entr_bitmask(max_active_part)
     payload[19:23] = b'\x00\x00\x00\x00'
     payload[23:27] = struct.pack('>I', save_counter - 1)
     payload[27:]   = name_bytes
+    validate_epfm_entr_tail(payload)
     return payload
 
 # Drum-key collateral bytes — updated automatically by MODX on any drum-key edit
@@ -4714,7 +4773,7 @@ def diff_report(
 # [8:] = entry data:
 # [0:4] = 0x00003529 (fixed = DPFM sub-chunk data length = 13609 = 0x3529)
 # [4:8] = DPFM offset where this perf's data starts
-# [8:12] = 0x00400000 | (perf_index << 0) (byte[11] = 0-based index)
+# [8:12] = packed Performance ID: 0x00400000 | ((index//128)<<8) | (index%128)
 # [12:20]= 8 fixed bytes: 0x0000000202000100
 # [20:26]= 6 fixed bytes: 0x0000000000002a (last byte = 0x2a always)
 # [26] = checksum/hash byte (from source file, not recalculated)
@@ -4728,7 +4787,7 @@ def diff_report(
 # NOTE: _build_catalog_entry rebuilds Entr records from scratch.
 # For best results when building from library files,
 # the original Entr records should be cloned from the source catalog
-# and only [0:4]=blob_sz, [4:8]=dp_off, [11]=idx should be updated.
+# and only [0:4]=blob_sz, [4:8]=dp_off, and the full packed [8:12] Performance ID should be updated.
 # The JS Forge v1.19+ implements this correctly via byDpOff map matching.
 # Python serializer fix: TODO when source Entr records are available.
 
@@ -4759,6 +4818,32 @@ def _detect_engine_bits(blob: bytes) -> int:
                 i += 1
     return bits
 
+
+def modern_epfm_performance_id(perf_index: int) -> int:
+    """Return the ESP-verified modern Y2L EPFM Performance ID.
+
+    Modern Y2L supports 640 Performance slots arranged as five banks of
+    128 slots.  The EPFM ID at record bytes [8:12] is encoded as:
+
+        0x00400000 | (bank << 8) | slot
+
+    where:
+        bank = perf_index // 128   (0..4)
+        slot = perf_index % 128    (0..127)
+
+    This is intentionally NOT a linear base-plus-index representation.
+    ESP verification on 2026-08-22 established the 128-slot bank boundary:
+    128 entries load, 129 with a linear/raw-u8 ID is Illegal file, while
+    packed-128 files with 129, 130, 256 and 414 entries all load.
+    """
+    if not isinstance(perf_index, int):
+        raise TypeError("perf_index must be int")
+    if perf_index < 0 or perf_index >= 640:
+        raise ValueError(f"Performance index out of Y2L range 0..639: {perf_index}")
+    bank, slot = divmod(perf_index, 128)
+    return 0x00400000 | (bank << 8) | slot
+
+
 def _build_catalog_entry(name: str, perf_size: int, dpfm_data_offset: int,
                          perf_index: int, blob: bytes = None) -> bytes:
     """Build one EPFM catalog Entr data block (WITHOUT the Entr+size header).
@@ -4769,7 +4854,7 @@ def _build_catalog_entry(name: str, perf_size: int, dpfm_data_offset: int,
         [8] 0x00 constant
         [9] 0x40 constant (MODX validerar detta fält)
         [10] 0x00 constant
-        [11] entry_index u8
+        [8:12] packed Performance ID (5 banks × 128 slots; see modern_epfm_performance_id())
         [12] 0x00 constant
         [13] 0x00 multi-engine flag (förenklat)
         [14] 0x00 constant
@@ -4798,10 +4883,7 @@ def _build_catalog_entry(name: str, perf_size: int, dpfm_data_offset: int,
     data = bytearray(27)
     struct.pack_into('>I', data, 0, perf_size)
     struct.pack_into('>I', data, 4, dpfm_data_offset)
-    data[8] = 0x00
-    data[9] = 0x40
-    data[10] = 0x00
-    data[11] = perf_index & 0xFF
+    struct.pack_into('>I', data, 8, modern_epfm_performance_id(perf_index))
     data[12] = 0x00
     data[13] = 0x00
     data[14] = 0x00
@@ -4814,7 +4896,9 @@ def _build_catalog_entry(name: str, perf_size: int, dpfm_data_offset: int,
     data[25] = 0x30
     data[26] = 0x00
     data += text.encode('ascii', errors='replace')
-    return bytes(data)
+    built = bytes(data)
+    validate_epfm_entr_tail(built)
+    return built
 
 # Kept for backward-compatibility reference only
 _CATALOG_FIXED_22 = bytes.fromhex('000044410000000c0040000000000001020001000000')
