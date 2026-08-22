@@ -1,9 +1,5 @@
 # Reverse Engineering Status
 
-> **FM-X completion checkpoint — 2026-08-11 / parser v1.0.77**  
-> The Soundmondo→Y2L FM-X mapping represented by `FMX_COVERAGE_MATRIX_v177.csv` is now complete for 153 tracked Yamaha-documented parameter points and has an ESP-verified lineage. Important correction: OP-relative `+62/+64` are Pitch/Level Controller Sensitivity and `+66/+68/+70` are 1st-LFO destination depth ratios. Older text that labels `+66/+68/+70` as internal trailer bytes is superseded. The FM-X 2nd-LFO depth matrix is no longer partial. Smart Morph **transport/preservation** is verified, while generic reconstruction/interpolation-table editing remains a separate open problem.
-
-
 This document contains the detailed reverse engineering status and methodology for YSFC Forge. For an overview, see the main [README](../README.md).
 
 ## Table of Contents
