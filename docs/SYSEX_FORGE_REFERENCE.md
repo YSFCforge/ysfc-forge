@@ -2,8 +2,7 @@
 
 **Scope:** Yamaha Soundmondo/WebMIDI SysEx → normalized bridge → MODX M / MONTAGE M Y2L  
 **Primary verification target:** MODX M / MODX M ESP  
-**Current browser writer:** SysEx Converter v1.27  
-**Master-map checkpoint:** 2026-08-22
+
 
 > This document is the compact **parameter-by-parameter recovery map**. It records both source Soundmondo/WebMIDI coordinates and target Y2L coordinates wherever the project has explicit evidence. A dash (`—`) means the current recovery sources do not support a precise coordinate; it must not be guessed.
 

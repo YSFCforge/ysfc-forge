@@ -2,8 +2,6 @@
 
 *Soundmondo SysEx → MODX M / MONTAGE M Y2L-integrationsprojekt*  
 *Primärt verifieringsmål: Yamaha MODX M + MODX M ESP*  
-*Aktuell webbläsarkonverterare: YSFC Forge SysEx Converter v1.27*  
-*Kontext-checkpoint: 2026-08-22*
 
 ---
 

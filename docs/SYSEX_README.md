@@ -46,7 +46,7 @@ All browser conversion runs locally. No SysEx or library file needs to be upload
 
 ### Browser converter
 
-1. Open `tools/ysfc_forge_sysex_converter_v1_27.html` in a modern browser.
+1. Open `tools/ysfc_forge_sysex_converter_v1_58.html` in a modern browser.
 2. Drag one or more Soundmondo `.syx` files onto the import area.
 3. Review detected platform, engines, Parts and dependency warnings.
 4. Optionally load a companion `.Y2L` / `.Y2U` when external waveform dependencies must be resolved.
@@ -251,7 +251,7 @@ A full development checkout should contain these areas:
 
 ```text
 tools/
-  ysfc_forge_sysex_converter_v1_27.html
+  ysfc_forge_sysex_converter_v1_58.html
 
 integration/soundmondo/
   sysex_parser.py

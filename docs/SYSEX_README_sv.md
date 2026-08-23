@@ -46,7 +46,7 @@ All konvertering i webbläsaren sker lokalt. SysEx- och library-filer behöver i
 
 ### Webbläsarkonverteraren
 
-1. Öppna `tools/ysfc_forge_sysex_converter_v1_27.html`.
+1. Öppna `tools/ysfc_forge_sysex_converter_v1_58.html`.
 2. Dra in en eller flera Soundmondo `.syx`.
 3. Kontrollera detekterad plattform, engines, Parts och dependency-varningar.
 4. Ladda vid behov en companion `.Y2L` / `.Y2U` för externa waveform-dependencies.
@@ -239,7 +239,7 @@ SysEx Converter skapar normalt en Performance per Y2L, men v1.27 använder änd�
 
 ```text
 tools/
-  ysfc_forge_sysex_converter_v1_27.html
+  ysfc_forge_sysex_converter_v1_58.html
 
 integration/soundmondo/
   sysex_parser.py

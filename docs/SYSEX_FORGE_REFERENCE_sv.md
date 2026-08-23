@@ -2,8 +2,6 @@
 
 **Omfattning:** Yamaha Soundmondo/WebMIDI SysEx → normalized bridge → MODX M / MONTAGE M Y2L  
 **Primärt verifieringsmål:** MODX M / MODX M ESP  
-**Aktuell browser-writer:** SysEx Converter v1.27  
-**Master-map checkpoint:** 2026-08-22
 
 > Detta dokument är den kompakta **parameter-för-parameter recovery-kartan**. Den dokumenterar både Soundmondo/WebMIDI source-koordinater och Y2L target-koordinater där projektet har explicit evidens. Ett streck (`—`) betyder att recovery-underlaget inte stöder en exakt koordinat; den får inte gissas.
 
