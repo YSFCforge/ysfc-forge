@@ -45,7 +45,7 @@ Engine pool:        variable, one engine block per part
 Important offsets:
 
 ```text
-common[6695] = active part count
+common[6695] = physical/template Part-slot count
 common[6700] = engine byte for Part 1 / primary engine indicator
 part stride  = 5765
 ```
@@ -92,7 +92,7 @@ Short-layout structure:
 ```text
 Performance Common: 6689 bytes
 Part Common:        5621 bytes per part
-common[6683]        = active part count
+common[6683]        = classic physical Part-slot count in that layout
 common[6688]        = engine byte for Part 1 / primary engine indicator
 ```
 

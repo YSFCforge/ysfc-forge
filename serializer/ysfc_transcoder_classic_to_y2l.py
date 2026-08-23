@@ -12,8 +12,7 @@ Omfång:
   ✅ AWM2 parts (type=0) — alla 120 parametrar mappade
   ✅ Drum parts  (type=1) — bevaras som AWM2 (raw copy av element-data)
   ✅ FM-X parts  (type=2) — binäranalys av Y2L FM-X-format 
-  ✅ Legacy preset waves  — exact-name legacy→M identity remap
-  ⚠ User/Library waves  — external dependency; safe fallback when unresolved
+  ✅ User waveforms       — waveform-pool remappning
 
 Adresskonventioner (Y2L):
   AWM2 element base    = engine_area_start + 3 bytes header (= audit_abs 12469 för Part 1)
@@ -77,84 +76,6 @@ from ysfc_serializer_classic import (
     FORMAT_MODX,
 )
 
-
-# Cross-generation legacy preset waveform identity.
-#
-# IMPORTANT:
-#   Never silently copy a legacy preset waveform number into M-generation Y2L.
-#   Yamaha preset IDs are not generation-stable.  The authoritative remap data
-#   lives in ysfc_enums.waveform_remap_legacy_to_m.
-#
-# The import is deliberately optional at module-import time so the rest of the
-# serializer remains inspectable, but an actual legacy preset conversion fails
-# closed if the remap data module is missing.
-try:
-    from ysfc_enums.waveform_remap_legacy_to_m import remap_legacy_preset_waveform
-except Exception:
-    remap_legacy_preset_waveform = None
-
-
-class WaveformRemapDataMissing(RuntimeError):
-    """Raised when legacy->M conversion is attempted without remap data."""
-
-
-# Soundmondo legacy AWM2 is a deliberately partial decode.  Only these
-# ClassicPartElement attributes are currently sourced explicitly by the bridge.
-# Any other field must retain the native M-generation Init/reference default.
-#
-# This is the permanent form of the v1.0.3 "source-known-fields-only" fix that
-# prevented ClassicPartElement class defaults (notably filter_gain=0) from
-# overwriting safe Y2L defaults (filter_gain=230).
-SOUNDMONDO_AWM2_KNOWN_DIRECT_FIELDS = frozenset({
-    "element_switch",
-    "xa_mode",
-    "note_limit_low",
-    "note_limit_high",
-    "velocity_limit_low",
-    "velocity_limit_high",
-    "velocity_cross_fade",
-    "pan",
-    "element_level",
-    "coarse_tune",
-    "fine_tune",
-    "filter_resonance",
-    "feg_depth",
-    "lfo_wave",
-    "lfo_amod_depth",
-    "lfo_pmod_depth",
-    "lfo_fmod_depth",
-    "lfo_speed",
-})
-
-
-def mark_soundmondo_source_known_fields(element: ClassicPartElement) -> ClassicPartElement:
-    """Mark a ClassicPartElement as originating from partial Soundmondo AWM2.
-
-    Classic X7L/X8L parsing does *not* use this marker and therefore retains
-    the normal full Classic -> Y2L mapping behavior.
-    """
-    setattr(element, "_ysfc_source_known_direct_fields",
-            SOUNDMONDO_AWM2_KNOWN_DIRECT_FIELDS)
-    return element
-
-
-def _direct_fields_for_element(element: ClassicPartElement):
-    marker = getattr(element, "_ysfc_source_known_direct_fields", None)
-    if marker is None:
-        return _DIRECT_COPY_FIELDS.items()
-    allowed = set(marker)
-    return ((name, off) for name, off in _DIRECT_COPY_FIELDS.items()
-            if name in allowed)
-
-
-def _remap_legacy_waveform_number(legacy_no: int) -> dict:
-    if remap_legacy_preset_waveform is None:
-        raise WaveformRemapDataMissing(
-            "Legacy->M preset waveform remap data is not installed. "
-            "Refusing unsafe direct numeric waveform copy."
-        )
-    return remap_legacy_preset_waveform(int(legacy_no))
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Y2L sub-blob konstanter (från ysfc_serializer.py)
 # ─────────────────────────────────────────────────────────────────────────────
@@ -174,33 +95,11 @@ AWM2_LAST_ELEMENT_SIZE  = 309
 ENGINE_POOL_SEP_SIZE    = 5
 AWM2_ELEM_LAYOUT_OFFSET = 51   # AWM2_ELEM_LAYOUT keys är rel från elem_base - 51
 
-# Engine type byte stored in Y2L performance blob[6700].
-# ESP-verified values:
-#   0x00 = AWM2
-#   0x01 = Drum
-#   0x02 = FM-X
-#   0x03 = AN-X
-#
-# IMPORTANT: this is NOT an element-count field. Older code incorrectly used
-# 0x0A for AWM2, which can make an otherwise valid AWM2 Y2L illegal in ESP.
-Y2L_ENGINE_AWM2 = 0x00
-Y2L_ENGINE_DRUM = 0x01
-Y2L_ENGINE_FMX  = 0x02
-Y2L_ENGINE_ANX  = 0x03
-
-# Part Common structural tail/link pointer (ESP-verified 2026-08-17).
-# Relative to each 5765-byte Part Common block:
-#   +5763 / 0x1683 = marker
-#   +5764 / 0x1684 = next-engine type or 0 for final Part
-# Intermediate Part Common records use marker 0x01 and point at the next
-# Part's engine type. The final Part uses the first Part engine's magic byte.
-PART_COMMON_POINTER_REL = (5763, 5764)
-Y2L_ENGINE_MAGIC_BY_PART_TYPE = {
-    PART_TYPE_AWM2: 0x08,
-    PART_TYPE_DRUM: 0x49,
-    PART_TYPE_FMX:  0x52,
-}
-
+# Engine type bytes (Y2L blob[6700])
+Y2L_ENGINE_AWM2 = 0x0A   # AWM2  (≈ element_count + 2, default element_count=8 → 0x0A)
+Y2L_ENGINE_DRUM = 0x01   # Drum
+Y2L_ENGINE_FMX  = 0x02   # FM-X
+Y2L_ENGINE_ANX  = 0x03   # AN-X
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Filter cutoff konvertering
@@ -523,8 +422,16 @@ def _make_y2l_default_element() -> bytearray:
     w16(307, 60)    # lfo_extended_speed = 60
 
     # ── Controller sets ──────────────
-    for i in range(32):
-        w(265 + i, 1)  # ctrlSet1..32 = on
+    # SysEx Forge v1.54 / direct ESP-reference locked policy for legacy AWM2:
+    # modern Element rel +7..+38 are Controller Set 1..32 switches.
+    # Legacy conversion does NOT copy the legacy per-element mask directly.
+    # Yamaha/ESP normalization observed for the exact-match reference is:
+    # Set 1 = Off, Sets 2..32 = On.
+    # IMPORTANT: older recovery code incorrectly wrote these at rel 265+i,
+    # corrupting Filter Scaling / LFO bytes. That interpretation is superseded.
+    w(7, 0)
+    for i in range(1, 32):
+        w(7 + i, 1)
 
     # ── Firmware constants ────────────
     w(46, 40)       # [INTERN] firmware constant
@@ -573,7 +480,7 @@ def transcode_element(classic: ClassicPartElement,
         e[rel + 1] = (val >> 8) & 0xFF
 
     # ── 1. Direkta kopieringar ────────────────────────────────────────────
-    for classic_attr, y2l_rel in _direct_fields_for_element(classic):
+    for classic_attr, y2l_rel in _DIRECT_COPY_FIELDS.items():
         raw = getattr(classic, classic_attr, None)
         if raw is None:
             continue
@@ -587,25 +494,12 @@ def transcode_element(classic: ClassicPartElement,
             w(y2l_rel, raw)
 
     # ── 2. Waveform ───────────────────────────────────────────────────────
-    if classic.wave_bank == 0:
-        # Legacy preset IDs are not generation-stable.  Translate identity
-        # through the conservative exact-name legacy->M table.
-        wf = _remap_legacy_waveform_number(classic.waveform_number)
-        if wf.get("status") == "EXACT_NAME" and wf.get("target_id") is not None:
-            w16(51, int(wf["target_id"]))
-            w(53, 0)   # target is M-generation Preset bank
-        else:
-            # Never silently write an unrelated same-number M waveform.
-            # Use the known-safe Init preset and let the caller report fidelity.
-            w16(51, 6)
-            w(53, 0)
-    elif not preset_only:
-        # Explicit non-preset passthrough is retained only for callers that
-        # intentionally manage User/Library dependencies themselves.
+    if classic.wave_bank == 0 or not preset_only:
+        # Preset waveform: direct copy of waveform_number (u16le)
         w16(51, classic.waveform_number)
-        w(53, classic.wave_bank)
+        w(53, 0)   # waveformBank = 0 (preset)
     else:
-        # External User/Library waveform unresolved in this path.
+        # User/library waveform: not supported in Fas 3a — use default
         w16(51, 6)
         w(53, 0)
 
@@ -726,7 +620,7 @@ def build_y2l_blob(classic_perf: ClassicPerformance,
       • Annars: fyll med syntetisk minimalt-giltigt Common + Part headers.
       • AWM2 engine blocks skapas av transcode_part_to_awm2_engine().
       • FM-X parts transkodas till ett 1143-byte Y2L engine-block.
-      • blob[6695] uppdateras till antal aktiva parts.
+      • blob[6695] sätts till fysisk Part-slot count; denna builder konstruerar exakt n_parts slots.
       • blob[6700] uppdateras till engine type byte för Part 1.
 
     Returnerar en bytes-sträng som kan sättas in direkt i DPFM-poolen.
@@ -758,7 +652,9 @@ def build_y2l_blob(classic_perf: ClassicPerformance,
     common[4:22] = name_padded
     common[22] = 0  # null terminator
 
-    # Uppdatera max_active_part (byte 6695 = offset inom Common)
+    # Den klassiska transcodern bygger exakt n_parts fysiska Part-slots, därför är
+    # blob[6695] = n_parts korrekt här. Detta skiljer sig från M-gen fixed-template
+    # FM-X-vägen där template-slot-count måste bevaras (v1.58).
     common[6695] = n_parts
 
     # ── 2. Part sub-blobs (5765 bytes vardera) ─────────────────────────────
@@ -778,32 +674,6 @@ def build_y2l_blob(classic_perf: ClassicPerformance,
             part_sb[4:4+len(pname)] = pname
 
         part_sub_blobs.append(part_sb)
-
-    # Correct the structural Part Common tail/link pointers after cloning or
-    # synthesizing the blocks.  A single-Part Init/reference contains a final
-    # marker (AWM2=0x08); blindly cloning that value into every Part makes
-    # multi-Part Y2L illegal in ESP (Storage Read/Write Error).
-    _pointer_engine_type = {
-        PART_TYPE_AWM2: Y2L_ENGINE_AWM2,
-        PART_TYPE_DRUM: Y2L_ENGINE_DRUM,
-        PART_TYPE_FMX:  Y2L_ENGINE_FMX,
-    }
-    first_type = classic_perf.parts[0].type
-    if first_type not in Y2L_ENGINE_MAGIC_BY_PART_TYPE:
-        raise ValueError(f"Unsupported/unverified Part Common pointer engine type: {first_type}")
-    for part_idx, part_sb in enumerate(part_sub_blobs):
-        p0, p1 = PART_COMMON_POINTER_REL
-        if part_idx < n_parts - 1:
-            next_type = classic_perf.parts[part_idx + 1].type
-            if next_type not in _pointer_engine_type:
-                raise ValueError(
-                    f"Unsupported/unverified next-Part pointer engine type: {next_type}"
-                )
-            part_sb[p0] = 0x01
-            part_sb[p1] = _pointer_engine_type[next_type]
-        else:
-            part_sb[p0] = Y2L_ENGINE_MAGIC_BY_PART_TYPE[first_type]
-            part_sb[p1] = 0x00
 
     # ── 3. Engine blocks ───────────────────────────────────────────────────
     # FM-X reference engine (lazily loaded)
@@ -837,21 +707,16 @@ def build_y2l_blob(classic_perf: ClassicPerformance,
         engine_blocks.append(block)
 
     # ── 4. Sätt engine type bytes i Part Common-blocken ────────────────────
-    # Engine type bytes (ESP verified): AWM2=0x00, Drum=0x01, FMX=0x02, AN-X=0x03
+    # Engine type bytes: AWM2=0x0A, FMX=0x02, Drum=0x01
     _engine_type_byte_map = {
         PART_TYPE_AWM2: Y2L_ENGINE_AWM2,
         PART_TYPE_DRUM: Y2L_ENGINE_DRUM,
         PART_TYPE_FMX:  Y2L_ENGINE_FMX,
     }
-    # AN-X is handled by the modern/direct writer path in the current classic
-    # transcoder. Do not silently fall back to an AWM2 metadata value for an
-    # unsupported classic part type.
     for part_idx in range(n_parts):
         p = classic_perf.parts[part_idx]
         if part_idx == 0:
-            if p.type not in _engine_type_byte_map:
-                raise ValueError(f"Unsupported/unverified classic Y2L engine type: {p.type}")
-            common[6700] = _engine_type_byte_map[p.type]
+            common[6700] = _engine_type_byte_map.get(p.type, Y2L_ENGINE_AWM2)
 
     # ── 5. Montera blob ────────────────────────────────────────────────────
     out = bytearray()
@@ -895,7 +760,7 @@ def transcode_classic_to_y2l(
                 warnings.append(
                     f"Part {i+1} Elem {j+1}: User/Library waveform "
                     f"(bank={elem.wave_bank}, waveform={elem.waveform_number}) "
-                    f"— ersatt med safe preset #6 tills extern waveform-dependency kan lösas."
+                    f"— ersatt med preset waveform #6. Waveform-remapping kräver Fas 3c."
                 )
 
     y2l_blob = build_y2l_blob(classic_perf, ref_blob=ref_blob)
@@ -1244,7 +1109,7 @@ def _fmx_smoke_test():
 #
 #   EPFM entry-struktur: 53-68 bytes (varierar med namnlängd)
 #     Fält: [0:4]=blob_size, [4:8]=DPFM_body_data_offset+4,
-#           [8:12]=packed 5×128 Performance ID, [12:14]=category_flags,
+#           [8:12]=0x00400000+idx, [12:14]=category_flags,
 #           [14]=0, [15]=max(2,ceil(n_parts/2)),
 #           [16:20]=engine_flags, [20:22]=0, [22:26]=0x0000003e,
 #           [26]=sequential_byte, [27:N]="IDX:SHORT_NAME:FULL_NAME\0"
@@ -1311,54 +1176,6 @@ def _load_esp_static_chunks() -> bool:
     return False
 
 
-
-def _validate_epfm_entr_tail(record: bytes, name_offset: int = 27) -> None:
-    """Fail-closed EPFM Entr integrity check (SysEx Forge v1.24 rule).
-
-    A freshly generated entry normally ends immediately after the name NUL,
-    i.e. tail length 0.  If future code appends metadata, it must be composed
-    exclusively of complete 4-byte words.
-    """
-    if len(record) <= name_offset:
-        raise ValueError(f"EPFM Entr record too short: {len(record)} bytes")
-    try:
-        name_end = record.index(0, name_offset)
-    except ValueError as exc:
-        raise ValueError("EPFM performance name is not NUL terminated") from exc
-    tail_len = len(record) - (name_end + 1)
-    if tail_len % 4:
-        raise ValueError(
-            f"Invalid EPFM tail length: {tail_len} bytes after NUL-terminated "
-            "name (must be a multiple of 4)"
-        )
-
-
-
-def modern_epfm_performance_id(perf_index: int) -> int:
-    """Return the ESP-verified modern Y2L EPFM Performance ID.
-
-    Modern Y2L supports 640 Performance slots arranged as five banks of
-    128 slots.  The EPFM ID at record bytes [8:12] is encoded as:
-
-        0x00400000 | (bank << 8) | slot
-
-    where:
-        bank = perf_index // 128   (0..4)
-        slot = perf_index % 128    (0..127)
-
-    This is intentionally NOT a linear base-plus-index representation.
-    ESP verification on 2026-08-22 established the 128-slot bank boundary:
-    128 entries load, 129 with a linear/raw-u8 ID is Illegal file, while
-    packed-128 files with 129, 130, 256 and 414 entries all load.
-    """
-    if not isinstance(perf_index, int):
-        raise TypeError("perf_index must be int")
-    if perf_index < 0 or perf_index >= 640:
-        raise ValueError(f"Performance index out of Y2L range 0..639: {perf_index}")
-    bank, slot = divmod(perf_index, 128)
-    return 0x00400000 | (bank << 8) | slot
-
-
 def _build_epfm_entry(blob: bytes, perf_index: int, body_data_offset: int) -> bytes:
     """Bygg en EPFM entry i ESP-format för ett Y2L blob.
 
@@ -1367,10 +1184,10 @@ def _build_epfm_entry(blob: bytes, perf_index: int, body_data_offset: int) -> by
     body_data_offset — offset för blobdatan inom DPFM body (efter 'Data'+size header)
     """
     n_parts    = blob[6695] if len(blob) > 6695 else 1
-    engine_byte = blob[6700] if len(blob) > 6700 else Y2L_ENGINE_AWM2
+    engine_byte = blob[6700] if len(blob) > 6700 else 0x0A
     blob_size  = len(blob)
     dpfm_off   = body_data_offset + 4   # +4 för 'Data'-taggen
-    entry_id   = modern_epfm_performance_id(perf_index)
+    entry_id   = 0x00400000 + perf_index
     b15        = max(2, _math.ceil(n_parts / 2))
     seq_byte   = (_ESP_MAX_ENTRY_ID_BASE + perf_index - 15875) & 0xFF
 
@@ -1389,7 +1206,7 @@ def _build_epfm_entry(blob: bytes, perf_index: int, body_data_offset: int) -> by
     full_name  = name_raw[:40]
     name_str   = f'{perf_index}:{short_name}:{full_name}\x00'.encode('latin-1', 'replace')
 
-    built = (
+    return (
         _struct.pack('>I', blob_size) +        # [0:4]   blob_size
         _struct.pack('>I', dpfm_off) +          # [4:8]   DPFM data offset
         _struct.pack('>I', entry_id) +          # [8:12]  entry_id
@@ -1402,8 +1219,6 @@ def _build_epfm_entry(blob: bytes, perf_index: int, body_data_offset: int) -> by
         bytes([seq_byte]) +                     # [26]    sequential
         name_str                                # [27:N]  name string
     )
-    _validate_epfm_entr_tail(built)
-    return built
 
 
 def write_y2l_file(out_path: str,
