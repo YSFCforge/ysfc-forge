@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>YSFC Forge Library Builder v15.46 — Y2L/Y2U Merge (+ X7L/X8L transcode) för MODX M / Montage M</title>
+  <title>YSFC Forge Library Builder v15.48 — Y2L/Y2U Merge (+ X7L/X8L transcode) för MODX M / Montage M</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
 
@@ -718,7 +718,7 @@
 <h1>
   YSFC Forge Library Builder
   <span class="sep">│</span>
-  <span class="ver">v15.46</span>
+  <span class="ver">v15.48</span>
   <span class="sep">│</span>
   Y2L · Y2U · X7L · X8L → Y2L/Y2U · X7L export
   <span class="spacer"></span>
@@ -1759,6 +1759,7 @@ function applyI18n() {
 
 (() => {
 
+  // v15.48: Selection move fix — moving selected rows preserves exactly the selected set.
   // v15.46: ESP_VERIFIED packed EPFM Performance IDs for 5 × 128 = 640 slots.
   // v15.33: rollback of v15.26 FX/scene experiment. Stable base is v15.25
   // + keep global User Arp id fix, Arp Master 0x26, and element/cutoff parameter map.
@@ -8706,16 +8707,41 @@ function applyI18n() {
     selection.length = 0; refreshSelectionList(); updateBars(); updateDepSummary();
   });
 
+  // v15.48: Move ONLY the currently selected rows and keep exactly those
+  // rows selected after the move. refreshSelectionList() normally preserves
+  // selected slot indices, which is correct for a normal re-render but wrong
+  // during a move: preserving the old indices and then selecting the new
+  // indices makes the selection grow on every click.
+  function setSelectionListSelectedIndices(indices) {
+    const sl = $("selectionList");
+    const wanted = new Set(indices);
+    for (let i = 0; i < sl.options.length; i++) {
+      sl.options[i].selected = wanted.has(i);
+    }
+    syncSelTableFromSelect();
+  }
+
   $("moveUpBtn").addEventListener("click", () => {
     resetDiagnosticSession();
     const idxs = Array.from($("selectionList").selectedOptions).map(o => parseInt(o.value, 10))
       .filter(Number.isInteger).sort((a,b) => a - b);
     if (!idxs.length || idxs[0] === 0) return;
-    for (const i of idxs) { const t = selection[i]; selection[i] = selection[i-1]; selection[i-1] = t; }
-    refreshSelectionList(); updateBars();
-    const sl = $("selectionList");
-    for (const i of idxs) { if (sl.options[i-1]) sl.options[i-1].selected = true; }
-    syncSelTableFromSelect();
+
+    for (const i of idxs) {
+      const t = selection[i];
+      selection[i] = selection[i-1];
+      selection[i-1] = t;
+    }
+
+    // Clear old selection BEFORE rebuilding, so refreshSelectionList() cannot
+    // preserve the old slot indices.
+    Array.from($("selectionList").options).forEach(o => { o.selected = false; });
+    refreshSelectionList();
+    updateBars();
+
+    const movedIdxs = idxs.map(i => i - 1);
+    setSelectionListSelectedIndices(movedIdxs);
+    selLastClicked = movedIdxs.length ? movedIdxs[movedIdxs.length - 1] : -1;
   });
 
   $("moveDownBtn").addEventListener("click", () => {
@@ -8723,11 +8749,21 @@ function applyI18n() {
     const idxs = Array.from($("selectionList").selectedOptions).map(o => parseInt(o.value, 10))
       .filter(Number.isInteger).sort((a,b) => b - a);
     if (!idxs.length || idxs[0] === selection.length - 1) return;
-    for (const i of idxs) { const t = selection[i]; selection[i] = selection[i+1]; selection[i+1] = t; }
-    refreshSelectionList(); updateBars();
-    const sl = $("selectionList");
-    for (const i of idxs) { if (sl.options[i+1]) sl.options[i+1].selected = true; }
-    syncSelTableFromSelect();
+
+    for (const i of idxs) {
+      const t = selection[i];
+      selection[i] = selection[i+1];
+      selection[i+1] = t;
+    }
+
+    // Same rule as Move Up: do not let refresh preserve the old positions.
+    Array.from($("selectionList").options).forEach(o => { o.selected = false; });
+    refreshSelectionList();
+    updateBars();
+
+    const movedIdxs = idxs.map(i => i + 1);
+    setSelectionListSelectedIndices(movedIdxs);
+    selLastClicked = movedIdxs.length ? movedIdxs[movedIdxs.length - 1] : -1;
   });
 
   $("baseFileSelect").addEventListener("change", () => { updateBars(); updateExportBtn(); });
