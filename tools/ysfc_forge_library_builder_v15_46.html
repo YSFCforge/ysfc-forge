@@ -108,11 +108,11 @@
     h1 .btn-group {
       display: flex;
       gap: 10px;
-      flex-wrap: wrap;      /* allows the second button to wrap */
+      flex-wrap: wrap;      /* allows the buttons to wrap */
       justify-content: flex-end; /* keeps them right-aligned */
     }
 
-    #themeToggle, #advancedView {
+    #themeToggle, #langToggle, #advancedView {
       font-family: var(--mono);
       font-size: 11px;
       font-weight: 600;
@@ -127,7 +127,7 @@
       align-items: center;
       gap: 5px;
     }
-    #themeToggle:hover, #advancedView:hover { border-color: var(--accent); color: var(--accent); }
+    #themeToggle:hover, #langToggle:hover, #advancedView:hover { border-color: var(--accent); color: var(--accent); }
 
     .grid-main {
       display: grid;
@@ -716,15 +716,16 @@
 <body>
 
 <h1>
-  Library Builder by <a href="https://github.com/YSFCforge/" class="ver" title="Open the YSFC Forge project on GitHub" target="_blank" rel="noopener noreferrer">YSFC Forge</a>
+  YSFC Forge Library Builder
   <span class="sep">│</span>
   <span class="ver">v15.46</span>
   <span class="sep">│</span>
-  Y2L/U · X7L/U · X8L/U → Y2L/U · X7L export
-  <span class="sep">│</span>
-  <span>Hosted by <a href="https://itb-music.online/" class="ver" title="ITB Music Online: Premium sounds for Yamaha synths, since 2020" target="_blank" rel="noopener noreferrer">ITB-Music</a></span>
+  Y2L · Y2U · X7L · X8L → Y2L/Y2U · X7L export
   <span class="spacer"></span>
   <div class="btn-group">
+    <button id="langToggle" title="Switch language / Växla språk">
+      <span>🌐</span> <span id="langLabel">EN</span>
+    </button>
     <button id="themeToggle" data-i18n-title="theme_toggle_title" title="Växla ljust/mörkt läge">
       <span id="themeIcon">☀</span> <span id="themeLabel">Ljust läge</span>
     </button>
@@ -1589,7 +1590,7 @@ const LANG = {
   }
 };
 
-let currentLang = 'en'; // forced English
+let currentLang = localStorage.getItem('ysfc-lang') || 'sv';
 function t(key, vars) {
   let s = (LANG[currentLang] || LANG.sv)[key];
   if (s == null) s = (LANG.sv[key] != null ? LANG.sv[key] : key);
@@ -1611,7 +1612,8 @@ function applyI18n() {
   document.querySelectorAll('[data-i18n-title]').forEach(el => {
     el.title = t(el.dataset.i18nTitle);
   });
-  // removed toggle label logic
+  const lbl = document.getElementById('langLabel');
+  if (lbl) lbl.textContent = currentLang === 'sv' ? 'EN' : 'SV';
   document.documentElement.lang = currentLang;
 }
 
@@ -1675,7 +1677,19 @@ function applyI18n() {
       });
     }
 
-    let currentLang = 'en';
+    const langToggle = document.getElementById("langToggle");
+    if (langToggle) {
+      langToggle.addEventListener("click", () => {
+        currentLang = currentLang === 'sv' ? 'en' : 'sv';
+        localStorage.setItem('ysfc-lang', currentLang);
+        applyI18n();
+        // Refresh theme label which depends on lang
+        applyTheme(currentTheme);
+        // Refresh dynamic content
+        if (typeof window.__libRefresh === 'function') window.__libRefresh();
+      });
+    }
+
     // Apply translations now that DOM is ready
     applyI18n();
 
