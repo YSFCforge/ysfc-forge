@@ -572,11 +572,13 @@ Per-OP field layout (offsets relative to OP_BASE):
 | +56 | level_vel | u8 | 7 |
 | +58 | second_lfo_pitch_mod_dest | enum 0..7 | 3 |
 | +60 | second_lfo_amp_mod_dest | enum 0..7 | 3 |
-| +66 | trailer_a | u8 | 127 [INTERN] |
-| +68 | trailer_b | u8 | 127 [INTERN] |
-| +70 | trailer_c | u8 | 127 [INTERN] |
+| +62 | pitch_controller_sensitivity | centered source code 7 | 0 |
+| +64 | level_controller_sensitivity | centered source code 7 | 0 |
+| +66 | first_lfo_dest1_depth_ratio | u8 | 127 |
+| +68 | first_lfo_dest2_depth_ratio | u8 | 127 |
+| +70 | first_lfo_dest3_depth_ratio | u8 | 127 |
 
-Per-OP fields `second_lfo_pitch_mod_dest` (+58) and `second_lfo_amp_mod_dest` (+60) are replicated across all 8 operators with stride 123. The three trailer bytes per OP are firmware constants of the same category as the AN-X filter trailers.
+Per-OP fields `second_lfo_pitch_mod_dest` (+58) and `second_lfo_amp_mod_dest` (+60) are replicated across all 8 operators with stride 123. OP-relative +62/+64 and +66/+68/+70 are user-editable FM-X control/modulation fields verified in the v1.0.72–v1.0.76 ESP-tested lineage; they must not be treated as firmware trailers.
 
 ---
 

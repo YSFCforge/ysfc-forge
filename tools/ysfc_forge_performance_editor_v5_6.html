@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>YSFC Forge Performance Editor v5.5</title>
+<title>YSFC Forge Performance Editor v5.6</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -959,7 +959,7 @@ main > * { min-width: 0; min-height: 0; }
 <body>
 
 <header>
-  <div class="logo">YSFC<span class="logo-dot">.</span>FORGE<span class="logo-sub">Performance Editor v5.5</span></div>
+  <div class="logo">YSFC<span class="logo-dot">.</span>FORGE<span class="logo-sub">Performance Editor v5.6</span></div>
   <span id="enginePill" class="engine-pill hidden"></span>
   <div class="h-gap"></div>
 
@@ -1033,9 +1033,14 @@ main > * { min-width: 0; min-height: 0; }
 <div class="toast" id="toast"></div>
 <script>
 // ═══════════════════════════════════════════════════════════════════
-// YSFC Forge Performance Editor v5.5
+// YSFC Forge Performance Editor v5.6
 // Engines: AWM2 · FM-X · AN-X · Drum
 // Based on serializer v5.10+ — all binary-verified offsets
+//
+// v5.6: Defensive Y2L container hardening.
+// - Validates modern EPFM 5 × 128 Performance IDs (0..639) before export.
+// - Validates EPFM NUL-tail 32-bit alignment before export.
+// - Does not rewrite EPFM records; invalid containers are blocked fail-closed.
 //
 // v5.4: Multi-part support (up to 16 parts per performance).
 // - State: currentPart (1-based), numParts, partEngines[] per performance.
@@ -2809,15 +2814,19 @@ function renderDrumKey() {
 function renderFX() {
   const headline = `<div class="content-headline">
     <h2>Insertion FX</h2>
-    <div class="sub">InsA and InsB effect type selection · Part ${S.currentPart}</div>
+    <div class="sub">InsA/InsB effect type and routing · Part ${S.currentPart}</div>
   </div>`;
 
   const pd = partDelta(S.currentPart);
   const INSA_LO = PART_BASE + 275 + pd, INSA_HI = PART_BASE + 276 + pd;
   const INSB_LO = PART_BASE + 332 + pd, INSB_HI = PART_BASE + 333 + pd;
+  // Binary-verified Y2L Part Common rel +232 = blob abs 6933 for Part 1.
+  // Editor PART_BASE is 6708, hence +225 here. Values: 0=Parallel, 1=A→B, 2=B→A.
+  const INS_CONNECTION = PART_BASE + 225 + pd;
 
   const insAType = fxFromBytes(S.perfBytes[INSA_LO], S.perfBytes[INSA_HI]);
   const insBType = fxFromBytes(S.perfBytes[INSB_LO], S.perfBytes[INSB_HI]);
+  const insConnection = S.perfBytes[INS_CONNECTION] ?? 1;
 
   function fxSelector(label, currentIdx, abs_lo, abs_hi) {
     let opts = '';
@@ -2831,7 +2840,18 @@ function renderFX() {
     </div>`;
   }
 
-  const body = fxSelector('Insertion FX A', insAType, INSA_LO, INSA_HI) +
+  const routeNames = ['Parallel', 'Ins A → B', 'Ins B → A'];
+  const routeOpts = routeNames.map((name, idx) =>
+    `<option value="${idx}" ${idx===insConnection?'selected':''}>${name}</option>`
+  ).join('');
+  const routeSelector = `<div class="srow">
+    <div class="srow-hdr"><span class="sname">Insertion Connection</span>
+      <span class="sval">${routeNames[insConnection] || 'Unknown ('+insConnection+')'}</span></div>
+    <select onchange="writeByte(${INS_CONNECTION},+this.value,'Insertion Connection');renderContent();">${routeOpts}</select>
+  </div>`;
+
+  const body = routeSelector +
+    fxSelector('Insertion FX A', insAType, INSA_LO, INSA_HI) +
     fxSelector('Insertion FX B', insBType, INSB_LO, INSB_HI);
 
   return headline +
@@ -2983,6 +3003,107 @@ function writePerfName(newName) {
   renderPerfList();
 }
 
+// ─── v5.6 EPFM CONTAINER INTEGRITY ────────────────────────────────
+// The editor preserves the EPFM container rather than rebuilding it.
+// Before export we therefore validate the existing modern EPFM records
+// and refuse to emit a file whose container is already structurally invalid.
+
+function modernPerformanceEntryId(index) {
+  if (!Number.isInteger(index) || index < 0 || index >= 640) {
+    throw new Error(`Invalid Y2L Performance index ${index}; expected 0..639`);
+  }
+  const bank = Math.floor(index / 128);
+  const slot = index % 128;
+  return (0x00400000 | (bank << 8) | slot) >>> 0;
+}
+
+function readModernEntrRecordsFromFile(d) {
+  const records = [];
+  const seenOffsets = new Set();
+
+  function tryChunk(abs) {
+    if (abs < 0 || abs + 12 > d.length || seenOffsets.has(abs)) return false;
+    seenOffsets.add(abs);
+    if (d[abs]!==0x45||d[abs+1]!==0x50||d[abs+2]!==0x46||d[abs+3]!==0x4D) return false;
+    const sz = ((d[abs+4]<<24)|(d[abs+5]<<16)|(d[abs+6]<<8)|d[abs+7]) >>> 0;
+    if (abs + 8 + sz > d.length) return false;
+    const p = d.subarray(abs + 8, abs + 8 + sz);
+    if (p.length < 8) return false;
+    const count = ((p[0]<<24)|(p[1]<<16)|(p[2]<<8)|p[3]) >>> 0;
+    if (count < 1 || count > 640) return false;
+    if (p[4]!==0x45||p[5]!==0x6e||p[6]!==0x74||p[7]!==0x72) return false;
+
+    let pos = 8;
+    const tmp = [];
+    for (let i=0; i<count; i++) {
+      if (pos + 4 > p.length) return false;
+      const len = ((p[pos]<<24)|(p[pos+1]<<16)|(p[pos+2]<<8)|p[pos+3]) >>> 0;
+      pos += 4;
+      if (len < 12 || pos + len > p.length) return false;
+      tmp.push(p.subarray(pos, pos + len));
+      pos += len;
+      if (i < count - 1) {
+        if (pos + 4 > p.length ||
+            p[pos]!==0x45||p[pos+1]!==0x6e||p[pos+2]!==0x74||p[pos+3]!==0x72) return false;
+        pos += 4;
+      }
+    }
+    records.push(...tmp);
+    return true;
+  }
+
+  // Modern direct-directory path.
+  const ep = dirChunkPos(d, 'EPFM');
+  if (ep >= 0 && tryChunk(ep)) return records;
+
+  // Some files place the record EPFM chunk later; scan only for a chunk that
+  // actually parses as count + Entr records. This does not rewrite anything.
+  for (let i = 64; i < d.length - 12; i++) {
+    if (d[i]===0x45&&d[i+1]===0x50&&d[i+2]===0x46&&d[i+3]===0x4D) {
+      if (tryChunk(i)) return records;
+    }
+  }
+  return records;
+}
+
+function validateEpfmContainerBeforeExport(d) {
+  const records = readModernEntrRecordsFromFile(d);
+  // If this is a layout without a modern Entr record chunk, do not invent
+  // semantics. The editor leaves it byte-for-byte intact.
+  if (!records.length) return true;
+
+  if (records.length > 640) throw new Error(`EPFM count ${records.length} exceeds Y2L limit 640`);
+
+  for (let i=0; i<records.length; i++) {
+    const rec = records[i];
+    if (rec.length < 28) throw new Error(`EPFM record ${i+1} is too short`);
+
+    const got = ((rec[8]<<24)|(rec[9]<<16)|(rec[10]<<8)|rec[11]) >>> 0;
+    const expected = modernPerformanceEntryId(i);
+    if (got !== expected) {
+      throw new Error(
+        `EPFM Performance ID mismatch at index ${i}: ` +
+        `0x${got.toString(16).padStart(8,'0')} != ` +
+        `0x${expected.toString(16).padStart(8,'0')}`
+      );
+    }
+
+    let nul = -1;
+    for (let p=27; p<rec.length; p++) {
+      if (rec[p] === 0) { nul = p; break; }
+    }
+    if (nul < 0) throw new Error(`EPFM record ${i+1}: name has no NUL terminator`);
+    const tailLen = rec.length - (nul + 1);
+    if ((tailLen & 3) !== 0) {
+      throw new Error(
+        `EPFM record ${i+1}: invalid tail length ${tailLen}; ` +
+        `tail after NUL must be a multiple of 4 bytes`
+      );
+    }
+  }
+  return true;
+}
+
 // ─── EXPORT ───────────────────────────────────────────────────────
 
 function exportY2L() {
@@ -3005,6 +3126,15 @@ function exportY2L() {
   }
   // Current perf may have unsaved diffs in S.perfBytes (which IS perf.bytes)
   // so the loop above already handles it.
+
+  // v5.6: fail closed if the preserved Y2L container is structurally invalid.
+  try {
+    validateEpfmContainerBeforeExport(out);
+  } catch (err) {
+    console.error('EPFM validation failed:', err);
+    showToast(`Export blocked: ${err.message || err}`, 'error');
+    return;
+  }
 
   // Trigger download
   const blob = new Blob([out], { type: 'application/octet-stream' });

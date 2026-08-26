@@ -48,7 +48,7 @@ Open the HTML files in any modern browser — no installation, no cloud upload, 
 
 ### Merge performances
 
-1. Download [`tools/ysfc_forge_performance_merger_v1_21.html`](tools/ysfc_forge_performance_merger_v1_21.html)
+1. Download [`tools/ysfc_forge_performance_merger_v1_23.html`](tools/ysfc_forge_performance_merger_v1_23.html)
 2. Open it in your browser
 3. Drag and drop `.Y2L` or `.Y2U` files
 4. Select the performances you want
@@ -57,7 +57,7 @@ Open the HTML files in any modern browser — no installation, no cloud upload, 
 
 ### Merge performances including dependencies
 
-1. Download [`tools/ysfc_forge_library_builder_v15_33.html`](tools/ysfc_forge_library_builder_v15_33.html)
+1. Download [`tools/ysfc_forge_library_builder_v15_46.html`](tools/ysfc_forge_library_builder_v15_46.html)
 2. Open it in your browser
 3. Drag and drop `.Y2L` or `.Y2U` files
 4. Select the performances you want
@@ -66,11 +66,20 @@ Open the HTML files in any modern browser — no installation, no cloud upload, 
 
 ### Edit a performance
 
-1. Download [`tools/ysfc_forge_performance_editor_v5_3.html`](tools/ysfc_forge_performance_editor_v5_3.html)
+1. Download [`tools/ysfc_forge_performance_editor_v5_6.html`](tools/ysfc_forge_performance_editor_v5_6.html)
 2. Open it in your browser
 3. Click **Open Y2L** and choose a file
 4. Adjust parameters with sliders
 5. Click **Export Y2L** to save
+
+### Convert Yamaha sysex to Y2L
+
+1. Download [`tools/ysfc_forge_sysex_converter_v1_58.html`](tools/ysfc_forge_sysex_converter_v1_58.html)
+2. Drag one or more Soundmondo `.syx` files onto the import area.
+3. Review detected platform, engines, Parts and dependency warnings.
+4. Optionally load a companion `.Y2L` / `.Y2U` when external waveform dependencies must be resolved.
+5. Convert one file or use bulk conversion.
+6. Load the resulting Y2L in MODX M / MONTAGE M / ESP and verify the result. 
 
 ---
 
@@ -80,9 +89,10 @@ Open the HTML files in any modern browser — no installation, no cloud upload, 
 
 |Tool|What it does|
 |-|-|
-|[**Performance Merger**](tools/ysfc_forge_performance_merger_v1_21.html)|Merge performances from multiple Y2L/Y2U files|
-|[**Library Builder**](tools/ysfc_forge_library_builder_v15_33.html)|Merge selected Performances and dependencies from Y2L/Y2U, with experimental legacy X7L/X8L and X2L-style import support|
-|[**Performance Editor**](tools/ysfc_forge_performance_editor_v5_3.html)|Edit FM-X, AWM2 and AN-X parameters in the browser|
+|[**Performance Merger**](tools/ysfc_forge_performance_merger_v1_23.html)|Merge performances from multiple Y2L/Y2U files|
+|[**Library Builder**](tools/ysfc_forge_library_builder_v15_46.html)|Merge selected Performances and dependencies from Y2L/Y2U, with experimental legacy X7L/X8L and X2L-style import support|
+|[**Performance Editor**](tools/ysfc_forge_performance_editor_v5_6.html)|Edit FM-X, AWM2 and AN-X parameters in the browser|
+|[**Sysex Converter**](tools/ysfc_forge_sysex_converter_v1_58.html)|Convert Yamaha sysex files to Y2L|
 
 ### Experimental / Extra Tools
 
@@ -242,31 +252,3 @@ The `.Y2L` / `.Y2U` format research, MODX M / MONTAGE M engine mapping, browser 
 The main YSFC Forge project is released under the MIT License — see [LICENSE](LICENSE).
 
 Some legacy MONTAGE/MODX `.X7L` / `.X8L` support components are based on or derived from ConvertWithMoss and are distributed under the GNU Lesser General Public License v3.0. See [`licenses/LGPL-3.0.txt`](licenses/LGPL-3.0.txt) and the relevant source file headers.
-
-
-> Step 133: classic arpeggio diagnostics now group aligned candidates into repeated 48-byte record families. Automatic arpeggio reference rewriting remains disabled until a controlled single-assignment oracle pair confirms the field offsets.
-
-
-## Step 134
-
-Arpeggio candidate analysis now ranks aligned offsets by non-default ID evidence, repeated 48-byte slot support, and default-value dominance. This remains diagnostic only; merging different non-empty arpeggio pools is still blocked until a controlled one-edit oracle pair confirms the writable reference fields.
-
-
-### X7L multi-source merge plan / X7L mergeplan
-
-The classic writer accepts reproducible JSON merge plans through `--merge-plan`, writes X7L 4.0.2 through `--merge-output`, and can emit a detailed manifest with `--manifest`.
-
-Schema: `ysfc-forge-x7l-merge-plan-v1`.
-
-### Classic merge preflight / Förhandskontroll
-
-Before writing a merged X7L file, a merge plan can now be validated with `--preflight REPORT.json`. The JSON report lists source versions, selected Performance names and indices, estimated output size, warnings and blocking errors. The target remains X7L 4.0.2.
-
-
-### Transactional merge export
-
-Use `--preflight-report` and `--receipt` together with `--merge-output` to write a verified X7L 4.0.2 file, manifest, preflight report and SHA-256 receipt. A blocked preflight never publishes the output file.
-
-## X7L/X8L export in Performance Merger v1.22
-
-Start the local bridge with `tools/start_x7_bridge.bat` (Windows) or `tools/start_x7_bridge.sh`, then open `tools/ysfc_forge_performance_merger_v1_22.html`. Classic files stay local and are exported as X7L 4.0.2.

@@ -98,7 +98,7 @@ Verifieringen ovan gäller de fyra synthesengines:arnas användarredigerbara par
 | Insertion FX / Motion Sequencer / Arp / Control Assign | ✅ Kartlagd (se [Täckning per sektion](#täckning-per-sektion)) |
 | Scene-snapshots | ⚠️ Struktur verifierad, ~10 fält/scen UI-bekräftade — se [Vad som inte är kartlagt ännu](#vad-som-inte-är-kartlagt-ännu) |
 | Smart Morph-interpolationstabeller | ⚠️ Inte kartlagda än — se [Vad som inte är kartlagt ännu](#vad-som-inte-är-kartlagt-ännu) |
-| FM-X 2nd LFO depth-matris | ⚠️ Partiell mappning — se [Vad som inte är kartlagt ännu](#vad-som-inte-är-kartlagt-ännu) |
+| FM-X 2nd LFO depth matrix | ✅ Fully mapped / ESP-verified lineage |
 
 ---
 
@@ -301,9 +301,9 @@ Scene-strukturen är verifierad (8 × 71 bytes Common vid abs 1710, 8 × 84 byte
 
 Interpolationstabellerna och FM-X morphing-state är ej kartlagda.
 
-### FM-X 2nd LFO depth-matris
+### FM-X 2nd LFO depth matrix
 
-Partiell mappning vid `abs=12547+`. Behöver fler testfiler.
+Completed in the v1.0.64 lineage: global Pitch/Amp/Filter modulation depths and per-operator Pitch/Amp depths are mapped and ESP-verified.
 
 ### Performance Editor-verktyg (UI-lucka)
 

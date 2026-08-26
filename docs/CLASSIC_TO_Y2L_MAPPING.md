@@ -201,6 +201,17 @@ OP8:     72 bytes
 
 Classic FM-X common/operator values are written into the low byte of modern Y2L u16 fields where the modern format uses u16 storage. Fields with no classic source are kept from the modern template/default.
 
+
+## Insertion Connection Type — verified Y2L field
+
+The modern Y2L Part Common stores the routing between InsA and InsB at relative offset `+232` (Part 1 blob absolute `6933`) as one byte:
+
+- `0` = `Parallel`
+- `1` = `A_to_B`
+- `2` = `B_to_A`
+
+This mapping was binary-verified with three otherwise-identical MODX M/ESP `Init Normal` exports on 2026-08-08. The classic source field/index has not yet been identified, so classic→Y2L conversion currently preserves the modern template/default value rather than guessing.
+
 ## Dependency selection and renumbering
 
 The Library Builder performs selective dependency export. It does not blindly copy all dependency records when it can reliably resolve the references used by the selected Performances.

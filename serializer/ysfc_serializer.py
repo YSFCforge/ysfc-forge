@@ -33,7 +33,7 @@ Adress-bas:
   DRUM_KEY+N relativt DRUM_KEY1_BASE=12469 (stride=68)
 
 Kritiska metadata-bytes:
-  blob[+6695] Högsta aktiva Part-index (1..16)
+  blob[+6695] Fysisk/template Part-slot count (1..16); INTE logiskt source-Part-count
   blob[+6700] Engine Type Part 1 (0=AWM2, 1=Drum, 2=FMX, 3=ANX)
   blob[+12464], blob[+12465] Part 2 engine-prefix i multi-part-filer
 """
@@ -1473,13 +1473,26 @@ def get_engine_type_byte(blob: bytes) -> str:
     val = blob[ENGINE_TYPE_BYTE]
     return ENGINE_TYPE_VALUES.get(val, f'Unknown({val})')
 
-def get_max_active_part(blob: bytes) -> int:
-    """Read max active part index from blob[+6695].
+def get_physical_part_slot_count(blob: bytes) -> int:
+    """Read the physical/template Part-slot count from blob[+6695].
 
-    Returns the HIGHEST part number that is active (NOT the count of active parts).
-    Example: Parts 3+5 active → returns 5, not 2.
+    ★★★★★ v1.58 correction (ESP verified 2026-08-23): this byte describes
+    the physical Part-slot topology carried by the DPFM blob. It must NOT be
+    overwritten merely because the logical source/export plan uses fewer Parts.
+
+    Example: the verified 92,259-byte multi-Part FM-X template carries 11 physical
+    slots. A three-Part export using that fixed template must keep blob[6695] == 11.
     """
-    return blob[MAX_ACTIVE_PART_BYTE]
+    return blob[PHYSICAL_PART_SLOT_COUNT_BYTE]
+
+
+def get_max_active_part(blob: bytes) -> int:
+    """Backward-compatible alias for get_physical_part_slot_count().
+
+    Historical name retained for callers only. The old semantic description
+    ("highest active Part") was disproven by the v1.58 controlled ESP tests.
+    """
+    return get_physical_part_slot_count(blob)
 
 def validate_engine_consistency(blob: bytes) -> tuple[bool, str]:
     """Check that blob[+6700] matches sub-blob 2 name suffix.
@@ -1504,11 +1517,24 @@ def set_engine_type_byte(blob: bytearray, engine_name: str) -> None:
         raise ValueError(f"Unknown engine name: {engine_name}")
     blob[ENGINE_TYPE_BYTE] = ENGINE_TYPE_BY_NAME[engine_name]
 
+def set_physical_part_slot_count(blob: bytearray, slot_count: int) -> None:
+    """Write physical/template Part-slot count at blob[+6695].
+
+    Use this only when the code is also constructing/resizing the physical topology
+    to exactly ``slot_count`` slots. Do not call it just to mirror a logical source
+    Part count when reusing a fixed multi-slot template.
+    """
+    if not 1 <= slot_count <= 16:
+        raise ValueError(f"slot_count must be 1..16, got {slot_count}")
+    blob[PHYSICAL_PART_SLOT_COUNT_BYTE] = slot_count
+
+
 def set_max_active_part(blob: bytearray, max_part_idx: int) -> None:
-    """Write max active part index at blob[+6695]. max_part_idx: 1..16."""
-    if not 1 <= max_part_idx <= 16:
-        raise ValueError(f"max_part_idx must be 1..16, got {max_part_idx}")
-    blob[MAX_ACTIVE_PART_BYTE] = max_part_idx
+    """Backward-compatible alias for set_physical_part_slot_count().
+
+    Historical name retained for callers only. Prefer the explicit topology name.
+    """
+    set_physical_part_slot_count(blob, max_part_idx)
 
 # ── AWM2 ENGINE INTERNAL STRUCTURE ★★★★★ ──
 # AWM2 engine = 3 byte header + 7 elements × 313 byte + 1 element × 309 byte = 2503 bytes
@@ -2255,10 +2281,14 @@ FMX_OP_FIELDS = {
     56: ('op_level_vel',           'u8',      '7 (FM-X_00_Part1_OP1_LevelVel_+7.Y2L)'),
     58: ('op_2nd_lfo_pitch_mod_dest','u8 enum','3 (FMX_00_Init_2ndLFO_PitchMod_Matrix.Y2L; stride 123 OP1-8 verifierat)'),
     60: ('op_2nd_lfo_amp_mod_dest', 'u8 enum','3 (FMX_00_Init_2ndLFO_AmpMod_Matrix.Y2L; stride 123 OP1-8 verifierat)'),
-    # SESSION 2: per-OP trailer-bytes ★★★★★ [INTERN] default 127 (samma som AN-X Filter-trailers)
-    66: ('op_trailer_a',           'u8',      '127 ([INTERN] OP-trailer; stride 123 verifierat alla 8 OP)'),
-    68: ('op_trailer_b',           'u8',      '127 ([INTERN] OP-trailer)'),
-    70: ('op_trailer_c',           'u8',      '127 ([INTERN] OP-trailer)'),
+    # FM-X completion checkpoint v1.0.77 (2026-08-11) ★★★★★
+    # +62/+64 were previously unmapped; +66/+68/+70 were incorrectly classified as [INTERN] trailers.
+    # Soundmondo→Y2L mapping and ESP acceptance now verify the following semantics.
+    62: ('op_pitch_controller_sensitivity', 'u8 c7', '0 (source code 7 = UI 0; v1.0.76 ESP_VERIFIED)'),
+    64: ('op_level_controller_sensitivity', 'u8 c7', '0 (source code 7 = UI 0; v1.0.76 ESP_VERIFIED)'),
+    66: ('op_1st_lfo_dest1_depth_ratio', 'u8', '127 (v1.0.72 ESP_VERIFIED)'),
+    68: ('op_1st_lfo_dest2_depth_ratio', 'u8', '127 (v1.0.72 ESP_VERIFIED)'),
+    70: ('op_1st_lfo_dest3_depth_ratio', 'u8', '127 (v1.0.72 ESP_VERIFIED)'),
 }
 
 def get_fmx_op_addr(op_idx: int) -> int:
@@ -2874,6 +2904,59 @@ def write_save_counter(file_data: bytearray, value: int) -> None:
 ENTR_PART_BITMASK_OFFSET = 18  # relativt Entr payload start
 ENTR_INNER_COUNTER_OFFSET = 23
 
+
+# SysEx Forge v1.54 recovery rules — verified 2026-08-23.
+def modern_performance_entry_id(index: int) -> int:
+    """Return the modern Y2L EPFM Performance ID for slot 0..639.
+
+    Modern Y2L uses five banks × 128 slots:
+        bank = index // 128
+        slot = index % 128
+        id   = 0x00400000 | (bank << 8) | slot
+    """
+    index = int(index)
+    if not 0 <= index < 640:
+        raise ValueError(f"modern Y2L Performance index out of range: {index}")
+    return 0x00400000 | ((index // 128) << 8) | (index % 128)
+
+
+def validate_epfm_entr_tail(record: bytes | bytearray, *, name_offset: int = 27) -> None:
+    """Fail closed if the tail after the NUL-terminated Entr text is not 32-bit aligned."""
+    rec = bytes(record)
+    if len(rec) <= name_offset:
+        raise ValueError("EPFM Entr record too short")
+    end = rec.find(b"\\x00", name_offset)
+    if end < 0:
+        raise ValueError("EPFM performance name is not NUL terminated")
+    tail_len = len(rec) - (end + 1)
+    if tail_len % 4:
+        raise ValueError(f"Invalid EPFM tail length: {tail_len} bytes (must be a multiple of 4)")
+
+
+def sanitize_epfm_entr_tail(record: bytes | bytearray, *, name_offset: int = 27) -> bytes:
+    """Trim only an incomplete 1..3-byte all-zero EPFM tail remainder.
+
+    Complete 4-byte words are always preserved. Non-zero incomplete data is corruption
+    and raises ValueError. This is the source-side counterpart of the ESP-verified
+    Library Builder sanitizer that fixed the 3- and 100-Performance Illegal-file cases.
+    """
+    rec = bytes(record)
+    if len(rec) <= name_offset:
+        raise ValueError("EPFM Entr record too short")
+    end = rec.find(b"\\x00", name_offset)
+    if end < 0:
+        raise ValueError("EPFM performance name is not NUL terminated")
+    tail_len = len(rec) - (end + 1)
+    rem = tail_len % 4
+    if not rem:
+        return rec
+    extra = rec[-rem:]
+    if extra != b"\\x00" * rem:
+        raise ValueError("EPFM has non-zero data in an incomplete 32-bit tail")
+    out = rec[:-rem]
+    validate_epfm_entr_tail(out, name_offset=name_offset)
+    return out
+
 def build_entr_payload(perf_name: str, part1_name: str,
                        max_active_part: int, save_counter: int,
                        dpfm_size: int) -> bytearray:
@@ -2885,7 +2968,7 @@ def build_entr_payload(perf_name: str, part1_name: str,
     payload = bytearray(27 + len(name_bytes))
     payload[0:4]   = struct.pack('>I', dpfm_size)
     payload[4:8]   = struct.pack('>I', 0x0000000C)
-    payload[8:12]  = struct.pack('>I', 0x00400000)
+    payload[8:12]  = struct.pack('>I', modern_performance_entry_id(0))
     payload[12:16] = struct.pack('>I', 0x00000004)
     payload[16:18] = b'\x02\x00'
     payload[18]    = get_entr_bitmask(max_active_part)
@@ -3040,9 +3123,14 @@ ENGINE_TYPE_BYTE = 6700  # u8 enum: 0=AWM2, 1=Drum, 2=FMX, 3=ANX  ★★★★�
 ENGINE_TYPE_VALUES = {0: 'AWM2', 1: 'Drum', 2: 'FMX', 3: 'ANX'}
 ENGINE_TYPE_BY_NAME = {v: k for k, v in ENGINE_TYPE_VALUES.items()}
 
-# Högsta aktiva Part-index (INTE antal aktiva parts):
-# Part 1 only → 1; Parts 1+2 → 2; Parts 3+5 → 5 (icke-konsekutiva tillåtna)
-MAX_ACTIVE_PART_BYTE = 6695  # u8 direct, 1..16  ★★★★★
+# Fysisk/template Part-slot count ★★★★★ v1.58 (ESP verified 2026-08-23).
+# Detta är INTE automatiskt samma sak som logiskt antal source/export-Parts.
+# Fast 92,259-byte multi-Part FM-X-template: 11 fysiska slots även när endast
+# 3 source-Parts skrivs. Att tvinga 11 -> 3 utan att bygga om topologin gav
+# reproducerbart "Illegal file" i MODX M ESP; återställning 3 -> 11 fixade båda
+# testperformancerna Soft Pad Shimmer G och 2310 Isaiah61 med exakt 1 byte vardera.
+PHYSICAL_PART_SLOT_COUNT_BYTE = 6695  # u8 direct, 1..16
+MAX_ACTIVE_PART_BYTE = PHYSICAL_PART_SLOT_COUNT_BYTE  # backward-compatible alias
 
 # Part 2 engine-typ-indikatorer (engine-pool prefix):
 PART2_ENGINE_PREFIX = (12464, 12465)  # u8 × 2, engine-specifika värden
@@ -3401,7 +3489,7 @@ PART_SUBTABLE = dict(
     partEqHighGain=243, # u8 center=64 default=0dB ✅ (MIDI 0x26)
 )
 FMX_OP_LAYOUT = dict(
-    # OP1_BASE=12676, stride=123 — COMPLETE 21/21 fält ★★★★★ (v4.0)
+    # OP1_BASE=12676, stride=123 — FM-X completion checkpoint v1.0.77 ★★★★★
     # PRE-OP block (relativt OP1_BASE, negativa offsets)
     keyOnReset=-4, # u8 bool default=1=On ★★★★★
     freqMode=-2, # u8 enum 0=Ratio,1=Fixed ★★★★☆
@@ -3441,7 +3529,10 @@ FMX_OP_LAYOUT = dict(
     # 2nd LFO modulation depth (per OP) — NEW★★★★★
     secondLfoPitchModDepth=58, # u8 direct default=3, abs OP1=12734
     secondLfoAmpModDepth=60, # u8 direct default=3, abs OP1=12736
-    # 1st LFO destination Ratio (per OP × 3 destinations) — NEW★★★★★
+    # Controller sensitivity — v1.0.76 ESP_VERIFIED ★★★★★
+    pitchControllerSensitivity=62, # u8 centered source code 7 -> Y2L neutral 0
+    levelControllerSensitivity=64, # u8 centered source code 7 -> Y2L neutral 0
+    # 1st LFO destination Ratio (per OP × 3 destinations) — v1.0.72 ESP_VERIFIED ★★★★★
     firstLfoDest1Ratio=66, # u8 direct default=127, abs OP1=12742
     firstLfoDest2Ratio=68, # u8 direct default=127, abs OP1=12744
     firstLfoDest3Ratio=70, # u8 direct default=127, abs OP1=12746

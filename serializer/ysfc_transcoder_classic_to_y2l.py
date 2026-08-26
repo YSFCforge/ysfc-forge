@@ -422,8 +422,16 @@ def _make_y2l_default_element() -> bytearray:
     w16(307, 60)    # lfo_extended_speed = 60
 
     # ── Controller sets ──────────────
-    for i in range(32):
-        w(265 + i, 1)  # ctrlSet1..32 = on
+    # SysEx Forge v1.54 / direct ESP-reference locked policy for legacy AWM2:
+    # modern Element rel +7..+38 are Controller Set 1..32 switches.
+    # Legacy conversion does NOT copy the legacy per-element mask directly.
+    # Yamaha/ESP normalization observed for the exact-match reference is:
+    # Set 1 = Off, Sets 2..32 = On.
+    # IMPORTANT: older recovery code incorrectly wrote these at rel 265+i,
+    # corrupting Filter Scaling / LFO bytes. That interpretation is superseded.
+    w(7, 0)
+    for i in range(1, 32):
+        w(7 + i, 1)
 
     # ── Firmware constants ────────────
     w(46, 40)       # [INTERN] firmware constant
@@ -612,7 +620,7 @@ def build_y2l_blob(classic_perf: ClassicPerformance,
       • Annars: fyll med syntetisk minimalt-giltigt Common + Part headers.
       • AWM2 engine blocks skapas av transcode_part_to_awm2_engine().
       • FM-X parts transkodas till ett 1143-byte Y2L engine-block.
-      • blob[6695] uppdateras till antal aktiva parts.
+      • blob[6695] sätts till fysisk Part-slot count; denna builder konstruerar exakt n_parts slots.
       • blob[6700] uppdateras till engine type byte för Part 1.
 
     Returnerar en bytes-sträng som kan sättas in direkt i DPFM-poolen.
@@ -644,7 +652,9 @@ def build_y2l_blob(classic_perf: ClassicPerformance,
     common[4:22] = name_padded
     common[22] = 0  # null terminator
 
-    # Uppdatera max_active_part (byte 6695 = offset inom Common)
+    # Den klassiska transcodern bygger exakt n_parts fysiska Part-slots, därför är
+    # blob[6695] = n_parts korrekt här. Detta skiljer sig från M-gen fixed-template
+    # FM-X-vägen där template-slot-count måste bevaras (v1.58).
     common[6695] = n_parts
 
     # ── 2. Part sub-blobs (5765 bytes vardera) ─────────────────────────────

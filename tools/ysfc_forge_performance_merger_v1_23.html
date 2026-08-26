@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>YSFC Forge Performance Merger v1.21</title>
+<title>YSFC Forge Performance Merger v1.23</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ═══════════════════════════════════════════════════
-   DESIGN SYSTEM — YSFC Forge Performance Merger v1.21
+   DESIGN SYSTEM — YSFC Forge Performance Merger v1.23
    Font: DM Mono + DM Sans
    Motiv: Synthlab Dark / Clean Light
 ═══════════════════════════════════════════════════ */
@@ -837,7 +837,7 @@ main { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
 
 <!-- ── HEADER ────────────────────────────────────── -->
 <header>
-  <div class="logo">YSFC<span class="logo-dot">.</span>FORGE Performance Merger <span class="logo-ver">v1.21</span></div>
+  <div class="logo">YSFC<span class="logo-dot">.</span>FORGE Performance Merger <span class="logo-ver">v1.23</span></div>
   <div class="header-sub" data-i18n="subtitle">Yamaha MODX M / Montage M / ESP Plugin</div>
   <div class="header-spacer"></div>
   <div class="header-controls">
@@ -894,6 +894,7 @@ main { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
         <input type="text" class="text-input" id="exportNameC" value="YSFC_Forge_Export">
         <button class="btn-primary" id="btnExportC" disabled data-i18n="save_y2l">💾 Spara som Y2L</button>
         <button class="btn-ghost" id="btnExportY2UC" disabled data-i18n="save_y2u">💾 Spara som Y2U</button>
+        <button class="btn-ghost" id="btnExportX7C" disabled>💾 Spara som X7L 4.0.2</button>
         <button class="btn-ghost" id="btnClearC" data-i18n="clear_all">Rensa allt</button>
         <div class="sel-count" id="selCountC"></div>
       </div>
@@ -932,7 +933,7 @@ main { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
           <div class="format-pills">
             <span class="format-pill ok">Y2L</span>
             <span class="format-pill ok">Y2U</span>
-            <span class="format-pill warn" data-i18n="pill_x7l">X7L / X8L — kräver konvertering</span>
+            <span class="format-pill warn" data-i18n="pill_x7l">X7L / X8L — lokal bridge</span>
           </div>
         </div>
         <div class="search-wrap" style="margin-bottom:12px">
@@ -967,7 +968,7 @@ main { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
           <div class="check-line"><span><b>Y2L / Y2U</b></span><span class="ck-ok">OK</span></div>
           <div class="check-line"><span>MODX / MODX+</span><span class="ck-ok">OK</span></div>
           <div class="check-line"><span>Montage M / ESP</span><span class="ck-ok">OK</span></div>
-          <div class="check-line"><span>X7L / X8L</span><span class="ck-warn" data-i18n="needs_y2l">Kräver Y2L</span></div>
+          <div class="check-line"><span>X7L / X8L</span><span class="ck-warn" data-i18n="needs_y2l">X7 bridge</span></div>
         </div>
       </div>
 
@@ -988,6 +989,7 @@ main { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
         <input type="text" class="text-input" id="exportNameW" value="YSFC_Forge_Export">
         <button class="btn-primary" id="btnExportW" disabled data-i18n="save_y2l">💾 Spara som Y2L</button>
         <button class="btn-ghost" id="btnExportY2UW" disabled data-i18n="save_y2u">💾 Spara som Y2U</button>
+        <button class="btn-ghost" id="btnExportX7W" disabled>💾 Spara som X7L 4.0.2</button>
         <button class="btn-ghost" id="btnClearW" data-i18n="clear_all">Rensa allt</button>
         <div class="sel-count" id="selCountW"></div>
       </div>
@@ -1014,7 +1016,7 @@ main { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal">
     <div class="modal-header">
-      <div class="modal-title">YSFC<span class="logo-dot">.</span>FORGE Performance Merger <span style="font-size:11px;color:var(--text-muted)">v1.16</span></div>
+      <div class="modal-title">YSFC<span class="logo-dot">.</span>FORGE Performance Merger <span style="font-size:11px;color:var(--text-muted)">v1.23</span></div>
       <button class="modal-close" id="modalClose">✕</button>
     </div>
     <div class="modal-body">
@@ -1047,6 +1049,16 @@ main { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
 
       <div class="modal-section-label" data-i18n="changelog">Versionshistorik</div>
       <div class="changelog">
+        <div class="cl-version">
+          <div class="cl-head"><span class="cl-ver">v1.23</span><span class="cl-date">2026-08-22</span></div>
+          <ul>
+            <li>ESP_VERIFIED: Y2L EPFM Performance ID använder nu 5 banker × 128 slots (max 640)</li>
+            <li>Fix: importgränser 128/256 höjda till korrekt max 640 Performances</li>
+            <li>Fix: full EPFM [8:12]-ID skrivs om; gamla ed[11] = index &amp; 0xFF borttagen</li>
+            <li>EPFM trailing-tail sanitizer: endast slutliga 1–3 nollbytes trimmas; icke-noll remainder blockerar export</li>
+            <li>Fail-closed EPFM ID/tail-validering före export</li>
+          </ul>
+        </div>
         <div class="cl-version">
           <div class="cl-head"><span class="cl-ver">v1.21</span><span class="cl-date">2026-06-04</span></div>
           <ul>
@@ -1129,7 +1141,7 @@ main { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
       </div>
       <p class="modal-footer-note">
         Yamaha MODX M8 och ESP plugin — referensenhet. Ej officiellt dokumenterat av Yamaha.<br>
-        Serializer v5.10 | Steg 1–69max | ~99% täckning | Container-fix v6.0 | Entr-metadata-fix v1.19 | Engine-detection-fix v1.21
+        Serializer v5.10 | Steg 1–69max | ~99% täckning | Container-fix v6.0 | Entr-metadata-fix v1.19 | Engine-detection-fix v1.21 | EPFM 5×128 + tail integrity v1.23
       </p>
     </div>
   </div>
@@ -1149,13 +1161,13 @@ const LANG = {
     wz_import_title: 'Importera Yamaha MODX / Montage-bibliotek',
     wz_import_sub1: 'Dra och släpp filer eller klicka för att bläddra.',
     wz_local: 'All bearbetning sker lokalt i webbläsaren — inga filer laddas upp.',
-    pill_x7l: 'X7L / X8L — kräver konvertering',
+    pill_x7l: 'X7L / X8L — lokal bridge',
     ws_import: 'Importera', ws_select: 'Välj', ws_export: 'Exportera',
     guide: 'Snabbguide',
     guide_1: '1. Importera', guide_2: '2. Välj performance', guide_2b: 'Sök / markera',
     guide_3: '3. Exportera', guide_3b: 'Testa kopia',
     guide_hint: 'Allt körs lokalt i webbläsaren — inga originalfiler ändras.',
-    compat: 'Kompatibilitet', needs_y2l: 'Kräver Y2L',
+    compat: 'Kompatibilitet', needs_y2l: 'X7 bridge',
     selection: 'Urval', files: 'Filer', total: 'Performances totalt',
     selected: 'Valda', engines: 'Motorer', est_size: 'Beräknad storlek',
     export: 'Exportera', export_ctrl: 'Exportkontroll', filename: 'Filnamn',
@@ -1220,13 +1232,13 @@ const LANG = {
     wz_import_title: 'Import Yamaha MODX / Montage Library',
     wz_import_sub1: 'Drag and drop files or click to browse.',
     wz_local: 'All processing runs locally in the browser — no files are uploaded.',
-    pill_x7l: 'X7L / X8L — requires conversion',
+    pill_x7l: 'X7L / X8L — local bridge',
     ws_import: 'Import', ws_select: 'Select', ws_export: 'Export',
     guide: 'Quick Guide',
     guide_1: '1. Import', guide_2: '2. Select performance', guide_2b: 'Search / check',
     guide_3: '3. Export', guide_3b: 'Test copy first',
     guide_hint: 'All processing is local — original files are never modified.',
-    compat: 'Compatibility', needs_y2l: 'Requires Y2L',
+    compat: 'Compatibility', needs_y2l: 'X7 bridge',
     selection: 'Selection', files: 'Files', total: 'Total performances',
     selected: 'Selected', engines: 'Engines', est_size: 'Estimated size',
     export: 'Export', export_ctrl: 'Export control', filename: 'File name',
@@ -1505,7 +1517,7 @@ function getEpfmEntries(u8) {
 
   const payloadSize = dv.getUint32(epfmBase + catOff + 5, false);
   const N           = dv.getUint32(epfmBase + catOff + 9, false);
-  if (!N || N > 256) return { entries: [] };
+  if (!N || N > 640) return { entries: [] };
 
   // Catalog stream: starts at epfm[catOff+9] (count field), data after +4
   // Spans beyond EPFM chunk for both standard and library files
@@ -1551,7 +1563,7 @@ function parseYSFC(arrayBuffer) {
   const dpfmData = u8.slice(best.pos+8, best.pos+8+best.len);
   const dpfmDV = new DataView(dpfmData.buffer, dpfmData.byteOffset, dpfmData.byteLength);
   const count = dpfmDV.getUint32(0, false);
-  if (count === 0 || count > 128) throw new Error(t('err_count') + ': ' + count);
+  if (count === 0 || count > 640) throw new Error(t('err_count') + ': ' + count);
 
   const performances = [];
   let pos = 4;
@@ -1589,6 +1601,71 @@ function parseYSFC(arrayBuffer) {
   });
 
   return { performances, rawBuffer: arrayBuffer, dpfmPos: best.pos, dpfmLen: best.len };
+}
+
+// ═══════════════════════════════════════════════════════
+// v1.23 — ESP_VERIFIED EPFM integrity helpers
+// ═══════════════════════════════════════════════════════
+
+// Modern Y2L: 640 Performance slots = 5 banks × 128 slots.
+// EPFM rec[8:12] is:
+//   0x00400000 | ((index // 128) << 8) | (index % 128)
+function modernPerformanceEntryId(index) {
+  if (!Number.isInteger(index) || index < 0 || index >= 640) {
+    throw new Error(`Invalid Y2L Performance index ${index}; expected 0..639`);
+  }
+  const bank = Math.floor(index / 128);
+  const slot = index % 128;
+  return (0x00400000 | (bank << 8) | slot) >>> 0;
+}
+
+function writeModernPerformanceEntryId(rec, index) {
+  if (!rec || rec.length < 12) throw new Error(`EPFM record ${index + 1} too short`);
+  const dv = new DataView(rec.buffer, rec.byteOffset, rec.byteLength);
+  dv.setUint32(8, modernPerformanceEntryId(index), false);
+  return rec;
+}
+
+// EPFM name starts at rel 27. After the NUL terminator, modern records may
+// contain a tail, but the tail must consist of complete 32-bit words.
+// Trim only a final 1..3 ZERO-byte remainder; reject non-zero remainder.
+function sanitizeModernEPFMRecordTail(rec, index = -1) {
+  if (!rec || rec.length < 28) return new Uint8Array(rec || 0);
+  let nul = -1;
+  for (let i = 27; i < rec.length; i++) {
+    if (rec[i] === 0) { nul = i; break; }
+  }
+  if (nul < 0) throw new Error(`EPFM record ${index + 1}: name has no NUL terminator`);
+  const tailLen = rec.length - (nul + 1);
+  const rem = tailLen & 3;
+  if (!rem) return new Uint8Array(rec);
+  for (let i = rec.length - rem; i < rec.length; i++) {
+    if (rec[i] !== 0) {
+      throw new Error(`EPFM record ${index + 1}: non-zero trailing remainder (${rem} byte(s))`);
+    }
+  }
+  return new Uint8Array(rec.slice(0, rec.length - rem));
+}
+
+function validateModernEPFMRecords(records) {
+  if (!Array.isArray(records)) throw new Error('EPFM validation: record array missing');
+  if (records.length > 640) throw new Error(`EPFM count ${records.length} exceeds Y2L limit 640`);
+  for (let i = 0; i < records.length; i++) {
+    const rec = records[i];
+    if (!rec || rec.length < 12) throw new Error(`EPFM record ${i + 1} too short`);
+    const dv = new DataView(rec.buffer, rec.byteOffset, rec.byteLength);
+    const got = dv.getUint32(8, false);
+    const expected = modernPerformanceEntryId(i);
+    if (got !== expected) {
+      throw new Error(
+        `EPFM Performance ID mismatch at index ${i}: ` +
+        `0x${got.toString(16).padStart(8,'0')} != ` +
+        `0x${expected.toString(16).padStart(8,'0')}`
+      );
+    }
+    // Validation-only tail check after sanitizer.
+    sanitizeModernEPFMRecordTail(rec, i);
+  }
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1681,7 +1758,17 @@ function buildLibraryYSFC(raw, rawDV, selectedPerfs, dpfmData, dpfmOffsets, dsys
   const newEpfmSize = epfmSize;
   const newEpfmData = raw.slice(72, 72+epfmSize);
 
-  let catBytes = 4; const entrDatas2 = selectedPerfs.map((p,i)=>{ const ed=(p.epfmEntry&&p.epfmEntry.length>=8)?new Uint8Array(p.epfmEntry):new Uint8Array(65); const edDV=new DataView(ed.buffer,ed.byteOffset,ed.byteLength); edDV.setUint32(0,p.plen,false); edDV.setUint32(4,dpfmOffsets[i],false); catBytes+=8+ed.length; return ed; });
+  let catBytes = 4; const entrDatas2 = selectedPerfs.map((p,i)=>{
+    let ed=(p.epfmEntry&&p.epfmEntry.length>=8)?new Uint8Array(p.epfmEntry):new Uint8Array(65);
+    ed=sanitizeModernEPFMRecordTail(ed,i);
+    const edDV=new DataView(ed.buffer,ed.byteOffset,ed.byteLength);
+    edDV.setUint32(0,p.plen,false);
+    edDV.setUint32(4,dpfmOffsets[i],false);
+    writeModernPerformanceEntryId(ed,i);
+    catBytes+=8+ed.length;
+    return ed;
+  });
+  validateModernEPFMRecords(entrDatas2);
   const innerCat = new Uint8Array(catBytes); const icDV=new DataView(innerCat.buffer);
   icDV.setUint32(0,N,false); let icPos=4;
   for (const ed of entrDatas2) { innerCat[icPos]=0x45;innerCat[icPos+1]=0x6e;innerCat[icPos+2]=0x74;innerCat[icPos+3]=0x72; icDV.setUint32(icPos+4,ed.length,false); innerCat.set(ed,icPos+8); icPos+=8+ed.length; }
@@ -1814,7 +1901,7 @@ function buildStandardYSFC(raw, rawDV, selectedPerfs, dpfmData, dpfmOffsets, dsy
 
   function makeEntrData(name, plen, offset, idx, blob) {
     // Correct Entr record layout (binärverifierat 2026-05-03):
-    // [0:4]  blob_sz,  [4:8] dp_off,  [8]=0x00, [9]=0x40, [10]=0x00, [11]=idx,
+    // [0:4] blob_sz, [4:8] dp_off, [8:12] packed Performance ID (5 × 128),
     // [12]=0x00, [13]=0x00, [14]=0x00, [15]=engine, [16]=0x02, [17]=0x00,
     // [18]=category, [19]=0x00, [20:25]=0x00, [25]=0x30, [26]=0x00,
     // [27:] = 'SLOT:LongName(20ch padded):ShortName\0'
@@ -1827,10 +1914,7 @@ function buildStandardYSFC(raw, rawDV, selectedPerfs, dpfmData, dpfmOffsets, dsy
     const dv = new DataView(ed.buffer);
     dv.setUint32(0, plen,   false);   // [0:4]  blob_sz
     dv.setUint32(4, offset, false);   // [4:8]  dp_off
-    ed[8]  = 0x00;                    // [8]    always 0
-    ed[9]  = 0x40;                    // [9]    constant 0x40
-    ed[10] = 0x00;                    // [10]   always 0
-    ed[11] = idx & 0xFF;              // [11]   entry index
+    writeModernPerformanceEntryId(ed, idx); // [8:12] packed 5 × 128 Performance ID
     ed[12] = 0x00;                    // [12]   always 0
     ed[13] = 0x00;                    // [13]   multi-engine flag (simplified)
     ed[14] = 0x00;                    // [14]   always 0
@@ -1852,12 +1936,11 @@ function buildStandardYSFC(raw, rawDV, selectedPerfs, dpfmData, dpfmOffsets, dsy
     if (p.epfmEntry && p.epfmEntry.length >= 27) {
       // Clone original Entr record — preserves all file-specific metadata bytes
       // ([13],[16],[18],[25],[26] etc. vary by source file type and must not be guessed)
-      ed = new Uint8Array(p.epfmEntry);
+      ed = sanitizeModernEPFMRecordTail(new Uint8Array(p.epfmEntry), i);
       const dv = new DataView(ed.buffer, ed.byteOffset, ed.byteLength);
       dv.setUint32(0, p.plen,          false); // [0:4]  blob_sz
       dv.setUint32(4, dpfmOffsets[i],  false); // [4:8]  dp_off
-      ed[9]  = 0x40;                            // [9]    constant (ensure)
-      ed[11] = i & 0xFF;                        // [11]   new sequential index
+      writeModernPerformanceEntryId(ed, i);     // [8:12] packed 5 × 128 ID
       // [15] engine bits: recompute in case source was wrong (e.g. from older Forge export)
       if (p.rawBytes) ed[15] = entrEngineFlags(p.rawBytes);
     } else {
@@ -1867,6 +1950,7 @@ function buildStandardYSFC(raw, rawDV, selectedPerfs, dpfmData, dpfmOffsets, dsy
     const edDV = new DataView(ed.buffer, ed.byteOffset, ed.byteLength);
     catBytes+=8+ed.length; return ed;
   });
+  validateModernEPFMRecords(entrDatas);
   const cat=new Uint8Array(catBytes); const catDV=new DataView(cat.buffer);
   catDV.setUint32(0,N,false); let catPos=4;
   for (let i=0;i<N;i++) {
@@ -2061,8 +2145,9 @@ function updateStats() {
   document.getElementById('cTotal').textContent    = total;
   document.getElementById('cSelected').textContent = sel;
   const cDis = sel === 0;
-  document.getElementById('btnExportC').disabled   = cDis;
-  document.getElementById('btnExportY2UC').disabled = cDis;
+  document.getElementById('btnExportC').disabled   = cDis || state.files.some(f=>f.format==='classic');
+  document.getElementById('btnExportY2UC').disabled = cDis || state.files.some(f=>f.format==='classic');
+  document.getElementById('btnExportX7C').disabled = cDis || !state.files.length || state.files.some(f=>f.format!=='classic');
   document.getElementById('selCountC').textContent  = sel > 0
     ? t('sel_count_sv', {n: sel, pl: sel>1?'s':'', pla: sel>1?'a':''}) : '';
 
@@ -2071,8 +2156,9 @@ function updateStats() {
   document.getElementById('wTotal').textContent    = total;
   document.getElementById('wSelected').textContent = sel;
   const wDis = sel === 0;
-  document.getElementById('btnExportW').disabled    = wDis;
-  document.getElementById('btnExportY2UW').disabled = wDis;
+  document.getElementById('btnExportW').disabled    = wDis || state.files.some(f=>f.format==='classic');
+  document.getElementById('btnExportY2UW').disabled = wDis || state.files.some(f=>f.format==='classic');
+  document.getElementById('btnExportX7W').disabled = wDis || !state.files.length || state.files.some(f=>f.format!=='classic');
   document.getElementById('selCountW').textContent  = sel > 0
     ? t('sel_count_sv', {n: sel, pl: sel>1?'s':'', pla: sel>1?'s':''}) : '';
 
@@ -2167,17 +2253,44 @@ function removeFile(fi) {
   render();
 }
 
+const X7_BRIDGE = 'http://127.0.0.1:8765';
+
+async function inspectClassicFile(file) {
+  const response = await fetch(X7_BRIDGE + '/api/inspect', {
+    method: 'POST',
+    headers: {'Content-Type':'application/octet-stream', 'X-YSFC-Filename': file.name},
+    body: file
+  });
+  const payload = await response.json();
+  if (!response.ok) throw new Error(payload.error || 'Classic-inspektion misslyckades');
+  state.files.push({
+    name: file.name,
+    format: 'classic',
+    classicToken: payload.token,
+    classicVersion: payload.version,
+    parsed: {performances: payload.performances},
+    rawBuffer: null
+  });
+  render();
+  toast(`${file.name} — ${payload.performanceCount} performance(s), classic ${payload.version}`, 'ok');
+}
+
 function handleFiles(files) {
   Array.from(files).forEach(file => {
     const ext = file.name.split('.').pop().toLowerCase();
-    if (ext === 'x7l') { toast(t('err_x7l'), 'err'); return; }
-    if (ext === 'x8l') { toast(t('err_x8l'), 'err'); return; }
+    if (ext === 'x7l' || ext === 'x8l') {
+      inspectClassicFile(file).catch(err => {
+        toast(`${file.name}: Starta X7 bridge (port 8765). ${err.message}`, 'err');
+        console.error(err);
+      });
+      return;
+    }
     if (ext !== 'y2l' && ext !== 'y2u') { toast(`${file.name} — ${t('err_unknown_fmt')} (.${ext})`, 'err'); return; }
     const reader = new FileReader();
     reader.onload = e => {
       try {
         const parsed = parseYSFC(e.target.result);
-        state.files.push({ name: file.name, parsed, rawBuffer: e.target.result });
+        state.files.push({ name: file.name, format: 'y2', parsed, rawBuffer: e.target.result });
         render();
         toast(`${file.name} — ${t('toast_loaded', {n: parsed.performances.length})}`);
       } catch(err) {
@@ -2188,6 +2301,45 @@ function handleFiles(files) {
     reader.onerror = () => toast(`${t('err_unknown_fmt')}: ${file.name}`, 'err');
     reader.readAsArrayBuffer(file);
   });
+}
+
+function classicMergePayload() {
+  return {sources: state.files.map((file, fi) => ({
+    token: file.classicToken,
+    label: file.name,
+    select: file.parsed.performances.map((_, pi)=>pi).filter(pi=>state.selected.has(pk(fi,pi)))
+  })).filter(src=>src.select.length)};
+}
+
+async function runX7Export() {
+  if (!state.files.length || state.files.some(f=>f.format!=='classic')) {
+    toast('X7L-export kräver endast X7L/X8L-källor.', 'err'); return;
+  }
+  const payload = classicMergePayload();
+  if (!payload.sources.length) return;
+  try {
+    const pre = await fetch(X7_BRIDGE + '/api/preflight', {
+      method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)
+    });
+    const preflight = await pre.json();
+    if (!pre.ok || !preflight.ok) throw new Error((preflight.blockers||[preflight.error]).filter(Boolean).join('; '));
+    toast(`Preflight OK: ${preflight.performanceCount} performance(s), ${(preflight.estimatedOutputBytes/1048576).toFixed(2)} MB`, 'ok');
+    const response = await fetch(X7_BRIDGE + '/api/export', {
+      method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)
+    });
+    if (!response.ok) {
+      const err = await response.json(); throw new Error(err.error || (err.blockers||[]).join('; '));
+    }
+    const blob = await response.blob();
+    const nameInput = currentView === 'wizard' ? document.getElementById('exportNameW') : document.getElementById('exportNameC');
+    const base = (nameInput.value.trim() || 'YSFC_Forge_Export').replace(/\.(x7l)$/i,'');
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href=url; a.download=base+'.X7L'; a.click();
+    URL.revokeObjectURL(url);
+    toast(`✓ Exporterade ${response.headers.get('X-YSFC-Performance-Count')} performance(s) som X7L 4.0.2`, 'ok');
+  } catch(err) {
+    toast('X7L-export misslyckades: ' + err.message, 'err'); console.error(err);
+  }
 }
 
 function runExport(ext) {
@@ -2398,6 +2550,8 @@ document.getElementById('btnExportC').addEventListener('click',    ()=>runExport
 document.getElementById('btnExportY2UC').addEventListener('click', ()=>runExport('Y2U'));
 document.getElementById('btnExportW').addEventListener('click',    ()=>runExport('Y2L'));
 document.getElementById('btnExportY2UW').addEventListener('click', ()=>runExport('Y2U'));
+document.getElementById('btnExportX7C').addEventListener('click', runX7Export);
+document.getElementById('btnExportX7W').addEventListener('click', runX7Export);
 
 document.getElementById('btnClearC').addEventListener('click', ()=>{ state.files.length=0; state.selected.clear(); render(); });
 document.getElementById('btnClearW').addEventListener('click', ()=>{ state.files.length=0; state.selected.clear(); render(); });

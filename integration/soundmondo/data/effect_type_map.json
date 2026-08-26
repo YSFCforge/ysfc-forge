@@ -1,0 +1,1027 @@
+{
+  "source": "Yamaha supplied Data Lists",
+  "profiles": {
+    "legacy": {
+      "00 00": {
+        "short_name": "---",
+        "name": "THRU",
+        "category": null
+      },
+      "01 03": {
+        "short_name": "REV",
+        "name": "HD HALL",
+        "category": "REVERB"
+      },
+      "01 00": {
+        "short_name": "REV",
+        "name": "REV-X HALL",
+        "category": "REVERB"
+      },
+      "01 01": {
+        "short_name": "REV",
+        "name": "R3 HALL",
+        "category": "REVERB"
+      },
+      "01 02": {
+        "short_name": "REV",
+        "name": "SPX HALL",
+        "category": "REVERB"
+      },
+      "01 13": {
+        "short_name": "REV",
+        "name": "HD ROOM",
+        "category": "REVERB"
+      },
+      "01 10": {
+        "short_name": "REV",
+        "name": "REV-X ROOM",
+        "category": "REVERB"
+      },
+      "01 11": {
+        "short_name": "REV",
+        "name": "R3 ROOM",
+        "category": "REVERB"
+      },
+      "01 12": {
+        "short_name": "REV",
+        "name": "SPX ROOM",
+        "category": "REVERB"
+      },
+      "01 21": {
+        "short_name": "REV",
+        "name": "HD PLATE",
+        "category": "REVERB"
+      },
+      "01 20": {
+        "short_name": "REV",
+        "name": "R3 PLATE",
+        "category": "REVERB"
+      },
+      "01 30": {
+        "short_name": "REV",
+        "name": "SPX STAGE",
+        "category": "REVERB"
+      },
+      "01 40": {
+        "short_name": "REV",
+        "name": "SPACE SIMULATOR",
+        "category": "REVERB"
+      },
+      "01 50": {
+        "short_name": "REV",
+        "name": "GATED REVERB",
+        "category": "REVERB"
+      },
+      "01 58": {
+        "short_name": "REV",
+        "name": "REVERSE REVERB",
+        "category": "REVERB"
+      },
+      "02 00": {
+        "short_name": "DLY",
+        "name": "CROSS DELAY",
+        "category": "DELAY"
+      },
+      "02 10": {
+        "short_name": "DLY",
+        "name": "TEMPO CROSS DELAY",
+        "category": "DELAY"
+      },
+      "02 20": {
+        "short_name": "DLY",
+        "name": "TEMPO DELAY MONO",
+        "category": "DELAY"
+      },
+      "02 28": {
+        "short_name": "DLY",
+        "name": "TEMPO DELAY STEREO",
+        "category": "DELAY"
+      },
+      "02 30": {
+        "short_name": "DLY",
+        "name": "CONTROL DELAY",
+        "category": "DELAY"
+      },
+      "02 40": {
+        "short_name": "DLY",
+        "name": "DELAY LR",
+        "category": "DELAY"
+      },
+      "02 50": {
+        "short_name": "DLY",
+        "name": "DELAY LCR",
+        "category": "DELAY"
+      },
+      "02 60": {
+        "short_name": "DLY",
+        "name": "ANALOG DELAY RETRO",
+        "category": "DELAY"
+      },
+      "02 68": {
+        "short_name": "DLY",
+        "name": "ANALOG DELAY MODERN",
+        "category": "DELAY"
+      },
+      "03 00": {
+        "short_name": "CHO",
+        "name": "G CHORUS",
+        "category": "CHORUS"
+      },
+      "03 10": {
+        "short_name": "CHO",
+        "name": "2 MODULATOR",
+        "category": "CHORUS"
+      },
+      "03 20": {
+        "short_name": "CHO",
+        "name": "SPX CHORUS",
+        "category": "CHORUS"
+      },
+      "03 30": {
+        "short_name": "CHO",
+        "name": "SYMPHONIC",
+        "category": "CHORUS"
+      },
+      "03 40": {
+        "short_name": "CHO",
+        "name": "ENSEMBLE DETUNE",
+        "category": "CHORUS"
+      },
+      "04 00": {
+        "short_name": "FLG",
+        "name": "VCM FLANGER",
+        "category": "FLANGER"
+      },
+      "04 10": {
+        "short_name": "FLG",
+        "name": "CLASSIC FLANGER",
+        "category": "FLANGER"
+      },
+      "04 20": {
+        "short_name": "FLG",
+        "name": "TEMPO FLANGER",
+        "category": "FLANGER"
+      },
+      "04 30": {
+        "short_name": "FLG",
+        "name": "DYNAMIC FLANGER",
+        "category": "FLANGER"
+      },
+      "04 08": {
+        "short_name": "FLG",
+        "name": "CONTROL FLANGER",
+        "category": "FLANGER"
+      },
+      "05 00": {
+        "short_name": "PHA",
+        "name": "VCM PHASER MONO",
+        "category": "PHASER"
+      },
+      "05 10": {
+        "short_name": "PHA",
+        "name": "VCM PHASER STEREO",
+        "category": "PHASER"
+      },
+      "05 20": {
+        "short_name": "PHA",
+        "name": "TEMPO PHASER",
+        "category": "PHASER"
+      },
+      "05 30": {
+        "short_name": "PHA",
+        "name": "DYNAMIC PHASER",
+        "category": "PHASER"
+      },
+      "05 18": {
+        "short_name": "PHA",
+        "name": "CONTROL PHASER",
+        "category": "PHASER"
+      },
+      "06 00": {
+        "short_name": "T&R",
+        "name": "AUTO PAN",
+        "category": "TREMOLO&ROTARY"
+      },
+      "06 10": {
+        "short_name": "T&R",
+        "name": "TREMOLO",
+        "category": "TREMOLO&ROTARY"
+      },
+      "06 20": {
+        "short_name": "T&R",
+        "name": "ROTARY SPEAKER 1",
+        "category": "TREMOLO&ROTARY"
+      },
+      "06 30": {
+        "short_name": "T&R",
+        "name": "ROTARY SPEAKER 2",
+        "category": "TREMOLO&ROTARY"
+      },
+      "07 00": {
+        "short_name": "DST",
+        "name": "AMP SIMULATOR 1",
+        "category": "DISTORTION"
+      },
+      "07 10": {
+        "short_name": "DST",
+        "name": "AMP SIMULATOR 2",
+        "category": "DISTORTION"
+      },
+      "07 20": {
+        "short_name": "DST",
+        "name": "COMP DISTORTION",
+        "category": "DISTORTION"
+      },
+      "07 30": {
+        "short_name": "DST",
+        "name": "COMP DISTORTION DELAY",
+        "category": "DISTORTION"
+      },
+      "07 40": {
+        "short_name": "DST",
+        "name": "US COMBO",
+        "category": "DISTORTION"
+      },
+      "07 41": {
+        "short_name": "DST",
+        "name": "JAZZ COMBO",
+        "category": "DISTORTION"
+      },
+      "07 42": {
+        "short_name": "DST",
+        "name": "US HIGH GAIN",
+        "category": "DISTORTION"
+      },
+      "07 43": {
+        "short_name": "DST",
+        "name": "BRITISH LEAD",
+        "category": "DISTORTION"
+      },
+      "07 44": {
+        "short_name": "DST",
+        "name": "MULTI FX",
+        "category": "DISTORTION"
+      },
+      "07 45": {
+        "short_name": "DST",
+        "name": "SMALL STEREO",
+        "category": "DISTORTION"
+      },
+      "07 46": {
+        "short_name": "DST",
+        "name": "BRITISH COMBO",
+        "category": "DISTORTION"
+      },
+      "07 47": {
+        "short_name": "DST",
+        "name": "BRITISH LEGEND",
+        "category": "DISTORTION"
+      },
+      "08 00": {
+        "short_name": "CMP",
+        "name": "VCM COMPRESSOR 376",
+        "category": "COMPRESSOR"
+      },
+      "08 10": {
+        "short_name": "CMP",
+        "name": "CLASSIC COMPRESSOR",
+        "category": "COMPRESSOR"
+      },
+      "08 20": {
+        "short_name": "CMP",
+        "name": "MULTI BAND COMP",
+        "category": "COMPRESSOR"
+      },
+      "08 30": {
+        "short_name": "CMP",
+        "name": "UNI COMP DOWN",
+        "category": "COMPRESSOR"
+      },
+      "08 38": {
+        "short_name": "CMP",
+        "name": "UNI COMP UP",
+        "category": "COMPRESSOR"
+      },
+      "08 40": {
+        "short_name": "CMP",
+        "name": "PARALLEL COMP",
+        "category": "COMPRESSOR"
+      },
+      "0A 00": {
+        "short_name": "WAH",
+        "name": "VCM AUTO WAH",
+        "category": "WAH"
+      },
+      "0A 10": {
+        "short_name": "WAH",
+        "name": "VCM TOUCH WAH",
+        "category": "WAH"
+      },
+      "0A 20": {
+        "short_name": "WAH",
+        "name": "VCM PEDAL WAH",
+        "category": "WAH"
+      },
+      "0B 00": {
+        "short_name": "L-F",
+        "name": "LO-FI",
+        "category": "LO-FI"
+      },
+      "0B 10": {
+        "short_name": "L-F",
+        "name": "NOISY",
+        "category": "LO-FI"
+      },
+      "0B 20": {
+        "short_name": "L-F",
+        "name": "DIGITAL TURNTABLE",
+        "category": "LO-FI"
+      },
+      "0B 30": {
+        "short_name": "L-F",
+        "name": "BIT CRUSHER",
+        "category": "LO-FI"
+      },
+      "0C 00": {
+        "short_name": "TEC",
+        "name": "RING MODULATOR",
+        "category": "TECH"
+      },
+      "0C 10": {
+        "short_name": "TEC",
+        "name": "DYNAMIC RING MODULATOR",
+        "category": "TECH"
+      },
+      "0C 20": {
+        "short_name": "TEC",
+        "name": "DYNAMIC FILTER",
+        "category": "TECH"
+      },
+      "0C 30": {
+        "short_name": "TEC",
+        "name": "AUTO SYNTH",
+        "category": "TECH"
+      },
+      "0C 38": {
+        "short_name": "TEC",
+        "name": "SPIRALIZER P",
+        "category": "TECH"
+      },
+      "0C 39": {
+        "short_name": "TEC",
+        "name": "TEMPO SPIRALIZER P",
+        "category": "TECH"
+      },
+      "0C 3A": {
+        "short_name": "TEC",
+        "name": "SPIRALIZER F",
+        "category": "TECH"
+      },
+      "0C 3B": {
+        "short_name": "TEC",
+        "name": "TEMPO SPIRALIZER F",
+        "category": "TECH"
+      },
+      "0C 40": {
+        "short_name": "TEC",
+        "name": "ISOLATOR",
+        "category": "TECH"
+      },
+      "0C 50": {
+        "short_name": "TEC",
+        "name": "SLICE",
+        "category": "TECH"
+      },
+      "0C 60": {
+        "short_name": "TEC",
+        "name": "TECH MODULATION",
+        "category": "TECH"
+      },
+      "0C 28": {
+        "short_name": "TEC",
+        "name": "CONTROL FILTER",
+        "category": "TECH"
+      },
+      "0C 70": {
+        "short_name": "TEC",
+        "name": "VINYL BREAK",
+        "category": "TECH"
+      },
+      "0C 78": {
+        "short_name": "TEC",
+        "name": "BEAT REPEAT EVEN",
+        "category": "TECH"
+      },
+      "0C 79": {
+        "short_name": "TEC",
+        "name": "BEAT REPEAT TRIPLET",
+        "category": "TECH"
+      },
+      "0C 7A": {
+        "short_name": "TEC",
+        "name": "BEAT REPEAT EVEN+TRIPLET",
+        "category": "TECH"
+      },
+      "0C 7B": {
+        "short_name": "TEC",
+        "name": "BEAT REPEAT FREE",
+        "category": "TECH"
+      },
+      "0D 00": {
+        "short_name": "MSC",
+        "name": "VCM EQ 501",
+        "category": "MISC"
+      },
+      "0D 08": {
+        "short_name": "MSC",
+        "name": "PRESENCE",
+        "category": "MISC"
+      },
+      "0D 10": {
+        "short_name": "MSC",
+        "name": "HARMONIC ENHANCER",
+        "category": "MISC"
+      },
+      "0D 18": {
+        "short_name": "MSC",
+        "name": "STEREOPHONIC OPTIMIZER",
+        "category": "MISC"
+      },
+      "0D 20": {
+        "short_name": "MSC",
+        "name": "TALKING MODULATOR",
+        "category": "MISC"
+      },
+      "0D 28": {
+        "short_name": "MSC",
+        "name": "WAVE FOLDER",
+        "category": "MISC"
+      },
+      "0D 29": {
+        "short_name": "MSC",
+        "name": "VCM MINI FILTER",
+        "category": "MISC"
+      },
+      "0D 2A": {
+        "short_name": "MSC",
+        "name": "VCM MINI BOOSTER",
+        "category": "MISC"
+      },
+      "0D 30": {
+        "short_name": "MSC",
+        "name": "DAMPER RESONANCE",
+        "category": "MISC"
+      },
+      "0D 40": {
+        "short_name": "MSC",
+        "name": "PITCH CHANGE",
+        "category": "MISC"
+      },
+      "0D 50": {
+        "short_name": "MSC",
+        "name": "EARLY REFLECTION",
+        "category": "MISC"
+      },
+      "0D 60": {
+        "short_name": "MSC",
+        "name": "VOCODER",
+        "category": "MISC"
+      },
+      "0D 70": {
+        "short_name": "MSC",
+        "name": "NOISE GATE+COMP+EQ",
+        "category": "MISC"
+      }
+    },
+    "m_generation": {
+      "00 00": {
+        "short_name": "---",
+        "name": "THRU",
+        "category": null
+      },
+      "01 03": {
+        "short_name": "REV",
+        "name": "HD HALL",
+        "category": "REVERB"
+      },
+      "01 00": {
+        "short_name": "REV",
+        "name": "REV-X HALL",
+        "category": "REVERB"
+      },
+      "01 01": {
+        "short_name": "REV",
+        "name": "R3 HALL",
+        "category": "REVERB"
+      },
+      "01 02": {
+        "short_name": "REV",
+        "name": "SPX HALL",
+        "category": "REVERB"
+      },
+      "01 13": {
+        "short_name": "REV",
+        "name": "HD ROOM",
+        "category": "REVERB"
+      },
+      "01 10": {
+        "short_name": "REV",
+        "name": "REV-X ROOM",
+        "category": "REVERB"
+      },
+      "01 11": {
+        "short_name": "REV",
+        "name": "R3 ROOM",
+        "category": "REVERB"
+      },
+      "01 12": {
+        "short_name": "REV",
+        "name": "SPX ROOM",
+        "category": "REVERB"
+      },
+      "01 21": {
+        "short_name": "REV",
+        "name": "HD PLATE",
+        "category": "REVERB"
+      },
+      "01 20": {
+        "short_name": "REV",
+        "name": "R3 PLATE",
+        "category": "REVERB"
+      },
+      "01 30": {
+        "short_name": "REV",
+        "name": "SPX STAGE",
+        "category": "REVERB"
+      },
+      "01 40": {
+        "short_name": "REV",
+        "name": "SPACE SIMULATOR",
+        "category": "REVERB"
+      },
+      "01 50": {
+        "short_name": "REV",
+        "name": "GATED REVERB",
+        "category": "REVERB"
+      },
+      "01 58": {
+        "short_name": "REV",
+        "name": "REVERSE REVERB",
+        "category": "REVERB"
+      },
+      "01 60": {
+        "short_name": "REV",
+        "name": "SHIMMER REVERB",
+        "category": "REVERB"
+      },
+      "02 00": {
+        "short_name": "DLY",
+        "name": "CROSS DELAY",
+        "category": "DELAY"
+      },
+      "02 10": {
+        "short_name": "DLY",
+        "name": "TEMPO CROSS DELAY",
+        "category": "DELAY"
+      },
+      "02 20": {
+        "short_name": "DLY",
+        "name": "TEMPO DELAY MONO",
+        "category": "DELAY"
+      },
+      "02 28": {
+        "short_name": "DLY",
+        "name": "TEMPO DELAY STEREO",
+        "category": "DELAY"
+      },
+      "02 30": {
+        "short_name": "DLY",
+        "name": "CONTROL DELAY",
+        "category": "DELAY"
+      },
+      "02 40": {
+        "short_name": "DLY",
+        "name": "DELAY LR",
+        "category": "DELAY"
+      },
+      "02 50": {
+        "short_name": "DLY",
+        "name": "DELAY LCR",
+        "category": "DELAY"
+      },
+      "02 60": {
+        "short_name": "DLY",
+        "name": "ANALOG DELAY RETRO",
+        "category": "DELAY"
+      },
+      "02 68": {
+        "short_name": "DLY",
+        "name": "ANALOG DELAY MODERN",
+        "category": "DELAY"
+      },
+      "03 00": {
+        "short_name": "CHO",
+        "name": "G CHORUS",
+        "category": "CHORUS"
+      },
+      "03 10": {
+        "short_name": "CHO",
+        "name": "2 MODULATOR",
+        "category": "CHORUS"
+      },
+      "03 20": {
+        "short_name": "CHO",
+        "name": "SPX CHORUS",
+        "category": "CHORUS"
+      },
+      "03 30": {
+        "short_name": "CHO",
+        "name": "SYMPHONIC",
+        "category": "CHORUS"
+      },
+      "03 40": {
+        "short_name": "CHO",
+        "name": "ENSEMBLE DETUNE",
+        "category": "CHORUS"
+      },
+      "03 50": {
+        "short_name": "CHO",
+        "name": "GS1 ENSEMBLE & TREMOLO",
+        "category": "CHORUS"
+      },
+      "04 00": {
+        "short_name": "FLG",
+        "name": "VCM FLANGER",
+        "category": "FLANGER"
+      },
+      "04 10": {
+        "short_name": "FLG",
+        "name": "CLASSIC FLANGER",
+        "category": "FLANGER"
+      },
+      "04 20": {
+        "short_name": "FLG",
+        "name": "TEMPO FLANGER",
+        "category": "FLANGER"
+      },
+      "04 30": {
+        "short_name": "FLG",
+        "name": "DYNAMIC FLANGER",
+        "category": "FLANGER"
+      },
+      "04 08": {
+        "short_name": "FLG",
+        "name": "CONTROL FLANGER",
+        "category": "FLANGER"
+      },
+      "05 00": {
+        "short_name": "PHA",
+        "name": "VCM PHASER MONO",
+        "category": "PHASER"
+      },
+      "05 10": {
+        "short_name": "PHA",
+        "name": "VCM PHASER STEREO",
+        "category": "PHASER"
+      },
+      "05 20": {
+        "short_name": "PHA",
+        "name": "TEMPO PHASER",
+        "category": "PHASER"
+      },
+      "05 30": {
+        "short_name": "PHA",
+        "name": "DYNAMIC PHASER",
+        "category": "PHASER"
+      },
+      "05 18": {
+        "short_name": "PHA",
+        "name": "CONTROL PHASER",
+        "category": "PHASER"
+      },
+      "06 00": {
+        "short_name": "T&R",
+        "name": "AUTO PAN",
+        "category": "TREMOLO&ROTARY"
+      },
+      "06 10": {
+        "short_name": "T&R",
+        "name": "TREMOLO",
+        "category": "TREMOLO&ROTARY"
+      },
+      "06 20": {
+        "short_name": "T&R",
+        "name": "ROTARY SPEAKER 1",
+        "category": "TREMOLO&ROTARY"
+      },
+      "06 30": {
+        "short_name": "T&R",
+        "name": "ROTARY SPEAKER 2",
+        "category": "TREMOLO&ROTARY"
+      },
+      "06 40": {
+        "short_name": "T&R",
+        "name": "VCM ROTARY SPEAKER CLASSIC",
+        "category": "TREMOLO&ROTARY"
+      },
+      "06 41": {
+        "short_name": "T&R",
+        "name": "VCM ROTARY SPEAKER OVERDRIVE",
+        "category": "TREMOLO&ROTARY"
+      },
+      "06 42": {
+        "short_name": "T&R",
+        "name": "VCM ROTARY SPEAKER STUDIO",
+        "category": "TREMOLO&ROTARY"
+      },
+      "07 00": {
+        "short_name": "DST",
+        "name": "AMP SIMULATOR 1",
+        "category": "DISTORTION"
+      },
+      "07 10": {
+        "short_name": "DST",
+        "name": "AMP SIMULATOR 2",
+        "category": "DISTORTION"
+      },
+      "07 20": {
+        "short_name": "DST",
+        "name": "COMP DISTORTION",
+        "category": "DISTORTION"
+      },
+      "07 30": {
+        "short_name": "DST",
+        "name": "COMP DISTORTION DELAY",
+        "category": "DISTORTION"
+      },
+      "07 40": {
+        "short_name": "DST",
+        "name": "US COMBO",
+        "category": "DISTORTION"
+      },
+      "07 41": {
+        "short_name": "DST",
+        "name": "JAZZ COMBO",
+        "category": "DISTORTION"
+      },
+      "07 42": {
+        "short_name": "DST",
+        "name": "US HIGH GAIN",
+        "category": "DISTORTION"
+      },
+      "07 43": {
+        "short_name": "DST",
+        "name": "BRITISH LEAD",
+        "category": "DISTORTION"
+      },
+      "07 44": {
+        "short_name": "DST",
+        "name": "MULTI FX",
+        "category": "DISTORTION"
+      },
+      "07 45": {
+        "short_name": "DST",
+        "name": "SMALL STEREO",
+        "category": "DISTORTION"
+      },
+      "07 46": {
+        "short_name": "DST",
+        "name": "BRITISH COMBO",
+        "category": "DISTORTION"
+      },
+      "07 47": {
+        "short_name": "DST",
+        "name": "BRITISH LEGEND",
+        "category": "DISTORTION"
+      },
+      "08 00": {
+        "short_name": "CMP",
+        "name": "VCM COMPRESSOR 376",
+        "category": "COMPRESSOR"
+      },
+      "08 10": {
+        "short_name": "CMP",
+        "name": "CLASSIC COMPRESSOR",
+        "category": "COMPRESSOR"
+      },
+      "08 20": {
+        "short_name": "CMP",
+        "name": "MULTI BAND COMP",
+        "category": "COMPRESSOR"
+      },
+      "08 30": {
+        "short_name": "CMP",
+        "name": "UNI COMP DOWN",
+        "category": "COMPRESSOR"
+      },
+      "08 38": {
+        "short_name": "CMP",
+        "name": "UNI COMP UP",
+        "category": "COMPRESSOR"
+      },
+      "08 40": {
+        "short_name": "CMP",
+        "name": "PARALLEL COMP",
+        "category": "COMPRESSOR"
+      },
+      "08 50": {
+        "short_name": "CMP",
+        "name": "M/S EQ COMPRESSOR",
+        "category": "COMPRESSOR"
+      },
+      "0A 00": {
+        "short_name": "WAH",
+        "name": "VCM AUTO WAH",
+        "category": "WAH"
+      },
+      "0A 10": {
+        "short_name": "WAH",
+        "name": "VCM TOUCH WAH",
+        "category": "WAH"
+      },
+      "0A 20": {
+        "short_name": "WAH",
+        "name": "VCM PEDAL WAH",
+        "category": "WAH"
+      },
+      "0B 00": {
+        "short_name": "L-F",
+        "name": "LO-FI",
+        "category": "LO-FI"
+      },
+      "0B 10": {
+        "short_name": "L-F",
+        "name": "NOISY",
+        "category": "LO-FI"
+      },
+      "0B 20": {
+        "short_name": "L-F",
+        "name": "DIGITAL TURNTABLE",
+        "category": "LO-FI"
+      },
+      "0B 30": {
+        "short_name": "L-F",
+        "name": "BIT CRUSHER",
+        "category": "LO-FI"
+      },
+      "0C 00": {
+        "short_name": "TEC",
+        "name": "RING MODULATOR",
+        "category": "TECH"
+      },
+      "0C 08": {
+        "short_name": "TEC",
+        "name": "CS RING MODULATOR",
+        "category": "TECH"
+      },
+      "0C 10": {
+        "short_name": "TEC",
+        "name": "DYNAMIC RING MODULATOR",
+        "category": "TECH"
+      },
+      "0C 20": {
+        "short_name": "TEC",
+        "name": "DYNAMIC FILTER",
+        "category": "TECH"
+      },
+      "0C 30": {
+        "short_name": "TEC",
+        "name": "AUTO SYNTH",
+        "category": "TECH"
+      },
+      "0C 38": {
+        "short_name": "TEC",
+        "name": "SPIRALIZER P",
+        "category": "TECH"
+      },
+      "0C 39": {
+        "short_name": "TEC",
+        "name": "TEMPO SPIRALIZER P",
+        "category": "TECH"
+      },
+      "0C 3A": {
+        "short_name": "TEC",
+        "name": "SPIRALIZER F",
+        "category": "TECH"
+      },
+      "0C 3B": {
+        "short_name": "TEC",
+        "name": "TEMPO SPIRALIZER F",
+        "category": "TECH"
+      },
+      "0C 40": {
+        "short_name": "TEC",
+        "name": "ISOLATOR",
+        "category": "TECH"
+      },
+      "0C 50": {
+        "short_name": "TEC",
+        "name": "SLICE",
+        "category": "TECH"
+      },
+      "0C 60": {
+        "short_name": "TEC",
+        "name": "TECH MODULATION",
+        "category": "TECH"
+      },
+      "0C 28": {
+        "short_name": "TEC",
+        "name": "CONTROL FILTER",
+        "category": "TECH"
+      },
+      "0C 70": {
+        "short_name": "TEC",
+        "name": "VINYL BREAK",
+        "category": "TECH"
+      },
+      "0C 78": {
+        "short_name": "TEC",
+        "name": "BEAT REPEAT EVEN",
+        "category": "TECH"
+      },
+      "0C 79": {
+        "short_name": "TEC",
+        "name": "BEAT REPEAT TRIPLET",
+        "category": "TECH"
+      },
+      "0C 7A": {
+        "short_name": "TEC",
+        "name": "BEAT REPEAT EVEN+TRIPLET",
+        "category": "TECH"
+      },
+      "0C 7B": {
+        "short_name": "TEC",
+        "name": "BEAT REPEAT FREE",
+        "category": "TECH"
+      },
+      "0D 00": {
+        "short_name": "MSC",
+        "name": "VCM EQ 501",
+        "category": "MISC"
+      },
+      "0D 08": {
+        "short_name": "MSC",
+        "name": "PRESENCE",
+        "category": "MISC"
+      },
+      "0D 10": {
+        "short_name": "MSC",
+        "name": "HARMONIC ENHANCER",
+        "category": "MISC"
+      },
+      "0D 18": {
+        "short_name": "MSC",
+        "name": "STEREOPHONIC OPTIMIZER",
+        "category": "MISC"
+      },
+      "0D 20": {
+        "short_name": "MSC",
+        "name": "TALKING MODULATOR",
+        "category": "MISC"
+      },
+      "0D 28": {
+        "short_name": "MSC",
+        "name": "WAVE FOLDER",
+        "category": "MISC"
+      },
+      "0D 29": {
+        "short_name": "MSC",
+        "name": "VCM MINI FILTER",
+        "category": "MISC"
+      },
+      "0D 2A": {
+        "short_name": "MSC",
+        "name": "VCM MINI BOOSTER",
+        "category": "MISC"
+      },
+      "0D 30": {
+        "short_name": "MSC",
+        "name": "DAMPER RESONANCE",
+        "category": "MISC"
+      },
+      "0D 40": {
+        "short_name": "MSC",
+        "name": "PITCH CHANGE",
+        "category": "MISC"
+      },
+      "0D 50": {
+        "short_name": "MSC",
+        "name": "EARLY REFLECTION",
+        "category": "MISC"
+      },
+      "0D 60": {
+        "short_name": "MSC",
+        "name": "VOCODER",
+        "category": "MISC"
+      },
+      "0D 70": {
+        "short_name": "MSC",
+        "name": "NOISE GATE+COMP+EQ",
+        "category": "MISC"
+      }
+    }
+  },
+  "notes": {
+    "00 00": "THRU for Insertion A/B; Yamaha also labels 00 00 NO EFFECT in contexts where that is applicable."
+  }
+}

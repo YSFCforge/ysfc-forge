@@ -98,7 +98,7 @@ The verification above applies to the four synthesis engines' user-editable para
 | Insertion FX / Motion Sequencer / Arp / Control Assign | ✅ Mapped (see [Coverage by Section](#coverage-by-section)) |
 | Scene snapshots | ⚠️ Structure verified, ~10 fields/scene UI-confirmed — see [What is Not Yet Mapped](#what-is-not-yet-mapped) |
 | Smart Morph interpolation tables | ⚠️ Not yet mapped — see [What is Not Yet Mapped](#what-is-not-yet-mapped) |
-| FM-X 2nd LFO depth matrix | ⚠️ Partial mapping — see [What is Not Yet Mapped](#what-is-not-yet-mapped) |
+| FM-X 2nd LFO depth matrix | ✅ Fully mapped / ESP-verified lineage |
 
 ---
 
@@ -108,7 +108,7 @@ The verification above applies to the four synthesis engines' user-editable para
 
 | Section | Fields | Coverage | Notes |
 |---|---:|---|---|
-| Operators (8 × 22 fields) | 176 | ✅ Verified | OP1@12676, stride 123 bytes |
+| Operators (8 × complete tracked field set) | 8 operators | ✅ Verified | OP1@12676, stride 123 bytes |
 | Pre-OP (PEG, LFO, Algo, Filter) | 23 | ✅ Verified | |
 | Part Common | 15 | ✅ Verified | Algorithm, Feedback, Filter, FM Color, Volume |
 | Per-OP 2nd LFO modulation | 16 | ✅ Verified | rel +58 (PitchMod), rel +60 (AmpMod) per OP |
@@ -303,7 +303,7 @@ The interpolation tables and FM-X morphing state are not mapped.
 
 ### FM-X 2nd LFO depth matrix
 
-Partial mapping at `abs=12547+`. Needs more test files.
+Completed in the v1.0.64 lineage: global Pitch/Amp/Filter modulation depths and per-operator Pitch/Amp depths are mapped and ESP-verified.
 
 ### Performance Editor tool (UI gap)
 
