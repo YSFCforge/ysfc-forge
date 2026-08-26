@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>YSFC Forge SysEx Converter v1.58</title>
+<title>YSFC Forge SysEx Converter v1.59</title>
 <style>
 :root{
   --bg:#0f1117;--bg2:#161b24;--bg3:#1e2535;--border:#2a3347;--border-hi:#3d5080;
@@ -132,7 +132,7 @@ input[type=number]:focus,select.filter-select:focus{outline:none;border-color:va
 </head>
 <body>
 <header>
-  <div class="brand">YSFC Forge SysEx Converter <span class="sep">│</span> <span class="ver">v1.58</span>
+  <div class="brand">YSFC Forge SysEx Converter <span class="sep">│</span> <span class="ver">v1.59</span>
     <span class="sep">│</span> Soundmondo SysEx → Y2L
   </div>
   <div class="spacer"></div>
@@ -781,7 +781,11 @@ function makeEntrData(perfName,part1Name,maxPart,saveCounter,dpfmSize,engineSele
   if(!contiguous||maxActive>16)
     throw new Error('YSFC contiguous writer supports active Parts 1..16');
 
-  const nb=new TextEncoder().encode(`256:${perfName}:${part1Name}\0`);
+  // v1.59: Yamaha hardware reference + ITB-Music bug fix.
+  // Modern EPFM Category Search text is IDX:SHORT:DISPLAY, where the third
+  // field is the user-visible Performance name. For converted SysEx, Part 1
+  // is the best verified SHORT field and perfName is DISPLAY.
+  const nb=new TextEncoder().encode(`256:${part1Name}:${perfName}\0`);
   const a=new Uint8Array(27+nb.length);
   putBe32(a,0,dpfmSize);
   putBe32(a,4,12);
@@ -1162,7 +1166,9 @@ function rewriteSinglePerfEntrNames(templateBytes,performanceName,partName){
   const maxBytes=Math.max(0,tailCapacity-1);
   let perf=String(performanceName||'');
   let part=String(partName||'');
-  let text=`256:${perf}:${part}`;
+  // v1.59: modern EPFM is IDX:SHORT:DISPLAY. Keep Part 1 as SHORT and
+  // Performance name as DISPLAY so Category Search shows the Performance.
+  let text=`256:${part}:${perf}`;
   let enc=encoder.encode(text);
 
   if(enc.length>maxBytes){
@@ -1173,8 +1179,9 @@ function rewriteSinglePerfEntrNames(templateBytes,performanceName,partName){
     const fixedBytes=encoder.encode(prefix+sep).length;
     let budget=Math.max(0,maxBytes-fixedBytes);
 
-    // Keep as much of the Performance name as possible, then use remaining
-    // bytes for the Part name. Trim by Unicode code point to avoid broken UTF-8.
+    // The third field is the user-visible Performance name, so preserve it
+    // with priority. Use the remaining budget for the SHORT/Part-1 field.
+    // Trim by Unicode code point to avoid broken UTF-8.
     const fit=(s,limit)=>{
       let outText='';
       for(const ch of String(s||'')){
@@ -1185,22 +1192,24 @@ function rewriteSinglePerfEntrNames(templateBytes,performanceName,partName){
       return outText;
     };
 
+    // Reserve most of the available text budget for DISPLAY (Performance).
+    // SHORT is auxiliary metadata and may be shortened first if necessary.
     const desiredPart=Math.min(16,Math.max(0,Math.floor(budget/3)));
     part=fit(part,desiredPart);
     const partBytes=encoder.encode(part).length;
     perf=fit(perf,Math.max(0,budget-partBytes));
-    text=`${prefix}${perf}${sep}${part}`;
+    text=`${prefix}${part}${sep}${perf}`;
     enc=encoder.encode(text);
 
-    // Last-resort byte-safe trim, should normally never be needed.
+    // Last-resort byte-safe trim: shorten SHORT first, DISPLAY last.
     while(enc.length>maxBytes && part.length){
       part=[...part].slice(0,-1).join('');
-      text=`${prefix}${perf}${sep}${part}`;
+      text=`${prefix}${part}${sep}${perf}`;
       enc=encoder.encode(text);
     }
     while(enc.length>maxBytes && perf.length){
       perf=[...perf].slice(0,-1).join('');
-      text=`${prefix}${perf}${sep}${part}`;
+      text=`${prefix}${part}${sep}${perf}`;
       enc=encoder.encode(text);
     }
   }
@@ -2999,6 +3008,7 @@ function planEngineTopology(parts){
 
 
 
+// v1.59 candidate: EPFM name-order fix (IDX:SHORT:DISPLAY) based on Frank MODX M6 hardware refs and ITB-Music NL2 Echo pad report.
 const REQUIRED_CARRY_FORWARD_FIXES=Object.freeze([
   'modelId source-family routing',
   'AWM2 multi-Part structural tail/link markers',
@@ -7661,7 +7671,7 @@ document.getElementById('bulkConvertBtn').onclick=async()=>{
 };
 document.getElementById('aboutBtn').onclick=()=>{
  const msg=lang==='sv'
- ?`YSFC Forge SysEx Converter v1.58
+ ?`YSFC Forge SysEx Converter v1.59
 
 Kort om begränsningar:
 • Externa User/Library-waveforms och User Arps kräver motsvarande companion Y2L/Y2U.
@@ -7671,7 +7681,7 @@ Kort om begränsningar:
 • Exportalternativet ”Tvinga Portamento OFF” stänger av Performance- och Part-Portamento i exporterade filer.
 
 All bearbetning sker lokalt i webbläsaren. Originalfiler ändras aldrig.`
- :`YSFC Forge SysEx Converter v1.58
+ :`YSFC Forge SysEx Converter v1.59
 
 Limitations:
 • External User/Library waveforms and User Arps require the matching companion Y2L/Y2U.
