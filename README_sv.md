@@ -57,7 +57,7 @@ MODX M / MONTAGE M-verktygen för `.Y2L` / `.Y2U` är reverse-engineerade från 
 
 ### Sammanfoga performances inklusive beroenden
 
-1. Ladda ner [`tools/ysfc_forge_library_builder_v15_46.html`](tools/ysfc_forge_library_builder_v15_46.html)
+1. Ladda ner [`tools/ysfc_forge_library_builder_v15_48.html`](tools/ysfc_forge_library_builder_v15_48.html)
 2. Öppna filen i din webbläsare
 3. Dra och släpp `.Y2L`- eller `.Y2U`-filer
 4. Markera de performances du vill ha
@@ -74,7 +74,7 @@ MODX M / MONTAGE M-verktygen för `.Y2L` / `.Y2U` är reverse-engineerade från 
 
 ### Konvertera Yamaha sysex till Y2L
 
-1. Ladda ner [`tools/ysfc_forge_sysex_converter_v1_58.html`](tools/ysfc_forge_sysex_converter_v1_58.html)
+1. Ladda ner [`tools/ysfc_forge_sysex_converter_v1_59.html`](tools/ysfc_forge_sysex_converter_v1_59.html)
 2. Dra in en eller flera Soundmondo `.syx`.
 3. Kontrollera detekterad plattform, engines, Parts och dependency-varningar.
 4. Ladda vid behov en companion `.Y2L` / `.Y2U` för externa waveform-dependencies.
@@ -90,9 +90,9 @@ MODX M / MONTAGE M-verktygen för `.Y2L` / `.Y2U` är reverse-engineerade från 
 |Verktyg|Vad det gör|
 |-|-|
 |[**Performance Merger**](tools/ysfc_forge_performance_merger_v1_23.html)|Sammanfoga performances från flera Y2L/Y2U-filer|
-|[**Library Builder**](tools/ysfc_forge_library_builder_v15_46.html)|Sammanfoga valda performances och beroenden från Y2L/Y2U, med experimentellt stöd för legacy X7L/X8L och X2L-liknande import|
+|[**Library Builder**](tools/ysfc_forge_library_builder_v15_48.html)|Sammanfoga valda performances och beroenden från Y2L/Y2U, med experimentellt stöd för legacy X7L/X8L och X2L-liknande import|
 |[**Performance Editor**](tools/ysfc_forge_performance_editor_v5_6.html)|Redigera FM-X, AWM2 och AN-X-parametrar i webbläsaren|
-|[**Sysex Converter**](tools/ysfc_forge_sysex_converter_v1_58.html)|ConKonvertera Yamaha sysex filer till Y2L|
+|[**Sysex Converter**](tools/ysfc_forge_sysex_converter_v1_59.html)|ConKonvertera Yamaha sysex filer till Y2L|
 
 ### Experimentella / extra verktyg
 

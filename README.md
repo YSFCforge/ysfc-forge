@@ -57,7 +57,7 @@ Open the HTML files in any modern browser — no installation, no cloud upload, 
 
 ### Merge performances including dependencies
 
-1. Download [`tools/ysfc_forge_library_builder_v15_46.html`](tools/ysfc_forge_library_builder_v15_46.html)
+1. Download [`tools/ysfc_forge_library_builder_v15_48.html`](tools/ysfc_forge_library_builder_v15_48.html)
 2. Open it in your browser
 3. Drag and drop `.Y2L` or `.Y2U` files
 4. Select the performances you want
@@ -74,7 +74,7 @@ Open the HTML files in any modern browser — no installation, no cloud upload, 
 
 ### Convert Yamaha sysex to Y2L
 
-1. Download [`tools/ysfc_forge_sysex_converter_v1_58.html`](tools/ysfc_forge_sysex_converter_v1_58.html)
+1. Download [`tools/ysfc_forge_sysex_converter_v1_59.html`](tools/ysfc_forge_sysex_converter_v1_59.html)
 2. Drag one or more Soundmondo `.syx` files onto the import area.
 3. Review detected platform, engines, Parts and dependency warnings.
 4. Optionally load a companion `.Y2L` / `.Y2U` when external waveform dependencies must be resolved.
@@ -90,9 +90,9 @@ Open the HTML files in any modern browser — no installation, no cloud upload, 
 |Tool|What it does|
 |-|-|
 |[**Performance Merger**](tools/ysfc_forge_performance_merger_v1_23.html)|Merge performances from multiple Y2L/Y2U files|
-|[**Library Builder**](tools/ysfc_forge_library_builder_v15_46.html)|Merge selected Performances and dependencies from Y2L/Y2U, with experimental legacy X7L/X8L and X2L-style import support|
+|[**Library Builder**](tools/ysfc_forge_library_builder_v15_48.html)|Merge selected Performances and dependencies from Y2L/Y2U, with experimental legacy X7L/X8L and X2L-style import support|
 |[**Performance Editor**](tools/ysfc_forge_performance_editor_v5_6.html)|Edit FM-X, AWM2 and AN-X parameters in the browser|
-|[**Sysex Converter**](tools/ysfc_forge_sysex_converter_v1_58.html)|Convert Yamaha sysex files to Y2L|
+|[**Sysex Converter**](tools/ysfc_forge_sysex_converter_v1_59.html)|Convert Yamaha sysex files to Y2L|
 
 ### Experimental / Extra Tools
 

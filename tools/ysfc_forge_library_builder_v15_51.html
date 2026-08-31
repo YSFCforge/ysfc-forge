@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>YSFC Forge Library Builder v15.46 — Y2L/Y2U Merge (+ X7L/X8L transcode) för MODX M / Montage M</title>
+  <title>YSFC Forge Library Builder v15.51 — Y2L/Y2U Merge (+ X7L/X8L transcode) för MODX M / Montage M</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
 
@@ -718,7 +718,7 @@
 <h1>
   YSFC Forge Library Builder
   <span class="sep">│</span>
-  <span class="ver">v15.46</span>
+  <span class="ver">v15.51</span>
   <span class="sep">│</span>
   Y2L · Y2U · X7L · X8L → Y2L/Y2U · X7L export
   <span class="spacer"></span>
@@ -1759,6 +1759,8 @@ function applyI18n() {
 
 (() => {
 
+  // v15.51: Constrained template-based DWFM scratch writer + structural validation.
+  // v15.50: Selection move fix — moving selected rows preserves exactly the selected set.
   // v15.46: ESP_VERIFIED packed EPFM Performance IDs for 5 × 128 = 640 slots.
   // v15.33: rollback of v15.26 FX/scene experiment. Stable base is v15.25
   // + keep global User Arp id fix, Arp Master 0x26, and element/cutoff parameter map.
@@ -2640,8 +2642,8 @@ function applyI18n() {
     const nameBytes = classicDepNameBytes(recPayload);
     const out = new Uint8Array(27 + nameBytes.length);
     const dv = new DataView(out.buffer);
-    // size/off are filled by buildDepPayload(), but seed them from source
-    // for round-trip sanity.
+    // Generic classic path retained for X7 and any classic family that is not
+    // the exact hardware-verified X8 5.0.1 dependency layout.
     if (recPayload && recPayload.length >= 8) {
       setU32be(dv, 0, u32be(new DataView(recPayload.buffer, recPayload.byteOffset, recPayload.byteLength), 0));
       setU32be(dv, 4, u32be(new DataView(recPayload.buffer, recPayload.byteOffset, recPayload.byteLength), 4));
@@ -2649,7 +2651,6 @@ function applyI18n() {
     out[8] = 0x00; out[9] = 0x01;
     out[10] = (newId >>> 8) & 0xff;
     out[11] = newId & 0xff;
-    // Modern dependency fixed/header bytes observed in ESP dependency exports.
     out[12]=0x00; out[13]=0x00; out[14]=0x00; out[15]=0x00; out[16]=0x00;
     out[17]=0x04; out[18]=0x02; out[19]=0x00;
     out[20]=0x00; out[21]=0x00; out[22]=0x00; out[23]=0x00; out[24]=0x00;
@@ -2662,9 +2663,79 @@ function applyI18n() {
     return out;
   }
 
-  function exportDepRecPayload(sf, e, newId, fileStamp3c) {
+  function isExactX8DependencySource(sf) {
+    return !!(sf && sf.ysfc && sf.ysfc.isClassic && String(sf.ysfc.version || '') === '5.0.1');
+  }
+
+  function x8DependencyNameBytes(recPayload) {
+    // Exact X8 5.0.1 dependency layout: name starts at rel22 and is followed
+    // by NUL plus one classic-only padding NUL. The modern record drops the
+    // extra pad and moves the same name to rel27.
+    if (!recPayload || recPayload.length < 24) return null;
+    let end = 22;
+    while (end < recPayload.length && recPayload[end] !== 0) end++;
+    if (end >= recPayload.length || end === 22) return null;
+    const out = new Uint8Array(end - 22 + 1);
+    out.set(recPayload.slice(22, end), 0);
+    out[out.length - 1] = 0;
+    return out;
+  }
+
+  function deriveVerifiedX8EARPVariant(darpBlob) {
+    // Hardware-verified ARPa control: raw 0x0F00 / 0x0780 = variant 2.
+    // Keep this intentionally narrow/fail-closed: only emit 2 when the
+    // corresponding DARP blob contains ARPa followed by the proven 0F00 value
+    // in the nearby ARPa payload. Unknown variants remain 0 rather than guessed.
+    if (!darpBlob || darpBlob.length < 8) return 0;
+    for (let i = 0; i + 4 <= darpBlob.length; i++) {
+      if (darpBlob[i] !== 0x41 || darpBlob[i+1] !== 0x52 || darpBlob[i+2] !== 0x50 || darpBlob[i+3] !== 0x61) continue; // ARPa
+      const end = Math.min(darpBlob.length - 1, i + 48);
+      for (let j = i + 4; j < end; j++) {
+        if (darpBlob[j] === 0x0f && darpBlob[j+1] === 0x00) return 2;
+      }
+    }
+    return 0;
+  }
+
+  function buildModernX8DependencyEntry(recPayload, newId, fileStamp3c, sectionTag, darpBlob) {
+    const family = String(sectionTag || '').toUpperCase();
+    if (!['EARP','EWFM','EWIM'].includes(family)) return null;
+    if (!recPayload || recPayload.length < 24) return null;
+    const nameBytes = x8DependencyNameBytes(recPayload);
+    if (!nameBytes) return null;
+
+    const out = new Uint8Array(27 + nameBytes.length);
+    // Exact Frank/MODX6 -> MODX M6 rule, verified 36/36 dependency Entries.
+    out.set(recPayload.slice(0, 17), 0);
+    out[17] = 0x04; out[18] = 0x02;
+    out.set(recPayload.slice(17, 20), 19);
+    out[22] = family === 'EARP' ? deriveVerifiedX8EARPVariant(darpBlob) : 0;
+    out[23] = 0; out[24] = 0;
+    const low = (fileStamp3c && fileStamp3c !== 0xffffffff) ? (fileStamp3c & 0xffff) : 0;
+    if (family === 'EWIM') {
+      out[25] = 0; out[26] = 0;
+    } else {
+      const stamp = (low - 8) & 0xffff;
+      out[25] = (stamp >>> 8) & 0xff;
+      out[26] = stamp & 0xff;
+    }
+    out.set(nameBytes, 27);
+    // ID may be globally renumbered by Library Builder. Preserve all other
+    // X8 fixed-header bytes exactly, then patch only the verified catalog ID.
+    if (newId != null && out.length >= 12) {
+      out[10] = (newId >>> 8) & 0xff;
+      out[11] = newId & 0xff;
+    }
+    return out;
+  }
+
+  function exportDepRecPayload(sf, e, newId, fileStamp3c, sectionTag, depBlob) {
     if (sf && sf.ysfc && sf.ysfc.isClassic) {
       const id = newId != null ? newId : (((e.recPayload?.[10] || 0) << 8) | (e.recPayload?.[11] || 0));
+      if (isExactX8DependencySource(sf)) {
+        const exact = buildModernX8DependencyEntry(e.recPayload, id, fileStamp3c, sectionTag, depBlob);
+        if (exact) return exact;
+      }
       return buildModernDepRecFromClassic(e.recPayload, id, fileStamp3c);
     }
     return (newId != null) ? setRecPayloadId(e.recPayload, newId)
@@ -3432,7 +3503,11 @@ function applyI18n() {
     return recPayload;
   }
 
-  function applyDependencyStampPolicy(recPayload, fileStamp3c, sectionTag) {
+  function applyDependencyStampPolicy(recPayload, fileStamp3c, sectionTag, sourceFile) {
+    // X8 5.0.1 classic records are already modernized with the exact
+    // hardware-derived family stamp (-8 for EARP/EWFM, 0000 for EWIM).
+    // Do not overwrite that with the older generic -3/-4 normalization.
+    if (isExactX8DependencySource(sourceFile)) return recPayload;
     // Native dependency records keep their original stamps in preserve mode.
     if (getStampDiagMode() === "preserve") return recPayload;
     return patchDependencyRecordStamp(recPayload, fileStamp3c, sectionTag);
@@ -3594,6 +3669,177 @@ function applyI18n() {
 
     return { payload: out, blobOffsets };
   }
+
+
+  // ── DWFM scratch-writer core (v15.51) ────────────────────────────────
+  // Constrained to the ESP-verified PCM/sample profile.
+  // Never build a 64-byte keybank from zeroes: clone a verified template,
+  // overwrite mapped fields only, and preserve opaque bytes byte-for-byte.
+
+  const DWFM_KEYBANK_SIZE = 64;
+  const DWFM_CANONICAL_MONO_TEMPLATE = new Uint8Array([
+      0,127,1,127,255,64,0,0,60,64,64,1,0,2,5,1,
+      0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,
+      0,0,255,255,68,172,0,0,0,0,0,0,0,0,0,0,
+      63,128,0,0,0,0,0,0,221,101,0,0,64,128,0,0
+  ]);
+
+  function _dwfmU32LEGet(a,o) {
+    return ((a[o]) | (a[o+1]<<8) | (a[o+2]<<16) | (a[o+3]<<24)) >>> 0;
+  }
+  function _dwfmU32LESet(a,o,v) {
+    v=Number(v)>>>0;
+    a[o]=v&255; a[o+1]=(v>>>8)&255; a[o+2]=(v>>>16)&255; a[o+3]=(v>>>24)&255;
+  }
+  function _dwfmRequireInt(name,v,lo,hi) {
+    if (!Number.isInteger(v) || v<lo || v>hi)
+      throw new Error(`DWFM ${name} out of range: ${v} (expected ${lo}..${hi})`);
+    return v;
+  }
+
+  function validateDwfmKeybank64(kb, opts={}) {
+    if (!(kb instanceof Uint8Array) || kb.length!==DWFM_KEYBANK_SIZE)
+      throw new Error("DWFM keybank must be exactly 64 bytes");
+
+    if (kb[0]>kb[1]) throw new Error(`DWFM KeyLow ${kb[0]} > KeyHigh ${kb[1]}`);
+    if (kb[2]>kb[3]) throw new Error(`DWFM VelocityLow ${kb[2]} > VelocityHigh ${kb[3]}`);
+
+    if (kb[11]!==1 && kb[11]!==2)
+      throw new Error(`DWFM unsupported channel mode ${kb[11]}`);
+
+    if (kb[14]!==5 && !opts.allowUnknownFormat)
+      throw new Error(`DWFM unsupported playback format ${kb[14]}; scratch profile requires 5`);
+
+    if (kb[15]!==0 && kb[15]!==1)
+      throw new Error(`DWFM unsupported loop mode ${kb[15]}`);
+
+    const sampleRate=_dwfmU32LEGet(kb,36);
+    const loopStart=_dwfmU32LEGet(kb,44);
+    const loopEnd=_dwfmU32LEGet(kb,48);
+    const frameCount=_dwfmU32LEGet(kb,60);
+
+    if (!sampleRate) throw new Error("DWFM SampleRate must be > 0");
+    if (!frameCount) throw new Error("DWFM FrameCount must be > 0");
+    if (loopStart>loopEnd) throw new Error(`DWFM LoopStart ${loopStart} > End ${loopEnd}`);
+    if (loopEnd>=frameCount) throw new Error(`DWFM End ${loopEnd} >= FrameCount ${frameCount}`);
+
+    return {
+      keyLow:kb[0], keyHigh:kb[1], velocityLow:kb[2], velocityHigh:kb[3],
+      pan:kb[5], rootKey:kb[8], coarseTune:kb[9], fineTune:kb[10],
+      channelMode:kb[11], playbackFormat:kb[14], loopMode:kb[15],
+      sampleRate, loopStart, loopEnd, uid:_dwfmU32LEGet(kb,56), frameCount
+    };
+  }
+
+  function buildDwfmKeybankFromTemplate(options={}) {
+    const template=options.template64 ?? DWFM_CANONICAL_MONO_TEMPLATE;
+    if (!(template instanceof Uint8Array) || template.length!==DWFM_KEYBANK_SIZE)
+      throw new Error("DWFM scratch template must be a 64-byte Uint8Array");
+
+    const kb=new Uint8Array(template); // preserves every still-opaque byte
+
+    const keyLow=options.keyLow ?? 0, keyHigh=options.keyHigh ?? 127;
+    const velocityLow=options.velocityLow ?? 1, velocityHigh=options.velocityHigh ?? 127;
+    const pan=options.pan ?? 64, rootKey=options.rootKey ?? 60;
+    const coarseTune=options.coarseTune ?? 64, fineTune=options.fineTune ?? 64;
+    const channelMode=options.channelMode ?? 1;
+    const playbackFormat=options.playbackFormat ?? 5;
+    const loopMode=options.loopMode ?? 1;
+
+    _dwfmRequireInt("KeyLow",keyLow,0,127);
+    _dwfmRequireInt("KeyHigh",keyHigh,0,127);
+    _dwfmRequireInt("VelocityLow",velocityLow,0,127);
+    _dwfmRequireInt("VelocityHigh",velocityHigh,0,127);
+    _dwfmRequireInt("Pan",pan,0,127);
+    _dwfmRequireInt("RootKey",rootKey,0,127);
+    _dwfmRequireInt("CoarseTune",coarseTune,0,127);
+    _dwfmRequireInt("FineTune",fineTune,0,127);
+    _dwfmRequireInt("ChannelMode",channelMode,1,2);
+    _dwfmRequireInt("PlaybackFormat",playbackFormat,0,255);
+    _dwfmRequireInt("LoopMode",loopMode,0,1);
+
+    if (keyLow>keyHigh) throw new Error("DWFM KeyLow must be <= KeyHigh");
+    if (velocityLow>velocityHigh) throw new Error("DWFM VelocityLow must be <= VelocityHigh");
+    if (playbackFormat!==5)
+      throw new Error(`DWFM scratch build refuses unverified playback format ${playbackFormat}`);
+
+    if (!Number.isInteger(options.sampleRate) || options.sampleRate<=0 || options.sampleRate>0xFFFFFFFF)
+      throw new Error("DWFM scratch build requires sampleRate > 0");
+    if (!Number.isInteger(options.frameCount) || options.frameCount<=0 || options.frameCount>0xFFFFFFFF)
+      throw new Error("DWFM scratch build requires frameCount > 0");
+
+    const frameCount=options.frameCount>>>0;
+    const loopStart=(options.loopStart ?? 0)>>>0;
+    const loopEnd=(options.loopEnd ?? (frameCount-1))>>>0;
+    if (loopStart>loopEnd || loopEnd>=frameCount)
+      throw new Error(`DWFM invalid loop/end range ${loopStart}..${loopEnd} for FrameCount ${frameCount}`);
+
+    kb[0]=keyLow; kb[1]=keyHigh; kb[2]=velocityLow; kb[3]=velocityHigh;
+    kb[5]=pan; kb[8]=rootKey; kb[9]=coarseTune; kb[10]=fineTune;
+    kb[11]=channelMode; kb[14]=playbackFormat; kb[15]=loopMode;
+    _dwfmU32LESet(kb,36,options.sampleRate);
+    _dwfmU32LESet(kb,44,loopStart);
+    _dwfmU32LESet(kb,48,loopEnd);
+    _dwfmU32LESet(kb,56,(options.uid ?? 0)>>>0);
+    _dwfmU32LESet(kb,60,frameCount);
+
+    validateDwfmKeybank64(kb);
+    return kb;
+  }
+
+  function buildDwfmRecordFromKeybanks(keybanks, opts={}) {
+    if (!Array.isArray(keybanks) || keybanks.length<1)
+      throw new Error("DWFM record requires at least one keybank");
+
+    const out=new Uint8Array(4 + keybanks.length*DWFM_KEYBANK_SIZE);
+    _dwfmU32LESet(out,0,keybanks.length);
+    for (let i=0;i<keybanks.length;i++) {
+      validateDwfmKeybank64(keybanks[i],opts);
+      out.set(keybanks[i],4+i*DWFM_KEYBANK_SIZE);
+    }
+    return out;
+  }
+
+  function buildDwfmMonoRecord(options={}) {
+    return buildDwfmRecordFromKeybanks([
+      buildDwfmKeybankFromTemplate({...options,channelMode:1})
+    ]);
+  }
+
+  function buildDwfmStereoRecord(leftOptions={},rightOptions={}) {
+    return buildDwfmRecordFromKeybanks([
+      buildDwfmKeybankFromTemplate({...leftOptions,channelMode:2}),
+      buildDwfmKeybankFromTemplate({...rightOptions,channelMode:2})
+    ]);
+  }
+
+  function validateDwfmRecordBlob(blob,opts={}) {
+    const b=(blob instanceof Uint8Array) ? blob : new Uint8Array(blob);
+    if (b.length<4) throw new Error("DWFM record too short");
+    const n=_dwfmU32LEGet(b,0);
+    const expected=4+n*DWFM_KEYBANK_SIZE;
+    if (expected>b.length)
+      throw new Error(`DWFM record truncated: count=${n}, need ${expected}, have ${b.length}`);
+
+    const keybanks=[];
+    for (let k=0;k<n;k++) {
+      const o=4+k*DWFM_KEYBANK_SIZE;
+      keybanks.push(validateDwfmKeybank64(b.slice(o,o+DWFM_KEYBANK_SIZE),opts));
+    }
+    return {keybankCount:n,keybanks,expectedBytes:expected};
+  }
+
+  window.YSFCDwfmWriter=Object.freeze({
+    version:"1.0",
+    keybankSize:DWFM_KEYBANK_SIZE,
+    canonicalMonoTemplate:()=>new Uint8Array(DWFM_CANONICAL_MONO_TEMPLATE),
+    validateKeybank:validateDwfmKeybank64,
+    validateRecord:validateDwfmRecordBlob,
+    buildKeybank:buildDwfmKeybankFromTemplate,
+    buildMonoRecord:buildDwfmMonoRecord,
+    buildStereoRecord:buildDwfmStereoRecord
+  });
+
 
   // Generic dep-section builder (v9: korrigerat format för EWFM/DWFM/EARP/DARP).
   // Använder samma universella struktur som EPFM/DPFM ovan.
@@ -7335,7 +7581,7 @@ function applyI18n() {
             if (!blob) continue;
             // Rewrite recPayload[10:12] to the new sequential id
             // when selective (nd.newId set); otherwise copy verbatim.
-            const rec = applyDependencyStampPolicy(exportDepRecPayload(sf, e, nd.newId, outStamp3c), outStamp3c, 'EWFM');
+            const rec = applyDependencyStampPolicy(exportDepRecPayload(sf, e, nd.newId, outStamp3c, 'EWFM', blob), outStamp3c, 'EWFM', sf);
             wfmRecs.push(rec);
             wfmBlobs.push(blob);
             newWfmCount++;
@@ -7343,46 +7589,43 @@ function applyI18n() {
         }
 
         if (wfmRecs.length > 0) {
-          // the global sample-data index lives in the DWFM BLOB
-          // DATA (wfmBlobs), NOT the EWFM index records (wfmRecs) — the
-          // A previous attempt renumbered the wrong array (53-byte EWFM recs,
-          // where offset 60 is out of range, so it was a no-op and the
-          // export was byte-identical). Verified vs ESP across all 151
-          // sub-entries: each DWFM blob is [4-byte header][N × 64-byte
-          // sub-entries]; at blob offset (60 + 64·k) there is a 4-byte
-          // LITTLE-ENDIAN index. ESP rewrites it as a pure ascending
-          // counter value[i] = base + i, base = first blob sub-entry's
-          // original 4-byte LE value (0x213), i incremented once per
-          // sub-entry across ALL blobs in order. Source blobs carry
-          // D-MODE's scattered indices → MODX "illegal file". Renumber
-          // the blobs (mutable copies — extractDepBlob/.slice return
-          // independent Uint8Arrays).
-          let dwfmBase = null;
-          for (const bl of wfmBlobs) {
-            if (bl.length >= 64) {
-              dwfmBase = bl[60] | (bl[61] << 8) | (bl[62] << 16) | (bl[63] << 24);
-              dwfmBase >>>= 0;
-              break;
-            }
-          }
-          if (dwfmBase != null) {
-            let g = 0;
-            for (let bi = 0; bi < wfmBlobs.length; bi++) {
-              const bl = wfmBlobs[bi];
-              // ensure mutable (extractDepBlob returns .slice copies, but
-              // be defensive against shared-buffer subarrays)
-              const mb = (bl instanceof Uint8Array) ? bl : new Uint8Array(bl);
-              for (let o = 60; o + 4 <= mb.length; o += 64) {
-                const val = (dwfmBase + g) >>> 0;
-                mb[o]     =  val         & 0xFF;
-                mb[o + 1] = (val >>> 8)  & 0xFF;
-                mb[o + 2] = (val >>> 16) & 0xFF;
-                mb[o + 3] = (val >>> 24) & 0xFF;
-                g++;
+          // DWFM keybank UID/reference writer policy (v15.50).
+          //
+          // Canonical coordinates:
+          //   DWFM record = u32LE keybank_count + N * 64-byte keybanks
+          //   UID field   = keybank rel +56
+          //               = DWFM record rel (4 + 56 + 64*k)
+          //               = 60 + 64*k
+          //
+          // ESP verification 2026-08-30 proved:
+          //   - zero, low16 and full32 values all load/play correctly;
+          //   - duplicate UIDs across two keybanks also load/play correctly.
+          //
+          // We nevertheless allocate deterministic UNIQUE values whenever
+          // Library Builder rebuilds the DWFM pool. This is conservative,
+          // reproducible and avoids depending on Yamaha's private allocator.
+          //
+          // Namespace 0x5953xxxx = ASCII "YS" in the high word.
+          // UID 0 is not used by the allocator even though ESP accepts it.
+          function assignDeterministicDwfmUids(blobs) {
+            let globalKeybankIndex = 1;
+            for (let bi = 0; bi < blobs.length; bi++) {
+              const src = blobs[bi];
+              const mb = (src instanceof Uint8Array) ? new Uint8Array(src) : new Uint8Array(src);
+              if (mb.length < 4) { blobs[bi] = mb; continue; }
+
+              // Copy/merge accepts source-preserved future +14 profiles;
+              // scratch generation remains fail-closed at verified +14=5.
+              const parsed = validateDwfmRecordBlob(mb, {allowUnknownFormat:true});
+              for (let k = 0; k < parsed.keybankCount; k++) {
+                const o = 4 + k * DWFM_KEYBANK_SIZE + 56;
+                _dwfmU32LESet(mb,o,(0x59530000 + globalKeybankIndex) >>> 0);
+                globalKeybankIndex++;
               }
-              wfmBlobs[bi] = mb;
+              blobs[bi] = mb;
             }
           }
+          assignDeterministicDwfmUids(wfmBlobs);
           const totalSz = wfmBlobs.reduce((s, b) => s + b.length, 0);
           const built = buildDepPayload(outWfm, wfmRecs, wfmBlobs);
           if (built) {
@@ -7433,7 +7676,7 @@ function applyI18n() {
             const e = sf.wim.entries[nd.idx];
             const blob = extractDepBlob(sf.wim, e);
             if (!blob) continue;
-            const rec = applyDependencyStampPolicy(exportDepRecPayload(sf, e, nd.newId, outStamp3c), outStamp3c, 'EWIM');
+            const rec = applyDependencyStampPolicy(exportDepRecPayload(sf, e, nd.newId, outStamp3c, 'EWIM', blob), outStamp3c, 'EWIM', sf);
             wimRecs.push(rec);
             wimBlobs.push(blob);
             newWimCount++;
@@ -7497,7 +7740,7 @@ function applyI18n() {
               const e = sf.arp.entries[nd.idx];
               const blob = extractDepBlob(sf.arp, e);
               if (!blob) continue;
-              const rec = applyDependencyStampPolicy(exportDepRecPayload(sf, e, nd.newId, outStamp3c), outStamp3c, 'EARP');
+              const rec = applyDependencyStampPolicy(exportDepRecPayload(sf, e, nd.newId, outStamp3c, 'EARP', blob), outStamp3c, 'EARP', sf);
               arpRecs.push(rec);
               arpBlobs.push(blob);
               newArpCount++;
@@ -7507,7 +7750,7 @@ function applyI18n() {
             for (const e of sf.arp.entries) {
               const blob = extractDepBlob(sf.arp, e);
               if (!blob) continue;
-              arpRecs.push(applyDependencyStampPolicy(exportDepRecPayload(sf, e, null, outStamp3c), outStamp3c, 'EARP'));
+              arpRecs.push(applyDependencyStampPolicy(exportDepRecPayload(sf, e, null, outStamp3c, 'EARP', blob), outStamp3c, 'EARP', sf));
               arpBlobs.push(blob);
               newArpCount++;
             }
@@ -8706,16 +8949,41 @@ function applyI18n() {
     selection.length = 0; refreshSelectionList(); updateBars(); updateDepSummary();
   });
 
+  // v15.50: Move ONLY the currently selected rows and keep exactly those
+  // rows selected after the move. refreshSelectionList() normally preserves
+  // selected slot indices, which is correct for a normal re-render but wrong
+  // during a move: preserving the old indices and then selecting the new
+  // indices makes the selection grow on every click.
+  function setSelectionListSelectedIndices(indices) {
+    const sl = $("selectionList");
+    const wanted = new Set(indices);
+    for (let i = 0; i < sl.options.length; i++) {
+      sl.options[i].selected = wanted.has(i);
+    }
+    syncSelTableFromSelect();
+  }
+
   $("moveUpBtn").addEventListener("click", () => {
     resetDiagnosticSession();
     const idxs = Array.from($("selectionList").selectedOptions).map(o => parseInt(o.value, 10))
       .filter(Number.isInteger).sort((a,b) => a - b);
     if (!idxs.length || idxs[0] === 0) return;
-    for (const i of idxs) { const t = selection[i]; selection[i] = selection[i-1]; selection[i-1] = t; }
-    refreshSelectionList(); updateBars();
-    const sl = $("selectionList");
-    for (const i of idxs) { if (sl.options[i-1]) sl.options[i-1].selected = true; }
-    syncSelTableFromSelect();
+
+    for (const i of idxs) {
+      const t = selection[i];
+      selection[i] = selection[i-1];
+      selection[i-1] = t;
+    }
+
+    // Clear old selection BEFORE rebuilding, so refreshSelectionList() cannot
+    // preserve the old slot indices.
+    Array.from($("selectionList").options).forEach(o => { o.selected = false; });
+    refreshSelectionList();
+    updateBars();
+
+    const movedIdxs = idxs.map(i => i - 1);
+    setSelectionListSelectedIndices(movedIdxs);
+    selLastClicked = movedIdxs.length ? movedIdxs[movedIdxs.length - 1] : -1;
   });
 
   $("moveDownBtn").addEventListener("click", () => {
@@ -8723,11 +8991,21 @@ function applyI18n() {
     const idxs = Array.from($("selectionList").selectedOptions).map(o => parseInt(o.value, 10))
       .filter(Number.isInteger).sort((a,b) => b - a);
     if (!idxs.length || idxs[0] === selection.length - 1) return;
-    for (const i of idxs) { const t = selection[i]; selection[i] = selection[i+1]; selection[i+1] = t; }
-    refreshSelectionList(); updateBars();
-    const sl = $("selectionList");
-    for (const i of idxs) { if (sl.options[i+1]) sl.options[i+1].selected = true; }
-    syncSelTableFromSelect();
+
+    for (const i of idxs) {
+      const t = selection[i];
+      selection[i] = selection[i+1];
+      selection[i+1] = t;
+    }
+
+    // Same rule as Move Up: do not let refresh preserve the old positions.
+    Array.from($("selectionList").options).forEach(o => { o.selected = false; });
+    refreshSelectionList();
+    updateBars();
+
+    const movedIdxs = idxs.map(i => i + 1);
+    setSelectionListSelectedIndices(movedIdxs);
+    selLastClicked = movedIdxs.length ? movedIdxs[movedIdxs.length - 1] : -1;
   });
 
   $("baseFileSelect").addEventListener("change", () => { updateBars(); updateExportBtn(); });

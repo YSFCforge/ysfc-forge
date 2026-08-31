@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>YSFC Forge SysEx Converter v1.58</title>
+<title>YSFC Forge SysEx Converter v1.67</title>
 <style>
 :root{
   --bg:#0f1117;--bg2:#161b24;--bg3:#1e2535;--border:#2a3347;--border-hi:#3d5080;
@@ -132,7 +132,7 @@ input[type=number]:focus,select.filter-select:focus{outline:none;border-color:va
 </head>
 <body>
 <header>
-  <div class="brand">YSFC Forge SysEx Converter <span class="sep">│</span> <span class="ver">v1.58</span>
+  <div class="brand">YSFC Forge SysEx Converter <span class="sep">│</span> <span class="ver">v1.67</span>
     <span class="sep">│</span> Soundmondo SysEx → Y2L
   </div>
   <div class="spacer"></div>
@@ -781,7 +781,11 @@ function makeEntrData(perfName,part1Name,maxPart,saveCounter,dpfmSize,engineSele
   if(!contiguous||maxActive>16)
     throw new Error('YSFC contiguous writer supports active Parts 1..16');
 
-  const nb=new TextEncoder().encode(`256:${perfName}:${part1Name}\0`);
+  // v1.67: Yamaha hardware reference + ITB-Music bug fix.
+  // Modern EPFM Category Search text is IDX:SHORT:DISPLAY, where the third
+  // field is the user-visible Performance name. For converted SysEx, Part 1
+  // is the best verified SHORT field and perfName is DISPLAY.
+  const nb=new TextEncoder().encode(`256:${part1Name}:${perfName}\0`);
   const a=new Uint8Array(27+nb.length);
   putBe32(a,0,dpfmSize);
   putBe32(a,4,12);
@@ -1144,70 +1148,50 @@ function writeModernFmxPartFields(parsed,norm,blob,partNo){
 
 
 function rewriteSinglePerfEntrNames(templateBytes,performanceName,partName){
-  const out=templateBytes.slice();
-  const directory=ysfcDirectory(out);
+  const directory=ysfcDirectory(templateBytes);
   const epOffset=directory.EPFM;
   if(epOffset==null)throw new Error('EPFM not found');
 
-  const epPayloadLen=be32(out,epOffset+4);
-  const epPayloadStart=epOffset+8;
-  if(ysfcAscii(out,epPayloadStart+4,4)!=='Entr')throw new Error('Entr record not found');
+  const epPayloadLen=be32(templateBytes,epOffset+4);
+  const payload=templateBytes.slice(epOffset+8,epOffset+8+epPayloadLen);
+  if(payload.length<12||be32(payload,0)!==1||ysfcAscii(payload,4,4)!=='Entr')
+    throw new Error('Expected exactly one EPFM Entr record');
 
-  const recLen=be32(out,epPayloadStart+8);
-  const recStart=epPayloadStart+12;
-  const tailStart=recStart+27;
-  const tailCapacity=recLen-27;
+  const recLen=be32(payload,8);
+  const rec=payload.slice(12,12+recLen);
+  if(rec.length!==recLen||recLen<27)throw new Error('Invalid EPFM Entr record');
+
+  let z=-1;
+  for(let p=27;p<rec.length;p++){if(rec[p]===0){z=p;break;}}
+  if(z<0)throw new Error('EPFM Entr name is not NUL terminated');
+
+  // Preserve any verified 4-byte dependency references after the existing
+  // string.  The old in-place implementation treated the template record
+  // length as a hard name limit (normally only 41 text bytes), truncating
+  // perfectly valid 19–20 character Performance names when SHORT was also
+  // long.  Build a correctly sized Entr instead of truncating.
+  const tail=rec.slice(z+1);
+  if(tail.length%4!==0)
+    throw new Error(`EPFM dependency tail is not 4-byte aligned (${tail.length} bytes)`);
+
   const encoder=new TextEncoder();
-  const decoder=new TextDecoder();
-  const maxBytes=Math.max(0,tailCapacity-1);
-  let perf=String(performanceName||'');
-  let part=String(partName||'');
-  let text=`256:${perf}:${part}`;
-  let enc=encoder.encode(text);
+  const perf=String(performanceName||'').trim();
+  const part=String(partName||'').trim();
+  const nameBytes=encoder.encode(`256:${part}:${perf}\0`);
 
-  if(enc.length>maxBytes){
-    // Entr is auxiliary metadata. The actual Performance and Part names are
-    // stored separately in DPFM, so shorten only this metadata copy.
-    const prefix='256:';
-    const sep=':';
-    const fixedBytes=encoder.encode(prefix+sep).length;
-    let budget=Math.max(0,maxBytes-fixedBytes);
+  const newRec=new Uint8Array(27+nameBytes.length+tail.length);
+  newRec.set(rec.slice(0,27),0);
+  newRec.set(nameBytes,27);
+  newRec.set(tail,27+nameBytes.length);
 
-    // Keep as much of the Performance name as possible, then use remaining
-    // bytes for the Part name. Trim by Unicode code point to avoid broken UTF-8.
-    const fit=(s,limit)=>{
-      let outText='';
-      for(const ch of String(s||'')){
-        const candidate=outText+ch;
-        if(encoder.encode(candidate).length>limit)break;
-        outText=candidate;
-      }
-      return outText;
-    };
+  const newPayload=new Uint8Array(12+newRec.length);
+  putBe32(newPayload,0,1);
+  newPayload.set([69,110,116,114],4); // Entr
+  putBe32(newPayload,8,newRec.length);
+  newPayload.set(newRec,12);
 
-    const desiredPart=Math.min(16,Math.max(0,Math.floor(budget/3)));
-    part=fit(part,desiredPart);
-    const partBytes=encoder.encode(part).length;
-    perf=fit(perf,Math.max(0,budget-partBytes));
-    text=`${prefix}${perf}${sep}${part}`;
-    enc=encoder.encode(text);
-
-    // Last-resort byte-safe trim, should normally never be needed.
-    while(enc.length>maxBytes && part.length){
-      part=[...part].slice(0,-1).join('');
-      text=`${prefix}${perf}${sep}${part}`;
-      enc=encoder.encode(text);
-    }
-    while(enc.length>maxBytes && perf.length){
-      perf=[...perf].slice(0,-1).join('');
-      text=`${prefix}${perf}${sep}${part}`;
-      enc=encoder.encode(text);
-    }
-  }
-
-  out.fill(0,tailStart,tailStart+tailCapacity);
-  out.set(enc,tailStart);
-  return out;
+  const newChunk=makeChunk('EPFM',newPayload);
+  return replaceYsfcChunkPreservingLayout(templateBytes,'EPFM',newChunk);
 }
 
 
@@ -1919,6 +1903,13 @@ function writeLegacySceneCommonCore(parsed,common){
     common[to+3]=d[so+7]&1; // Mixing Memorize
     common[to+4]=d[so+8]&1; // AEG Memorize
     common[to+5]=d[so+9]&1; // Arp/MS FX Memorize
+
+    // v1.67 — direct MODX M Y2L differential mapping.
+    // For Scene N, the Master switches are serialized in the two bytes
+    // immediately BEFORE that Scene's normal 71-byte Scene Common block.
+    common[to-2]=d[so+2]&1; // Arpeggio Master Switch
+    common[to-1]=d[so+3]&1; // Motion Sequence Master Switch
+
     writeU16LE(common,to+21,d[so+0]&7);       // Arp Select, 0-based
     writeU16LE(common,to+23,d[so+1]&7);       // Motion Seq Select, 0-based
     writeU16LE(common,to+25,(d[so+10]&0x7F)<<3); // Super Knob Value
@@ -1926,6 +1917,90 @@ function writeLegacySceneCommonCore(parsed,common){
     if(varReturn!==null)writeU16LE(common,to+33,varReturn);
   }
   return 8;
+}
+
+
+// v1.67 — legacy Scene Part snapshot data must obey Scene Common memorize flags.
+// 30 4C 00 per-scene record:
+// +7 Mixing Memorize, +8 AEG Memorize, +9 Arp/MS FX Memorize.
+function legacySceneMemorizeFlags(parsed){
+  const m=parsed.find(x=>x.kind==='bulk_dump'&&x.protocolTable==='legacy'&&
+    x.checksumOk&&x.byteCountOk&&x.address?.length===3&&
+    x.address[0]===0x30&&x.address[1]===0x4C&&x.address[2]===0x00)||null;
+  const out=[];
+  if(!m)return out;
+  const d=m.data;
+  for(let c=0;c<8;c++){
+    const so=1+c*16;
+    if(so+9>=d.length)break;
+    out.push({
+      scene:c+1,
+      mixing:!!(d[so+7]&1),
+      aeg:!!(d[so+8]&1),
+      arpMsFx:!!(d[so+9]&1)
+    });
+  }
+  return out;
+}
+
+function filterLegacyScenePartByMemorize(scene,flags){
+  if(!scene)return null;
+  const f=flags||{mixing:false,aeg:false,arpMsFx:false};
+  const out={...scene};
+
+  // Mixing-family snapshot fields.
+  if(!f.mixing){
+    for(const k of ['volume','pan','reverb_send','variation_send','dry_level',
+                    'cutoff_offset','resonance_offset','feg_depth_offset']){
+      out[k]=null;
+    }
+  }
+
+  // AEG family.
+  if(!f.aeg)out.aeg_attack_offset=null;
+
+  // Arp/MS Play-FX family.
+  if(!f.arpMsFx){
+    for(const k of ['swing','unit','gate_time','velocity'])out[k]=null;
+  }
+
+  // Do not allow the empirical active companion to activate a snapshot
+  // whose supported memorize families are all OFF.
+  if(!f.mixing&&!f.aeg&&!f.arpMsFx)out.active_companion=null;
+  return out;
+}
+
+function legacyScenePartHasRetainedData(scene){
+  if(!scene)return false;
+  return [
+    'volume','pan','reverb_send','variation_send','dry_level',
+    'cutoff_offset','resonance_offset','feg_depth_offset','aeg_attack_offset',
+    'swing','unit','gate_time','velocity','active_companion'
+  ].some(k=>scene[k]!==undefined&&scene[k]!==null);
+}
+
+// v1.67 — direct ESP canonicalization from PVB Children cool v4.
+// If legacy Mixing Memorize is OFF, the stored legacy Scene Part bytes are
+// not recallable mixing values. ESP neutralizes the Scene snapshot by filling
+// it with the Part's current values. This prevents template defaults such as
+// Volume=100 / Pan=Center from taking effect after a Scene change.
+function neutralizeLegacySceneMixFromCurrentPart(scene,flags,partBlock){
+  if(!scene||!flags||flags.mixing)return scene;
+  const out={...scene};
+  const r16=o=>(partBlock[o]|(partBlock[o+1]<<8));
+  out.volume=r16(130);
+  out.pan=r16(132);
+  out.reverb_send=r16(134);
+  out.variation_send=r16(136);
+  out.dry_level=r16(138);
+  out.cutoff_offset=r16(166);
+  out.resonance_offset=r16(168);
+  out.feg_depth_offset=r16(164);
+  // ESP v4 stores an active Scene Part companion even though legacy
+  // Mixing Memorize itself is OFF; the snapshot is safe because its
+  // mixing values are neutral/current rather than template defaults.
+  out.active_companion=1;
+  return out;
 }
 
 function writeSharedLegacyPartFieldsIntoPartBlock(parsed,partBlock,sourcePartNo){
@@ -2111,15 +2186,21 @@ function writeSharedLegacyPartFieldsIntoPartBlock(parsed,partBlock,sourcePartNo)
   const arpSlots=decodeLegacyPresetArpSlots(parsed,sourcePartNo);
   writeSharedPresetArpSlotsToPartBlock(partBlock,arpSlots);
 
-  const sceneMix=decodeLegacySceneMix(parsed,sourcePartNo);
-  const distinctScenes=deduplicateLegacySceneMix(sceneMix);
-  const activeSet=new Set(distinctScenes.map(s=>(s.number|0)-1));
-  if(!activeSet.size)activeSet.add(0);
+  const sceneMixRaw=decodeLegacySceneMix(parsed,sourcePartNo);
+  const memFlags=legacySceneMemorizeFlags(parsed);
+  const sceneMix=sceneMixRaw.map(scene=>{
+    const flags=memFlags.find(f=>f.scene===(scene.number|0))||null;
+    const filtered=filterLegacyScenePartByMemorize(scene,flags);
+    return neutralizeLegacySceneMixFromCurrentPart(filtered,flags,partBlock);
+  });
+  const activeSet=new Set(
+    sceneMix.filter(legacyScenePartHasRetainedData).map(s=>(s.number|0)-1)
+  );
   applySceneActivationSetToPartBlock(partBlock,activeSet);
 
-  // v1.44 — Yamaha direct conversion serializes every Scene snapshot,
-  // including byte-identical snapshots. Deduplication is only a structural
-  // activation/retention heuristic and must not suppress Scene data.
+  // v1.67 — write only Scene Part fields whose corresponding Scene Common
+  // memorize family is ON. Stored source bytes are not themselves proof that
+  // the Scene should recall those values.
   writeSharedSceneMixToPartBlock(partBlock,sceneMix);
 }
 
@@ -2999,11 +3080,12 @@ function planEngineTopology(parts){
 
 
 
+// v1.67 candidate: EPFM name-order fix (IDX:SHORT:DISPLAY) based on Frank MODX M6 hardware refs and ITB-Music NL2 Echo pad report.
 const REQUIRED_CARRY_FORWARD_FIXES=Object.freeze([
   'modelId source-family routing',
   'AWM2 multi-Part structural tail/link markers',
   'FM-X single-Part writer',
-  'FM-X verified 11-slot multi-Part topology',
+  'FM-X contiguous 2–4 Part topology + 11-slot non-contiguous fallback',
   'AN-X 438-byte source-owned writer',
   'Performance/Part names in DPFM',
   'EPFM Entr / Category Search names',
@@ -3186,7 +3268,7 @@ function buildVerifiedTopologyMultiPartFmxY2L(item){
   for(let i=0;i<active.length;i++){
     const targetSlot=VERIFIED_FMX_TARGET_SLOTS[i];
     const pcb=6701+(targetSlot-1)*5765;
-    putAsciiFixed(blob,pcb+4,16,active[i].name||`Part ${active[i].number}`);
+    putAsciiFixed(blob,pcb+4,20,active[i].name||`Part ${active[i].number}`);
     writeModernFmxFieldsToTargetSlot(
       item.analysis.parsed,
       active[i].number,
@@ -3206,6 +3288,56 @@ function buildVerifiedTopologyMultiPartFmxY2L(item){
   );
 }
 
+
+function buildContiguousMultiFmxY2L(item){
+  const n=item?.analysis?.normalized;
+  if(!n)throw new Error('No parsed source');
+  if(sourceFamilyFromModelId(n.modelId)!==SOURCE_FAMILY.M_GENERATION)
+    throw new Error('Contiguous multi-Part FM-X requires M-generation source');
+
+  const active=effectiveMGenerationParts(
+    item.analysis.parsed,(n.parts||[]).filter(p=>p.enabled!==false)
+  );
+  if(active.length<2||active.length>4||!active.every(p=>p.engine==='FM-X'))
+    throw new Error('Contiguous FM-X writer supports 2–4 active FM-X Parts');
+  if(!active.every((p,i)=>p.number===i+1))
+    throw new Error('Contiguous FM-X writer requires source active Parts 1..N');
+
+  // Use the verified single-Part FM-X Performance Common as the shell, then
+  // assemble exactly N physical Part Common + FM-X engine records. Frank's
+  // real MODX M6 references verify the resulting size/topology formula for
+  // 3 and 4 pure FM-X Parts and the generic 5-byte inter-engine separators.
+  const template=b64u8(FMX_INIT_NORMAL_Y2L_B64);
+  const single=firstDpfmBlob(template);
+  const common=single.slice(0,VERIFIED_GENERIC_TOPOLOGY.COMMON_SIZE);
+  putAsciiFixed(common,4,20,n.name||'Converted FM-X');
+
+  const activeSceneSet=mGenerationActiveSceneIndexes(
+    item.analysis.parsed,active.map(p=>p.number)
+  );
+  for(let c=0;c<8;c++){
+    common[SHARED_SCENE_COMMON.BASE+c*SHARED_SCENE_COMMON.STRIDE+
+      SHARED_SCENE_COMMON.MIXING_MEMORIZE_REL]=activeSceneSet.has(c)?1:0;
+  }
+
+  const pieces=active.map(p=>
+    buildFmxPartPieceFromSource(
+      item.analysis.parsed,p.number,p.name||`Part ${p.number}`,activeSceneSet
+    )
+  );
+  const blob=assembleGenericEngineTopology(
+    common,pieces.map(x=>({engineType:'FM-X',part:x.part,engine:x.engine}))
+  );
+
+  const built=rebuildContiguousPerfYsfc(
+    template,blob,n.name||'Converted FM-X',
+    active[0].name||'Part 1',ENTR_ENGINE.FMX,active.map(p=>p.number)
+  );
+  return finalizePerformanceArtifact(
+    built,n.name||'Converted FM-X',active[0].name||'Part 1'
+  );
+}
+
 function buildSinglePartModernFmxY2L(item){
   const n=item?.analysis?.normalized;
   if(!n)throw new Error('No parsed source');
@@ -3220,7 +3352,7 @@ function buildSinglePartModernFmxY2L(item){
   const template=b64u8(FMX_INIT_NORMAL_Y2L_B64);
   const blob=firstDpfmBlob(template);
   putAsciiFixed(blob,4,20,n.name||'Converted FM-X');
-  putAsciiFixed(blob,6701+4,16,active[0].name||'Part 1');
+  putAsciiFixed(blob,6701+4,20,active[0].name||'Part 1');
   blob[6695]=1;
   blob[6700]=2;
   writeModernFmxPartFields(item.analysis.parsed,n,blob,1);
@@ -3246,6 +3378,7 @@ const AWM2_ENGINE_SIZE=2503, AWM2_ELEM_STRIDE=313, AWM2_ELEM_COUNT=8;
 const AWM2_PREFIX=new Uint8Array([0x00,0x00,0x00,0x08,0x00]);
 
 function putLe16(a,o,v){v=Math.max(0,Math.min(65535,v|0));a[o]=v&255;a[o+1]=(v>>>8)&255;}
+// v1.67: MODX M6 hardware confirms modern Performance/Part names use 20 bytes at rel +4..+23.
 function putAsciiFixed(a,o,n,s){
   for(let i=0;i<n;i++)a[o+i]=0;
   const x=new TextEncoder().encode((s||'').slice(0,n));
@@ -3883,7 +4016,7 @@ function buildLegacyDrumPartPiece(parsed,part){
     engineStart+VERIFIED_GENERIC_TOPOLOGY.ENGINE_BODY_SIZE.Drum
   );
 
-  putAsciiFixed(partBlock,4,16,part.name||`Part ${part.number}`);
+  putAsciiFixed(partBlock,4,20,part.name||`Part ${part.number}`);
   writeSharedLegacyPartFieldsIntoPartBlock(parsed,partBlock,part.number);
 
   for(let k=0;k<73;k++){
@@ -4141,7 +4274,7 @@ function buildDrumPartPieceFromSource(parsed,part,activeSceneSet=null){
     writeMgenDrumKey(engine,k,m);
   }
 
-  putAsciiFixed(blob,pcb+4,16,part.name||`Part ${part.number}`);
+  putAsciiFixed(blob,pcb+4,20,part.name||`Part ${part.number}`);
   writeBasicDrumPartCommon(blob,pcb,part);
   writeSharedMGenerationPartFields(parsed,blob,part.number,1,activeSceneSet);
 
@@ -4869,7 +5002,7 @@ function buildAwm2PartPieceFromSource(parsed,part,activeSceneSet=null,dependency
     writeMgenAwm2Element(engine,sourceElem,sourceElem.index,dependencyRemap);
   }
 
-  putAsciiFixed(blob,pcb+4,16,part.name||`Part ${part.number}`);
+  putAsciiFixed(blob,pcb+4,20,part.name||`Part ${part.number}`);
   if(typeof part.keyboard_control==='boolean')blob[pcb+31]=part.keyboard_control?1:0;
   if(typeof part.mute==='boolean')blob[pcb+32]=part.mute?1:0;
   if(Number.isInteger(part.volume))writeU16LE(blob,pcb+130,part.volume);
@@ -5309,7 +5442,7 @@ function buildLegacyFmxCorePartPiece(parsed,part,activeSceneSet=null){
 
   // Shared legacy Part fields are already verified independently.
   const partBlock=blockSlice(blob,6701,5765);
-  putAsciiFixed(partBlock,4,16,part.name||`Part ${part.number}`);
+  putAsciiFixed(partBlock,4,20,part.name||`Part ${part.number}`);
   writeSharedLegacyPartFieldsIntoPartBlock(parsed,partBlock,part.number);
   const partLfo=writeLegacyPartLfoWaveSpeed(parsed,part.number,partBlock);
 
@@ -5337,7 +5470,7 @@ function buildFmxPartPieceFromSource(parsed,sourcePartNo,partName,activeSceneSet
 
   writeModernFmxFieldsToTargetSlot(parsed,sourcePartNo,blob,1);
   writeSharedMGenerationPartFields(parsed,blob,sourcePartNo,1,activeSceneSet);
-  putAsciiFixed(blob,6701+4,16,partName||`Part ${sourcePartNo}`);
+  putAsciiFixed(blob,6701+4,20,partName||`Part ${sourcePartNo}`);
 
   return {
     engineType:'FM-X',
@@ -5814,7 +5947,7 @@ function buildAnxPartPieceFromSource(parsed,sourcePartNo,partName,activeSceneSet
   writeModernAnxCoreFields(parsed,blob,sourcePartNo);
   writeModernAnxWaveFolderFields(parsed,blob,sourcePartNo);
   writeSharedMGenerationPartFields(parsed,blob,sourcePartNo,1,activeSceneSet);
-  putAsciiFixed(blob,6701+4,16,partName||`Part ${sourcePartNo}`);
+  putAsciiFixed(blob,6701+4,20,partName||`Part ${sourcePartNo}`);
   return {
     part:blockSlice(blob,6701,5765),
     engine:blockSlice(blob,6701+5765,684)
@@ -5886,7 +6019,7 @@ function buildAnxSourceOwned438Checkpoint(item){
   writeSharedMGenerationPartFields(item.analysis.parsed,blob,1,1);
 
   putAsciiFixed(blob,4,20,n.name||'Converted AN-X');
-  putAsciiFixed(blob,6701+4,16,active[0].name||'Part 1');
+  putAsciiFixed(blob,6701+4,20,active[0].name||'Part 1');
 
   const built=ysfcReplaceDpfmBlob(template,blob);
   return finalizePerformanceArtifact(
@@ -6048,7 +6181,15 @@ function fmxExportAssessment(item){
     return {ok:true,kind:'FM-X',mode:'single',parts:active,reason:'Ready'};
   }
   if(active.length>=2&&active.length<=4){
-    return {ok:true,kind:'FM-X',mode:'verified11slot',parts:active,reason:'Ready'};
+    const contiguous=active.every((p,i)=>p.number===i+1);
+    if(contiguous){
+      return {ok:true,kind:'FM-X',mode:'contiguous-generic',parts:active,
+        reason:`Ready: Yamaha-verified contiguous FM-X topology (Parts 1–${active.length})`};
+    }
+    // Carry forward the old ESP-verified 11-slot path only for source topologies
+    // that are not yet covered by the contiguous hardware references.
+    return {ok:true,kind:'FM-X',mode:'verified11slot',parts:active,
+      reason:'Ready: preserved 11-slot fallback for non-contiguous FM-X source topology'};
   }
   if(active.length>=5&&active.length<=8){
     return {ok:true,kind:'FM-X',mode:'generic-mgen',parts:active,
@@ -6194,7 +6335,7 @@ function buildLegacyDrumVerifiedPartPiece(parsed,part){
     engStart,engStart+VERIFIED_GENERIC_TOPOLOGY.ENGINE_BODY_SIZE.Drum
   );
 
-  putAsciiFixed(partBlock,4,16,part.name||`Part ${part.number}`);
+  putAsciiFixed(partBlock,4,20,part.name||`Part ${part.number}`);
   writeSharedLegacyPartFieldsIntoPartBlock(parsed,partBlock,part.number);
 
   for(let k=0;k<73;k++){
@@ -6676,7 +6817,7 @@ function buildLegacyAwm2PartPiece(parsed,part){
     engineStart+VERIFIED_GENERIC_TOPOLOGY.ENGINE_BODY_SIZE.AWM2
   );
 
-  putAsciiFixed(ps,4,16,part.name||`Part ${part.number}`);
+  putAsciiFixed(ps,4,20,part.name||`Part ${part.number}`);
   writeSharedLegacyPartFieldsIntoPartBlock(parsed,ps,part.number);
 
   // v1.33 — the legacy Part LFO mapping was already source/target verified
@@ -6709,7 +6850,7 @@ function buildLegacyAwm2Y2L(item){
   const ref=firstDpfmBlob(template);
 
   const common=ref.slice(0,SUB_COMMON);
-  putAsciiFixed(common,4,18,n.name||'Converted');
+  putAsciiFixed(common,4,20,n.name||'Converted');
   common[22]=0;
   // v1.03: the legacy AWM2 path previously skipped the shared Performance
   // master-switch writer used by Drum/FM-X/mixed legacy paths.
@@ -6726,7 +6867,7 @@ function buildLegacyAwm2Y2L(item){
   for(let i=0;i<parts.length;i++){
     const part=parts[i];
     const ps=refPart.slice();
-    putAsciiFixed(ps,4,16,part.name||`Part ${i+1}`);
+    putAsciiFixed(ps,4,20,part.name||`Part ${i+1}`);
 
     // Part Common structural tail/link marker at rel 0x1683:
     // intermediate Part Common records point onward with 0x01;
@@ -6746,9 +6887,12 @@ function buildLegacyAwm2Y2L(item){
     // here as well.
     writeLegacyPartLfoWaveSpeed(item.analysis.parsed,parts[i].number,ps);
 
-    const legacyScenesForActivation=deduplicateLegacySceneMix(
-      decodeLegacySceneMix(item.analysis.parsed,parts[i].number)
-    );
+    const memFlags=legacySceneMemorizeFlags(item.analysis.parsed);
+    const legacyScenesForActivation=decodeLegacySceneMix(
+      item.analysis.parsed,parts[i].number
+    ).map(scene=>filterLegacyScenePartByMemorize(
+      scene,memFlags.find(f=>f.scene===(scene.number|0))||null
+    )).filter(legacyScenePartHasRetainedData);
     for(const scene of legacyScenesForActivation){
       legacyActiveSceneSet.add((scene.number|0)-1);
     }
@@ -7110,6 +7254,8 @@ function buildY2LForItem(item,gate=exportAssessment(item)){
     : gate.kind==='FM-X'
     ? (gate.mode==='generic-mgen'
         ? buildPureMGenerationGenericY2L(item,'FM-X',8)
+        : gate.mode==='contiguous-generic'
+        ? buildContiguousMultiFmxY2L(item)
         : gate.mode==='verified11slot'
         ? buildVerifiedTopologyMultiPartFmxY2L(item)
         : buildSinglePartModernFmxY2L(item))
@@ -7661,7 +7807,7 @@ document.getElementById('bulkConvertBtn').onclick=async()=>{
 };
 document.getElementById('aboutBtn').onclick=()=>{
  const msg=lang==='sv'
- ?`YSFC Forge SysEx Converter v1.58
+ ?`YSFC Forge SysEx Converter v1.67
 
 Kort om begränsningar:
 • Externa User/Library-waveforms och User Arps kräver motsvarande companion Y2L/Y2U.
@@ -7671,7 +7817,7 @@ Kort om begränsningar:
 • Exportalternativet ”Tvinga Portamento OFF” stänger av Performance- och Part-Portamento i exporterade filer.
 
 All bearbetning sker lokalt i webbläsaren. Originalfiler ändras aldrig.`
- :`YSFC Forge SysEx Converter v1.58
+ :`YSFC Forge SysEx Converter v1.67
 
 Limitations:
 • External User/Library waveforms and User Arps require the matching companion Y2L/Y2U.
