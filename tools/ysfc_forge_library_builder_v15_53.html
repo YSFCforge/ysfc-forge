@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>YSFC Forge Library Builder v15.51 — Y2L/Y2U Merge (+ X7L/X8L transcode) för MODX M / Montage M</title>
+  <title>YSFC Forge Library Builder v15.53 — Y2L/Y2U Merge (+ X7L/X8L transcode) för MODX M / Montage M</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
 
@@ -718,7 +718,7 @@
 <h1>
   YSFC Forge Library Builder
   <span class="sep">│</span>
-  <span class="ver">v15.51</span>
+  <span class="ver">v15.53</span>
   <span class="sep">│</span>
   Y2L · Y2U · X7L · X8L → Y2L/Y2U · X7L export
   <span class="spacer"></span>
@@ -1576,7 +1576,7 @@ const LANG = {
     err_epfm_too_big: 'EPFM too large ({need} > {max}). Choose fewer performances or a larger base file.',
     err_dpfm_pool_too_big: 'DPFM pool too large ({len} > {max}).',
     err_not_yamaha_ysfc: 'Not a YAMAHA-YSFC container.',
-    err_section_missing: 'Section missing: {tag}',
+    err_section_missing: 'Missing section: {tag}',
     err_tag_mismatch: 'Tag mismatch at 0x{off}',
     err_section_oor: 'Section out of range: {tag}',
     err_epfm_typ_ne_entr: 'EPFM typ ≠ Entr.',
@@ -1759,6 +1759,13 @@ function applyI18n() {
 
 (() => {
 
+  // v15.53: X7L 4.0.0 Yamaha FM Converter FM-X fix:
+  //          preserve classic EPFM engine identity when building modern EPFM;
+  //          use EPFM-guided single-Part FM-X parsing for exact 4.0.0 sources.
+  // v15.52: Modern Y2 source validation — EPFM/DPFM required for reading;
+  //          ESYS/DSYS/EFVT/DFVT optional for source reading.
+  //          Modern validation failures are ERR, never mislabeled LEGACY.
+  //          Export-base compatibility remains strict; synthetic base used otherwise.
   // v15.51: Constrained template-based DWFM scratch writer + structural validation.
   // v15.50: Selection move fix — moving selected rows preserves exactly the selected set.
   // v15.46: ESP_VERIFIED packed EPFM Performance IDs for 5 × 128 = 640 slots.
@@ -2339,16 +2346,47 @@ function applyI18n() {
     }
   }
 
-  // ── Y2 validation ──────────────────────────────────────────
-  // EPFM + DPFM är obligatoriska (där performances bor).
-  // ESYS/DSYS/EFVT/DFVT är obligatoriska system-sektioner.
-  // ELST/DLST är frivilliga — Init Normal Y2L (1-perf) saknar dem.
+  // ── Y2 validation (v15.52) ─────────────────────────────────────
+  //
+  // Modern Y2L/Y2U files are identified by their version/header family, not
+  // by the presence of every system/favorites chunk.
+  //
+  // ESP-verified edge case:
+  //   S90ESVOICEPREMOD.Y2U, version 5.1.2, loads correctly in MODX M ESP
+  //   while omitting EFVT.
+  //
+  // For source/library reading, only EPFM + DPFM are structurally required:
+  // they contain the Performance catalogue and Performance data.
+  //
+  // ESYS/DSYS/EFVT/DFVT are optional for *reading* a modern source file.
+  // They may still be required when a file is reused as an output base
+  // container; that stricter requirement is handled separately by
+  // isY2ExportBaseCompatible().
   function checkY2(ysfc) {
-    const required = ["EPFM","ESYS","EFVT","DPFM","DSYS","DFVT"];
-    for (const t of required) {
-      if (!ysfc.sections.has(t)) return { ok: false, notes: `Saknar sektion: ${t}` };
+    const requiredForRead = ["EPFM","DPFM"];
+    for (const tag of requiredForRead) {
+      if (!ysfc.sections.has(tag)) {
+        return {
+          ok: false,
+          notesKey: "err_section_missing",
+          notesParams: { tag },
+          notes: t("err_section_missing",{tag})
+        };
+      }
     }
-    return { ok: true, notes: "" };
+    return { ok: true, notes: "", notesKey: null, notesParams: null };
+  }
+
+  // A source-readable modern Y2 is not automatically safe as the byte-template
+  // for export. The current in-place merge writer expects the standard system
+  // and Favorites chunks to exist in a selected real base file.
+  //
+  // If they are absent we simply do not offer that file as an export base;
+  // export can still proceed through the verified synthetic base path.
+  function isY2ExportBaseCompatible(f) {
+    if (!f || !f.ok || f.family !== "y2" || !f.ysfc || !f.ysfc.sections) return false;
+    const requiredForBase = ["EPFM","ESYS","EFVT","DPFM","DSYS","DFVT"];
+    return requiredForBase.every(tag => f.ysfc.sections.has(tag));
   }
 
   // ── Classic (X7L/X8L) validation ───────────────────────────
@@ -2365,14 +2403,17 @@ function applyI18n() {
   * are based on independent analysis and testing.
   */
   // Classic libraries only require EPFM + DPFM (where performances live).
-  // The system sections present in modern Y2 files (ESYS/EFVT/DSYS/DFVT)
-  // are not consistently present across classic libraries — a minimal
-  // export (e.g. Exported_Sounds) has just EPFM + DPFM. Phase 1 is
-  // read-only, so this is all that is needed to list performances.
+  // System sections are not consistently present across classic libraries.
   function checkClassic(ysfc) {
-    if (!ysfc.sections.has("EPFM")) return { ok: false, notes: "Saknar sektion: EPFM" };
-    if (!ysfc.sections.has("DPFM")) return { ok: false, notes: "Saknar sektion: DPFM" };
-    return { ok: true, notes: "" };
+    if (!ysfc.sections.has("EPFM")) {
+      return { ok:false, notesKey:"err_section_missing", notesParams:{tag:"EPFM"},
+               notes:t("err_section_missing",{tag:"EPFM"}) };
+    }
+    if (!ysfc.sections.has("DPFM")) {
+      return { ok:false, notesKey:"err_section_missing", notesParams:{tag:"DPFM"},
+               notes:t("err_section_missing",{tag:"DPFM"}) };
+    }
+    return { ok:true, notes:"", notesKey:null, notesParams:null };
   }
 
   // ════════════════════════════════════════════════════════════════════
@@ -3257,6 +3298,22 @@ function applyI18n() {
     return new Uint8Array([0, 0, 0, v]);
   }
 
+  function classicEPFMEngineBitsFromRecord(recPayload) {
+    // Classic EPFM rec[13] is already the authoritative engine-family value:
+    //   0 = AWM2
+    //   1 = FM-X
+    //   2 = AWM2 + FM-X
+    //
+    // Do not reparse the post-transcode modern DPFM blob as classic merely to
+    // reconstruct this information. That was the v15.51/v15.52 bug that made
+    // valid classic FM-X exports appear as AWM2 when reloaded in Library Builder.
+    if (!recPayload || recPayload.length <= 13) return 0x01;
+    const ev = recPayload[13] & 0xff;
+    if (ev === 1) return 0x02;
+    if (ev === 2) return 0x03;
+    return 0x01;
+  }
+
   function classicEPFMEngineBitsFromBlob(blob) {
     // EPFM rec[15] is an engine bitmask in modern Y2L: 0x01=AWM2/Drum,
     // 0x02=FM-X, 0x04=AN-X. Classic mixed AWM2+FM-X performances (for
@@ -3357,7 +3414,7 @@ function applyI18n() {
     out[12] = 0x00;
     out[13] = 0x00;
     out[14] = 0x00;
-    out[15] = classicEPFMEngineBitsFromBlob(blob); // modern Y2L engine bitmask
+    out[15] = classicEPFMEngineBitsFromRecord(recPayload); // modern Y2L engine bitmask
     const nParts = blob && blob.length > 6695 ? Math.max(1, Math.min(8, blob[6695] || 1)) : 1;
     out[16] = (nParts <= 1) ? 0x02 : 0x00;  // single-part flag
     out[17] = 0x00;
@@ -4682,7 +4739,7 @@ function applyI18n() {
 
   // Parsar ett klassiskt DPFM-blob till { name, parts[] }
   // Varje part: { type, name, elements[], fmxCommon, fmxOps[] }
-  function parseClassicBlob(u8, version) {
+  function parseClassicBlob(u8, version, expectedEngineHint = null) {
     // Klassisk blob (X7L/X8L) = CWM DataBlock-format:
     //   DataBlock: common sub-block
     //   DataBlock × 4: effects (reverb/variation/master_eq/master_effect)
@@ -4782,9 +4839,33 @@ function applyI18n() {
 
     const parts = [];
     for (let i = 0; i < nParts; i++) {
-      const ptype    = rU32();
-      let elements   = [], fmxCommon = null, fmxOps = [];
-      if (ptype === 0 || ptype === 1) {          // AWM2 / Drum
+      const rawPtype = rU32();
+
+      // v15.53 — Yamaha FM Converter 4.0.0 compatibility.
+      //
+      // EPFM is authoritative for the user-visible classic engine family.
+      // Kalin's Yamaha DX→FM-X Converter files are X7L 4.0.0 and are reported
+      // by their classic EPFM records as pure FM-X, while the older DPFM
+      // part-type discriminator does not necessarily match the later 4.0.5
+      // values used by our parser.
+      //
+      // Scope this override tightly:
+      //   - source version exactly 4.0.0
+      //   - EPFM says pure FM-X
+      //   - single-Part Performance
+      //
+      // We then parse the payload using the FM-X DataBlock shape instead of
+      // allowing an unknown/older discriminator to fall back to AWM2.
+      const force400SingleFmx =
+        String(version || '') === '4.0.0' &&
+        expectedEngineHint === 'FM-X' &&
+        nParts === 1 &&
+        i === 0;
+
+      const ptype = force400SingleFmx ? 2 : rawPtype;
+
+      let elements = [], fmxCommon = null, fmxOps = [];
+      if (ptype === 0 || ptype === 1) {           // AWM2 / Drum in verified later classic path
         const n = rU32();
         for (let j = 0; j < n; j++) elements.push(rDB());
       } else if (ptype === 2) {                   // FM-X
@@ -4794,8 +4875,14 @@ function applyI18n() {
       } else {                                    // AN-X / unknown
         rDB();
       }
-      parts.push({ type: ptype, name: hdrs[i].name, header: hdrs[i].header,
-                   elements, fmxCommon, fmxOps });
+      parts.push({
+        type: ptype,
+        rawType: rawPtype,
+        engineHintApplied: force400SingleFmx,
+        name: hdrs[i].name,
+        header: hdrs[i].header,
+        elements, fmxCommon, fmxOps
+      });
     }
     // Per-part arpeggio scene tables (verified byte-exact against ESP ground
     // truth Montage_Expanded.X7L → MONTAGE_Expanded.Y2L for 4Z_Club 1,
@@ -5745,9 +5832,9 @@ function applyI18n() {
 
   // ── Transkoda ett klassiskt DPFM-blob → Y2L DPFM-blob ─────────────────
 
-  function transcodeClassicDPFMBlob(classicBlob, version, arpRemap) {
+  function transcodeClassicDPFMBlob(classicBlob, version, arpRemap, expectedEngineHint = null) {
     const u8   = classicBlob instanceof Uint8Array ? classicBlob : new Uint8Array(classicBlob);
-    const perf = parseClassicBlob(u8, version);
+    const perf = parseClassicBlob(u8, version, expectedEngineHint);
     const nP   = Math.min(perf.parts.length, 16);
 
     const initBlob = getInitPerfBlob();
@@ -6000,7 +6087,13 @@ function applyI18n() {
       // string (authoritative); the extension is a secondary signal.
       const chk = ysfc.isClassic ? checkClassic(ysfc) : checkY2(ysfc);
       if (!chk.ok) {
-        files.push({ idx: files.length, name: f.name, ext, family, ysfc, tags, ok: false, epfm: null, dpfm: null, wfm: null, arp: null, notes: chk.notes });
+        files.push({
+          idx: files.length, name: f.name, ext, family, ysfc, tags,
+          ok: false, epfm: null, dpfm: null, wfm: null, arp: null,
+          notes: chk.notes,
+          notesKey: chk.notesKey || null,
+          notesParams: chk.notesParams || null
+        });
         return;
       }
 
@@ -6101,7 +6194,9 @@ function applyI18n() {
     if (!f) return { cls: 'st-err', text: 'ERR', title: '' };
     const fmt = ($('exportFormat')?.value || 'Y2L').toUpperCase();
     if (!f.ok) {
-      return f.ysfc
+      // LEGACY is a format-family classification, not a generic parse error.
+      // A modern 4.1.x/5.1.x Y2 container that fails validation is ERR.
+      return (f.ysfc && f.ysfc.isClassic)
         ? { cls: 'st-leg', text: 'LEGACY', title: fileNotes(f) }
         : { cls: 'st-err', text: 'ERR', title: fileNotes(f) };
     }
@@ -6570,7 +6665,7 @@ function applyI18n() {
     const bf = $("baseFileSelect");
     const prev = bf.value;
     bf.innerHTML = "";
-    const okFiles = supportedFiles().filter(f => f.family === "y2");
+    const okFiles = supportedFiles().filter(f => isY2ExportBaseCompatible(f));
 
     if (!okFiles.length) {
       // Show a disabled placeholder so user understands what's missing
@@ -7147,7 +7242,7 @@ function applyI18n() {
     let autoCreatedSynthetic = false;
     let autoUpgradeReason = "";
 
-    const needsAuto = !base || !base.ok || base.family !== "y2";
+    const needsAuto = !base || !isY2ExportBaseCompatible(base);
     let needsUpgrade = false;
     if (!needsAuto) {
       // if the chosen base file is ALSO a source of selected
@@ -7384,7 +7479,7 @@ function applyI18n() {
           const _ar0 = _cd0 && _cd0._arpResolve;
           const _arpRemap = (_ar0 && _ar0.ok && _ar0.remap && _ar0.remap.size > 0)
             ? _ar0.remap : null;
-          _blob = transcodeClassicDPFMBlob(_blob, srcFile.ysfc.version, _arpRemap);
+          _blob = transcodeClassicDPFMBlob(_blob, srcFile.ysfc.version, _arpRemap, srcE.classicEngine || null);
           xstats.transcoded++;
           // Count arp scene refs written for this performance (for diagnostics).
           if (_ar0 && _ar0.ok && _ar0.ids && _ar0.ids.size > 0) {
