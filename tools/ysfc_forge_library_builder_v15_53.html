@@ -5217,7 +5217,13 @@ function applyI18n() {
   }
 
   // pre-op variable byte (in the engine) ← classic fmxCommon index
-  const _FMX_PRE_VAR = [[43,57],[45,58],[49,60],[51,61],[53,62],[55,63],[59,65],[61,66]];
+  // PEG levels (19..27 ← fmxCommon 49..53) and PEG rates (29..35 ← 45..48)
+  // were unmapped, so classic sources kept the engine template defaults.
+  const _FMX_PRE_VAR = [
+    [19,49],[21,50],[23,51],[25,52],[27,53],
+    [29,45],[31,46],[33,47],[35,48],
+    [43,57],[45,58],[49,60],[51,61],[53,62],[55,63],[59,65],[61,66]
+  ];
   // OP mapping: classic op byte → Y2L u16le field index (value at even byte)
   const _FMX_OP  = [[2,0],[3,1],[4,2],[5,3],[6,4],[7,5],[8,6],[9,7],
                     [10,8],[11,9],[12,10],[13,11],
@@ -5247,6 +5253,15 @@ function applyI18n() {
         eng[base + rel]     = (cop && ci < cop.length) ? (cop[ci] & 0xff) : 0;
         eng[base + rel + 1] = 0;
       }
+    }
+    // Two more per-OP bytes sit immediately before each OP block (base-4 and
+    // base-2) ← classic fmxOps[k][0..1]. They fall outside the _FMX_OP range
+    // and so kept the engine template defaults.
+    for (let op = 0; op < 8; op++) {
+      const cop  = op < part.fmxOps.length ? part.fmxOps[op] : null;
+      const base = 210 + op * 123;
+      if (cop && cop.length > 0) eng[base - 4] = cop[0] & 0xff;
+      if (cop && cop.length > 1) eng[base - 2] = cop[1] & 0xff;
     }
     return eng;
   }
@@ -5751,6 +5766,10 @@ function applyI18n() {
     w(116, h.subCategory || 0);
     if (m.length > 2) w(130, g(m, 2));                           // volume_rel
     if (m.length > 6) w(136, g(m, 6));                           // varSend_rel
+    // Note Shift (c64, 64 = 0 semitones). Unmapped, so a transcoded Part kept
+    // the Init template's 64 and any voice with a transpose played in the
+    // wrong octave.
+    if (m.length > 8)  w(218, g(m, 8));                          // noteShift_rel
     if (m.length > 10) w(220, g(m, 10));                         // portamentoTime_rel
     if (m.length > 11) w(222, g(m, 11));                         // portamentoMode_rel
     if (m.length > 53) w(238, g(m, 53));                         // partEqLowFreq_rel
