@@ -1,9 +1,4 @@
 #!/usr/bin/env python3
-# RECOVERY CHECKPOINT 2026-08-21 / SysEx Converter v1.21
-# The standalone HTML app is the authoritative production runtime for
-# Soundmondo SysEx -> MODX M Y2L conversion at this checkpoint.
-# Keep fail-closed behavior: do not invent missing source blocks,
-# external waveform/Arp dependencies, or unverified mappings.
 from __future__ import annotations
 
 import argparse

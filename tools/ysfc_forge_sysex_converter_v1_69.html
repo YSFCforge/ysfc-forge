@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>YSFC Forge SysEx Converter v1.67</title>
+<title>YSFC Forge SysEx Converter v1.69</title>
 <style>
 :root{
   --bg:#0f1117;--bg2:#161b24;--bg3:#1e2535;--border:#2a3347;--border-hi:#3d5080;
@@ -132,7 +132,7 @@ input[type=number]:focus,select.filter-select:focus{outline:none;border-color:va
 </head>
 <body>
 <header>
-  <div class="brand">YSFC Forge SysEx Converter <span class="sep">│</span> <span class="ver">v1.67</span>
+  <div class="brand">YSFC Forge SysEx Converter <span class="sep">│</span> <span class="ver">v1.69</span>
     <span class="sep">│</span> Soundmondo SysEx → Y2L
   </div>
   <div class="spacer"></div>
@@ -3080,6 +3080,12 @@ function planEngineTopology(parts){
 
 
 
+// v1.69 — Exact-20-character DPFM name boundary fix (Frank regression):
+// - YSFC Performance/Part names are 20 visible chars + mandatory NUL at +20
+// - u32 prefix 0x00000015 denotes the 21-byte C-string area
+// - fixes stray template padding such as 0x25 ('%') appearing after 20-char names
+// - keeps all 20 visible characters; no return to 18/19-char truncation
+// - finalization validates DPFM Performance terminator at absolute blob rel +24
 // v1.67 candidate: EPFM name-order fix (IDX:SHORT:DISPLAY) based on Frank MODX M6 hardware refs and ITB-Music NL2 Echo pad report.
 const REQUIRED_CARRY_FORWARD_FIXES=Object.freeze([
   'modelId source-family routing',
@@ -3112,6 +3118,22 @@ function finalizePerformanceArtifact(bytes,performanceName,part1Name){
   }
   validateModernEpfmTails(out);
   validateModernEpfmPerformanceIds(out);
+
+  // v1.68 regression guard: the user-visible Performance name in DPFM must
+  // preserve the complete Yamaha 20-byte name field. This catches accidental
+  // 18/19-character truncation independently of the auxiliary EPFM text.
+  const finalBlob=firstDpfmBlob(out);
+  const expectedPerf=yamahaName20(perf).replace(/[ ]+$/,'');
+  const actualPerf=readAsciiFixed(finalBlob,4,20);
+  if(actualPerf!==expectedPerf){
+    throw new Error(`Performance-name validation: DPFM "${actualPerf}" != "${expectedPerf}"`);
+  }
+  // v1.69 regression guard for the exact-20-character spill bug.
+  // Byte +24 is the NUL terminator after the 20 visible name bytes.
+  if(finalBlob.length<25 || finalBlob[24]!==0){
+    const got=finalBlob.length>=25?`0x${finalBlob[24].toString(16).padStart(2,'0')}`:'EOF';
+    throw new Error(`Performance-name terminator validation: expected 0x00 at DPFM +24, got ${got}`);
+  }
   return out;
 }
 
@@ -3378,11 +3400,33 @@ const AWM2_ENGINE_SIZE=2503, AWM2_ELEM_STRIDE=313, AWM2_ELEM_COUNT=8;
 const AWM2_PREFIX=new Uint8Array([0x00,0x00,0x00,0x08,0x00]);
 
 function putLe16(a,o,v){v=Math.max(0,Math.min(65535,v|0));a[o]=v&255;a[o+1]=(v>>>8)&255;}
-// v1.67: MODX M6 hardware confirms modern Performance/Part names use 20 bytes at rel +4..+23.
+// v1.68: MODX M6 hardware + Frank regression corpus confirm modern Performance/Part names use all 20 bytes at rel +4..+23.
+// v1.68 — Frank/Soundmondo 20-character name regression fix.
+// Yamaha Performance and Part name fields are fixed 20-byte ASCII fields.
+// A name that occupies all 20 bytes is valid and must not be shortened to 18/19
+// characters merely to force an in-field NUL terminator.
+function yamahaName20(s){
+  return String(s||'').replace(/\x00.*$/s,'').slice(0,20);
+}
 function putAsciiFixed(a,o,n,s){
-  for(let i=0;i<n;i++)a[o+i]=0;
-  const x=new TextEncoder().encode((s||'').slice(0,n));
+  // v1.69: Modern YSFC Performance/Part name records use a 21-byte
+  // C-string area: up to 20 visible characters at o..o+19 and a mandatory
+  // NUL terminator at o+20. The preceding u32 value is 0x00000015 (=21).
+  // Shorter ESP exports may leave bytes after the first NUL as undefined
+  // padding, which is why exact-20-character names exposed a stray '%' when
+  // the old writer left the template byte at o+20 untouched.
+  const clearLen=(n===20)?21:n;
+  if(o+clearLen>a.length) throw new Error(`ASCII field exceeds destination: offset ${o}, length ${clearLen}`);
+  for(let i=0;i<clearLen;i++)a[o+i]=0;
+  const value=(n===20)?yamahaName20(s):String(s||'').slice(0,n);
+  const x=new TextEncoder().encode(value);
   a.set(x.slice(0,n),o);
+  if(n===20)a[o+20]=0;
+}
+function readAsciiFixed(a,o,n){
+  let e=o+n;
+  while(e>o && (a[e-1]===0 || a[e-1]===32))e--;
+  return String.fromCharCode(...a.slice(o,e)).replace(/[^\x20-\x7E]/g,'�');
 }
 function patchKnownLegacyAwm2ElementBlock(engine,elem,index){
   const base=3+index*AWM2_ELEM_STRIDE;
