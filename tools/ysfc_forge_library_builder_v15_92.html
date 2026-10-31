@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>YSFC Forge Library Builder v15.91 — Y2L/Y2U Merge (+ X7L/X8L transcode) för MODX M / Montage M</title>
+  <title>YSFC Forge Library Builder v15.92 — Y2L/Y2U Merge (+ X7L/X8L transcode) för MODX M / Montage M</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
 
@@ -718,7 +718,7 @@
 <h1>
   YSFC Forge Library Builder
   <span class="sep">│</span>
-  <span class="ver">v15.91</span>
+  <span class="ver">v15.92</span>
   <span class="sep">│</span>
   Y2L · Y2U · X7L · X8L → Y2L/Y2U · X7L export
   <span class="spacer"></span>
@@ -1085,7 +1085,11 @@
 </div><!-- /grid-main -->
 
 <script>
-// v15.91 ESP_VERIFIED checkpoint (2026-09-10).
+// v15.92 TEST_PENDING regression safety fix.
+// No active mapping change when the real ESP Init element template is available.
+// Removes the dormant fallback corruption of AWM2 rel 265..296.
+
+// v15.92 ESP_VERIFIED checkpoint (2026-09-10).
 // No new mapping behavior vs v15.81.
 // Verified in MODX M ESP: Performance Pan for X7L 4.0.5 / X8L 5.0.1 and
 // active-DPFM-authoritative AWM2 user-waveform dependency selection.
@@ -1764,7 +1768,7 @@ function applyI18n() {
 
 (() => {
 
-  // v15.91: ESP_VERIFIED Part Control Assign checkpoint (2026-09-09).
+  // v15.92: ESP_VERIFIED Part Control Assign checkpoint (2026-09-09).
   //          No mapping behavior changes vs v15.77. The full directly verified
   //          14-destination Part Control Assign subset has now passed controlled
   //          Library Builder -> Y2L -> MODX M ESP tests, including binary CA_PART checks.
@@ -3106,7 +3110,7 @@ function applyI18n() {
       const isClassic = !!(f.ysfc && f.ysfc.isClassic);
       const refMapForResolve = (wfmIdMap.size ? wfmIdMap : wimIdMap);
 
-      // v15.91: Classic X7L/X8L waveform dependencies.
+      // v15.92: Classic X7L/X8L waveform dependencies.
       //
       // The old path treated the classic EPFM Entr tail as authoritative.
       // That is not always safe: SH-101 Laser-Lead has an active AWM2 element
@@ -4836,7 +4840,7 @@ function applyI18n() {
 
   // ════════════════════════════════════════════════════════════════════════
   // CLASSIC X7L/X8L → Y2L TRANSCODER
-  // v15.91: classic AWM2 user-waveform dependency selection now trusts
+  // v15.92: classic AWM2 user-waveform dependency selection now trusts
   // actual active DPFM element references before EPFM tail hints. Fixes the
   // SH-101 Laser-Lead case (element waveform 6 vs EPFM tail waveform 10).
   // ════════════════════════════════════════════════════════════════════════
@@ -5103,7 +5107,11 @@ function applyI18n() {
     w(271,0);w(273,0);w(275,54);w(277,64);w(279,231);w(281,64);
     w(283,1);w(285,1);w(299,0);w(301,127);w(303,127);w(305,127);
     w16(307,60);
-    for (let i=0;i<32;i++) e[265+i]=1;
+    // v15.92: DO NOT fill rel 265..296 with Controller Set switches.
+    // These are real 16-bit AWM2 element parameter cells (filter-scaling/EQ/LFO area).
+    // Controller Set switches belong at rel 7..22 for the 16 legacy switches.
+    // _getDefElem() normally copies a real ESP Init element; this handcrafted
+    // fallback must preserve the explicit parameter defaults above.
     w(46,40);w(90,54);w(148,48);w(200,108);w(312,0x2B);
     return e;
   }
@@ -5957,7 +5965,7 @@ function applyI18n() {
   }
 
 
-  // ── v15.91 Classic Performance Common Control Assign (verified + corpus subset) ──
+  // ── v15.92 Classic Performance Common Control Assign (verified + corpus subset) ──
   // Classic CWM stores 16 Common/AD controller records × 9 bytes in
   // perf.commonInfo.controlBoxes. Record layout matches legacy 30 51/52:
   //   +0 Source, +1/+2 Destination (u14), +3 Curve Bank, +4 Curve Type,
@@ -6115,7 +6123,7 @@ function applyI18n() {
     }
   }
 
-  // ── v15.91 Classic Part Control Assign ───────────────────────────────
+  // ── v15.92 Classic Part Control Assign ───────────────────────────────
   // Directly verified legacy Part destination subset from the earlier
   // source-vs-WebMIDI/ESP reconciliation. Do not extrapolate a general rule.
   const _X_PART_CA_DEST_TO_M = Object.freeze({
@@ -6371,14 +6379,14 @@ function applyI18n() {
       w(dst + 12, 128); // sceneSmooth / Part MS Smooth mirror
     }
 
-    // v15.91: complete modern CA_PART row encoding for the directly verified
+    // v15.92: complete modern CA_PART row encoding for the directly verified
     // legacy destination subset. Unsupported active destinations remain on
     // the valid template destination until separately reconciled.
     _xApplyClassicPartControlAssign(psb, part);
     _xValidateClassicPartControlAssign(psb, part);
   }
 
-  // ── v15.91 Classic Performance Volume + diagnostic Pan ───────────────
+  // ── v15.92 Classic Performance Volume + diagnostic Pan ───────────────
   // Cross-corpus audit: classic commonParams[14] matches legacy MONTAGE
   // Performance Common Volume for all uniquely matched source performances.
   // Modern Y2L Performance Volume target rel+68 is direct ESP-verified.
@@ -6393,7 +6401,7 @@ function applyI18n() {
     return true;
   }
 
-  // ── v15.91 Diagnostic Classic Performance Pan ────────────────────────
+  // ── v15.92 Diagnostic Classic Performance Pan ────────────────────────
   // Target rel+70 is already directly ESP-verified in the old Y2L mapping work.
   //
   // Source-side evidence from the current classic corpus:
@@ -6426,7 +6434,7 @@ function applyI18n() {
     return true;
   }
 
-  // ── v15.91 Classic Performance Ribbon Controller Mode ────────────────
+  // ── v15.92 Classic Performance Ribbon Controller Mode ────────────────
   // Source audit against Yamaha legacy SysEx:
   //   X7L 4.0.2 commonParams[20] == Performance Common 30 40 41
   //   in 193/193 cross-matched performances.
@@ -6448,7 +6456,7 @@ function applyI18n() {
     return true;
   }
 
-  // ── v15.91 Classic Performance Common Controller Numbers ─────────────
+  // ── v15.92 Classic Performance Common Controller Numbers ─────────────
   // commonParams[21..36] is stable across the audited X7L 4.0.2,
   // X7L 4.0.5 and X8L 5.0.1 layouts and corresponds to Yamaha legacy
   // Performance Common 30 40 43..52.
@@ -6491,7 +6499,7 @@ function applyI18n() {
     return true;
   }
 
-  // ── v15.91 X7L 4.0.2 Performance Hardware/Portamento core ───────────
+  // ── v15.92 X7L 4.0.2 Performance Hardware/Portamento core ───────────
   // Classic commonParams sequence around the already verified Volume/Ribbon:
   //   [14] Performance Volume      (verified)
   //   [15] Portamento Time
@@ -6533,7 +6541,7 @@ function applyI18n() {
     return true;
   }
 
-  // ── v15.91 X7L 4.0.2 Performance Pan + Tone Envelope Core ───────────
+  // ── v15.92 X7L 4.0.2 Performance Pan + Tone Envelope Core ───────────
   // Yamaha MONTAGE Performance Common source semantics:
   //   commonParams[3]  = Performance Pan
   //   commonParams[4]  = AEG Attack
@@ -6630,23 +6638,23 @@ function applyI18n() {
       if (common.length > rel) common[rel] = 0;
     }
 
-    // v15.91: restore the actual classic Ribbon Controller Mode after the
+    // v15.92: restore the actual classic Ribbon Controller Mode after the
     // conservative v15.33 import-state normalization above.
     _xApplyClassicPerformanceRibbonMode(common, perf, version);
 
-    // v15.91: X7L 4.0.2 Performance Pan + AEG/FEG/Cutoff/Resonance.
+    // v15.92: X7L 4.0.2 Performance Pan + AEG/FEG/Cutoff/Resonance.
     _xApplyClassicPerformanceToneCore402(common, perf, version);
 
-    // v15.91: X7L 4.0.2 Performance Portamento + Assign switch modes.
+    // v15.92: X7L 4.0.2 Performance Portamento + Assign switch modes.
     _xApplyClassicPerformanceHardwareCore(common, perf, version);
 
-    // v15.91: verified Performance Common controller-number bridge.
+    // v15.92: verified Performance Common controller-number bridge.
     _xApplyClassicPerformanceControllerNumbers(common, perf);
 
-    // v15.91: parameter-based Performance Volume bridge.
+    // v15.92: parameter-based Performance Volume bridge.
     _xApplyClassicPerformanceVolume(common, perf);
 
-    // v15.91 diagnostic: version-gated Performance Pan candidate mapping.
+    // v15.92 diagnostic: version-gated Performance Pan candidate mapping.
     _xApplyClassicPerformancePanDiagnostic(common, perf, version);
 
     // v15.33: Performance Common Arp Master Switch.
