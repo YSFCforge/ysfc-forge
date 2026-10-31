@@ -1,3 +1,4 @@
+# Project checkpoint: 2026-10-31 — SysEx Converter v1.73; Kalin PR #13 + #14 baseline; legacy cutoff 47/134/227.
 """
 ysfc_serializer_classic.py
 ──────────────────────────
@@ -1318,6 +1319,35 @@ def filter_to_raw(family: str, poles: int) -> int:
         return idx
     return FILTER_TYPE_DEFAULTS.get(family, 17)
 
+
+
+# Canonical legacy Yamaha cutoff quantizer used by the current MODX/MONTAGE
+# legacy -> MODX M/MONTAGE M conversion path (SysEx Converter v1.73).
+# This replaces older floor(v*1023/255), MSB-replication and pseudo-Hz models.
+def legacy_cutoff_to_modern(raw: int) -> int:
+    """Map Yamaha legacy cutoff 0..255 to modern Y2L 0..1023.
+
+    Reconstructed production rule selected 2026-10-31 from 1,910
+    high-confidence cross-generation observations (1,886 matches = 98.74%):
+      0..46    -> 4*v
+      47..133  -> 4*v + 1
+      134..226 -> 4*v + 2
+      227..255 -> 4*v + 3
+
+    The remaining corpus differences are overwhelmingly +/-1 modern step;
+    direct sound impact is negligible.  Keep the evidence classification as
+    reconstructed/production-selected rather than byte-exact Yamaha-documented.
+    """
+    v = max(0, min(255, int(raw)))
+    return (v << 2) + (1 if v >= 47 else 0) + (1 if v >= 134 else 0) + (1 if v >= 227 else 0)
+
+
+def modern_cutoff_to_legacy(raw: int) -> int:
+    """Nearest inverse of :func:`legacy_cutoff_to_modern` for 0..1023 values."""
+    m = max(0, min(1023, int(raw)))
+    # The forward map is strictly monotonic.  A 256-entry nearest search is
+    # deterministic and avoids embedding a second independently-derived rule.
+    return min(range(256), key=lambda v: (abs(legacy_cutoff_to_modern(v) - m), v))
 
 def cutoff_normalized_to_raw(cutoff_normalized: float) -> int:
     """Convert normalized filter cutoff (0.0-1.0) → raw value (0-255).

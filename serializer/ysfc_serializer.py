@@ -1,3 +1,4 @@
+# Project checkpoint: 2026-10-31 — SysEx Converter v1.73; Kalin PR #13 + #14 baseline; legacy cutoff 47/134/227.
 """
 YSFC Forge — Serializer
 
@@ -33,7 +34,7 @@ Adress-bas:
   DRUM_KEY+N relativt DRUM_KEY1_BASE=12469 (stride=68)
 
 Kritiska metadata-bytes:
-  blob[+6695] Fysisk/template Part-slot count (1..16); INTE logiskt source-Part-count
+  blob[+6695] Högsta aktiva Part-index (1..16)
   blob[+6700] Engine Type Part 1 (0=AWM2, 1=Drum, 2=FMX, 3=ANX)
   blob[+12464], blob[+12465] Part 2 engine-prefix i multi-part-filer
 """
@@ -1473,26 +1474,13 @@ def get_engine_type_byte(blob: bytes) -> str:
     val = blob[ENGINE_TYPE_BYTE]
     return ENGINE_TYPE_VALUES.get(val, f'Unknown({val})')
 
-def get_physical_part_slot_count(blob: bytes) -> int:
-    """Read the physical/template Part-slot count from blob[+6695].
-
-    ★★★★★ v1.58 correction (ESP verified 2026-08-23): this byte describes
-    the physical Part-slot topology carried by the DPFM blob. It must NOT be
-    overwritten merely because the logical source/export plan uses fewer Parts.
-
-    Example: the verified 92,259-byte multi-Part FM-X template carries 11 physical
-    slots. A three-Part export using that fixed template must keep blob[6695] == 11.
-    """
-    return blob[PHYSICAL_PART_SLOT_COUNT_BYTE]
-
-
 def get_max_active_part(blob: bytes) -> int:
-    """Backward-compatible alias for get_physical_part_slot_count().
+    """Read max active part index from blob[+6695].
 
-    Historical name retained for callers only. The old semantic description
-    ("highest active Part") was disproven by the v1.58 controlled ESP tests.
+    Returns the HIGHEST part number that is active (NOT the count of active parts).
+    Example: Parts 3+5 active → returns 5, not 2.
     """
-    return get_physical_part_slot_count(blob)
+    return blob[MAX_ACTIVE_PART_BYTE]
 
 def validate_engine_consistency(blob: bytes) -> tuple[bool, str]:
     """Check that blob[+6700] matches sub-blob 2 name suffix.
@@ -1517,24 +1505,11 @@ def set_engine_type_byte(blob: bytearray, engine_name: str) -> None:
         raise ValueError(f"Unknown engine name: {engine_name}")
     blob[ENGINE_TYPE_BYTE] = ENGINE_TYPE_BY_NAME[engine_name]
 
-def set_physical_part_slot_count(blob: bytearray, slot_count: int) -> None:
-    """Write physical/template Part-slot count at blob[+6695].
-
-    Use this only when the code is also constructing/resizing the physical topology
-    to exactly ``slot_count`` slots. Do not call it just to mirror a logical source
-    Part count when reusing a fixed multi-slot template.
-    """
-    if not 1 <= slot_count <= 16:
-        raise ValueError(f"slot_count must be 1..16, got {slot_count}")
-    blob[PHYSICAL_PART_SLOT_COUNT_BYTE] = slot_count
-
-
 def set_max_active_part(blob: bytearray, max_part_idx: int) -> None:
-    """Backward-compatible alias for set_physical_part_slot_count().
-
-    Historical name retained for callers only. Prefer the explicit topology name.
-    """
-    set_physical_part_slot_count(blob, max_part_idx)
+    """Write max active part index at blob[+6695]. max_part_idx: 1..16."""
+    if not 1 <= max_part_idx <= 16:
+        raise ValueError(f"max_part_idx must be 1..16, got {max_part_idx}")
+    blob[MAX_ACTIVE_PART_BYTE] = max_part_idx
 
 # ── AWM2 ENGINE INTERNAL STRUCTURE ★★★★★ ──
 # AWM2 engine = 3 byte header + 7 elements × 313 byte + 1 element × 309 byte = 2503 bytes
@@ -2904,59 +2879,6 @@ def write_save_counter(file_data: bytearray, value: int) -> None:
 ENTR_PART_BITMASK_OFFSET = 18  # relativt Entr payload start
 ENTR_INNER_COUNTER_OFFSET = 23
 
-
-# SysEx Forge v1.54 recovery rules — verified 2026-08-23.
-def modern_performance_entry_id(index: int) -> int:
-    """Return the modern Y2L EPFM Performance ID for slot 0..639.
-
-    Modern Y2L uses five banks × 128 slots:
-        bank = index // 128
-        slot = index % 128
-        id   = 0x00400000 | (bank << 8) | slot
-    """
-    index = int(index)
-    if not 0 <= index < 640:
-        raise ValueError(f"modern Y2L Performance index out of range: {index}")
-    return 0x00400000 | ((index // 128) << 8) | (index % 128)
-
-
-def validate_epfm_entr_tail(record: bytes | bytearray, *, name_offset: int = 27) -> None:
-    """Fail closed if the tail after the NUL-terminated Entr text is not 32-bit aligned."""
-    rec = bytes(record)
-    if len(rec) <= name_offset:
-        raise ValueError("EPFM Entr record too short")
-    end = rec.find(b"\\x00", name_offset)
-    if end < 0:
-        raise ValueError("EPFM performance name is not NUL terminated")
-    tail_len = len(rec) - (end + 1)
-    if tail_len % 4:
-        raise ValueError(f"Invalid EPFM tail length: {tail_len} bytes (must be a multiple of 4)")
-
-
-def sanitize_epfm_entr_tail(record: bytes | bytearray, *, name_offset: int = 27) -> bytes:
-    """Trim only an incomplete 1..3-byte all-zero EPFM tail remainder.
-
-    Complete 4-byte words are always preserved. Non-zero incomplete data is corruption
-    and raises ValueError. This is the source-side counterpart of the ESP-verified
-    Library Builder sanitizer that fixed the 3- and 100-Performance Illegal-file cases.
-    """
-    rec = bytes(record)
-    if len(rec) <= name_offset:
-        raise ValueError("EPFM Entr record too short")
-    end = rec.find(b"\\x00", name_offset)
-    if end < 0:
-        raise ValueError("EPFM performance name is not NUL terminated")
-    tail_len = len(rec) - (end + 1)
-    rem = tail_len % 4
-    if not rem:
-        return rec
-    extra = rec[-rem:]
-    if extra != b"\\x00" * rem:
-        raise ValueError("EPFM has non-zero data in an incomplete 32-bit tail")
-    out = rec[:-rem]
-    validate_epfm_entr_tail(out, name_offset=name_offset)
-    return out
-
 def build_entr_payload(perf_name: str, part1_name: str,
                        max_active_part: int, save_counter: int,
                        dpfm_size: int) -> bytearray:
@@ -2968,7 +2890,7 @@ def build_entr_payload(perf_name: str, part1_name: str,
     payload = bytearray(27 + len(name_bytes))
     payload[0:4]   = struct.pack('>I', dpfm_size)
     payload[4:8]   = struct.pack('>I', 0x0000000C)
-    payload[8:12]  = struct.pack('>I', modern_performance_entry_id(0))
+    payload[8:12]  = struct.pack('>I', 0x00400000)
     payload[12:16] = struct.pack('>I', 0x00000004)
     payload[16:18] = b'\x02\x00'
     payload[18]    = get_entr_bitmask(max_active_part)
@@ -3123,14 +3045,9 @@ ENGINE_TYPE_BYTE = 6700  # u8 enum: 0=AWM2, 1=Drum, 2=FMX, 3=ANX  ★★★★�
 ENGINE_TYPE_VALUES = {0: 'AWM2', 1: 'Drum', 2: 'FMX', 3: 'ANX'}
 ENGINE_TYPE_BY_NAME = {v: k for k, v in ENGINE_TYPE_VALUES.items()}
 
-# Fysisk/template Part-slot count ★★★★★ v1.58 (ESP verified 2026-08-23).
-# Detta är INTE automatiskt samma sak som logiskt antal source/export-Parts.
-# Fast 92,259-byte multi-Part FM-X-template: 11 fysiska slots även när endast
-# 3 source-Parts skrivs. Att tvinga 11 -> 3 utan att bygga om topologin gav
-# reproducerbart "Illegal file" i MODX M ESP; återställning 3 -> 11 fixade båda
-# testperformancerna Soft Pad Shimmer G och 2310 Isaiah61 med exakt 1 byte vardera.
-PHYSICAL_PART_SLOT_COUNT_BYTE = 6695  # u8 direct, 1..16
-MAX_ACTIVE_PART_BYTE = PHYSICAL_PART_SLOT_COUNT_BYTE  # backward-compatible alias
+# Högsta aktiva Part-index (INTE antal aktiva parts):
+# Part 1 only → 1; Parts 1+2 → 2; Parts 3+5 → 5 (icke-konsekutiva tillåtna)
+MAX_ACTIVE_PART_BYTE = 6695  # u8 direct, 1..16  ★★★★★
 
 # Part 2 engine-typ-indikatorer (engine-pool prefix):
 PART2_ENGINE_PREFIX = (12464, 12465)  # u8 × 2, engine-specifika värden
@@ -3300,8 +3217,14 @@ def write_subblob_pointer_last(blob: bytearray, part_idx: int,
     blob[pos1] = 0
 
 def get_entr_bitmask(max_active_part: int) -> int:
-    """Beräknar Entr-record part-bitmask: (1 << N) - 1 där N = max_active_part."""
-    return (1 << max_active_part) - 1
+    """Return the one-byte Entr active-Part mask used by current Y2L files.
+
+    The field is one byte wide.  Parts 1..7 use (1<<N)-1; 8 or more active
+    slots saturate at 0xFF.  This matches the browser Library Builder / ESP
+    baseline and prevents values >255 for 9..16 Parts.
+    """
+    n = max(0, int(max_active_part))
+    return 0 if n == 0 else (0xFF if n >= 8 else (1 << n) - 1)
 
 def is_opaque_byte(offset: int) -> bool:
     """Returnerar True om offset ligger i en OPAQUE-region som ska preserveras verbatim."""
@@ -3988,7 +3911,8 @@ def decode(field: str, raw: Any, engine: str = None) -> Any:
     if field == "fxLfoSpeed":
         return round(raw / 23.7045, 2)
 
-    # Direct
+    # Direct/raw fields fall through unchanged.
+    return raw
 
 # ── CORE I/O ──────────────────────────────────────────────────────────────
 
@@ -4180,7 +4104,7 @@ def _resolve_field(engine: str, part: int, field_name: str, op=None, elem=None) 
 
     # Common (performance-level, no part stride)
     if field_name in COMMON_FIELDS:
-        return COMMON_FIELDS[field_name]
+        return 12 + COMMON_FIELDS[field_name]
 
     # Per-part portamento (all engines)
     _P = {"partPortaSW":6752,"partPortaTime":6933,"partPortaMode":6935,"partHalfDamperSW":12483, "partKeyOnDelaySW":12482}
@@ -4190,14 +4114,15 @@ def _resolve_field(engine: str, part: int, field_name: str, op=None, elem=None) 
 
 def _is_u16(field_name: str) -> bool:
     return field_name in ("cutoff", "elemCutoff", "anxAegSustain", "anxAegTimeVel",
-                          "aegSustain", "level", "waveformNumber", "hpfCutoff")
+                          "aegSustain", "level", "waveformNumber", "hpfCutoff",
+                          "performanceTempo")
 
 # ── PUBLIC API ────────────────────────────────────────────────────────────
 
 def read_raw(path: str, engine: str, part: int, field: str,
              op=None, elem=None) -> int | tuple[int,int]:
     """Read raw byte value(s) from a Y2L file."""
-    data = Path(path).read_bytes
+    data = Path(path).read_bytes()
     off, _ = find_dpfm(data)
     foff = _resolve_field(engine, part, field, op, elem)
     if _is_u16(field):
@@ -4219,6 +4144,10 @@ def patch_raw(src: str, dst: str, engine: str, part: int, field: str,
     if isinstance(raw_value, tuple):
         data[off+foff] = raw_value[0] & 0xFF
         data[off+foff+1] = raw_value[1] & 0xFF
+    elif _is_u16(field):
+        v = max(0, min(0xFFFF, int(raw_value)))
+        data[off+foff] = v & 0xFF
+        data[off+foff+1] = (v >> 8) & 0xFF
     else:
         data[off+foff] = int(raw_value) & 0xFF
     Path(dst).write_bytes(bytes(data))
@@ -4244,8 +4173,8 @@ def patch_ui(src: str, dst: str, engine: str, part: int, field: str,
 
 def diff_dpfm(path_a: str, path_b: str) -> list[tuple[int,int,int]]:
     """Return list of (dpfm_offset, val_a, val_b) for changed non-noise bytes."""
-    da = Path(path_a).read_bytes
-    db = Path(path_b).read_bytes
+    da = Path(path_a).read_bytes()
+    db = Path(path_b).read_bytes()
     oa, la = find_dpfm(da)
     ob, lb = find_dpfm(db)
     dpfm_a = da[oa:oa+min(la,lb)]
@@ -4255,7 +4184,7 @@ def diff_dpfm(path_a: str, path_b: str) -> list[tuple[int,int,int]]:
 
 def round_trip_verify(path: str) -> bool:
     """Verify that reading and writing leaves the file identical."""
-    data = Path(path).read_bytes
+    data = Path(path).read_bytes()
     off, length = find_dpfm(data)
     result = bytearray(data)
     result[off:off+length] = data[off:off+length]
@@ -4322,7 +4251,7 @@ def copy_fields(
 
     fields: list of {"field": "coarse", "op": 0} dicts
     """
-    src_data = Path(src_path).read_bytes
+    src_data = Path(src_path).read_bytes()
     dst_data = bytearray(Path(dst_path).read_bytes())
     src_off, _ = find_dpfm(src_data)
     dst_off, _ = find_dpfm(bytes(dst_data))
@@ -4409,7 +4338,7 @@ def copy_part_block(
 
 def get_part_count(path: str, engine: str) -> int:
     """Return the number of parts present in a Y2L file for a given engine."""
-    data = Path(path).read_bytes
+    data = Path(path).read_bytes()
     off, length = find_dpfm(data)
     stride = ENGINE_PART_STRIDE[engine]
     usable = length - PART_BLOCK_START
@@ -4417,7 +4346,7 @@ def get_part_count(path: str, engine: str) -> int:
 
 def extract_part_block(path: str, engine: str, part: int) -> bytes:
     """Extract a part block as raw bytes."""
-    data = Path(path).read_bytes
+    data = Path(path).read_bytes()
     off, length = find_dpfm(data)
     stride = ENGINE_PART_STRIDE[engine]
     start = off + PART_BLOCK_START + part * stride
@@ -4967,7 +4896,7 @@ def build_library(
     perf_data_list = []
     src_names = []
     for path in src_paths:
-        data = Path(path).read_bytes
+        data = Path(path).read_bytes()
         dpfm_off, dpfm_len = find_dpfm(data)
         dpfm = data[dpfm_off:dpfm_off+dpfm_len]
         # Parse all performances from DPFM (count + N×(Data+size+bytes))
@@ -4999,7 +4928,7 @@ def build_library(
     new_dpfm = bytes(new_dpfm)
 
     # Build catalog fields using the real MODX Entr-block format
-    base_data = Path(src_paths[0]).read_bytes
+    base_data = Path(src_paths[0]).read_bytes()
     # Compute DPFM data offsets for the catalog metadata
     _dpfm_sizes = [len(pd) for pd in perf_data_list]
     _dpfm_offsets = []

@@ -1,3 +1,4 @@
+# Project checkpoint: 2026-10-31 — SysEx Converter v1.73; Kalin PR #13 + #14 baseline; legacy cutoff 47/134/227.
 """
 ysfc_transcoder_classic_to_y2l.py
 ──────────────────────────────────
@@ -28,10 +29,10 @@ Filtertyp-mapping:
   Enkel regel: om classic_filterType == 17 → y2l_filterType = 21, annars kopieras direkt.
 
 Filter cutoff-konvertering:
-  Klassisk: 0-255 (normaliserad log-skala, 255 = ~20kHz)
-  Y2L: u16le Hz (0..20000)
-  Formula: y2l_hz = round(2^(raw/255 × log2(20000)))
-  Invers (för retur): raw = round(log2(hz)/log2(20000) × 255)
+  Klassisk: 0..255
+  Modern Y2L: u16le 0..1023 (inte ett Hz-tal)
+  Produktionsregel v1.73: 4*v + steg vid 47, 134 och 227.
+  Detta ersätter äldre logaritmisk pseudo-Hz-konvertering och floor-skalning.
 
 Viktiga fält som INTE mappas (sätts till default från Y2L Init Normal):
   - level_scaling (break points, offsets) — opak i klassisk
@@ -47,7 +48,6 @@ Viktiga fält som INTE mappas (sätts till default från Y2L Init Normal):
 from __future__ import annotations
 
 import io
-import math
 import struct
 import sys
 from dataclasses import dataclass, field
@@ -74,6 +74,8 @@ from ysfc_serializer_classic import (
     FILTER_TYPE_NAMES,
     FORMAT_MONTAGE,
     FORMAT_MODX,
+    legacy_cutoff_to_modern,
+    modern_cutoff_to_legacy,
 )
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -96,40 +98,29 @@ ENGINE_POOL_SEP_SIZE    = 5
 AWM2_ELEM_LAYOUT_OFFSET = 51   # AWM2_ELEM_LAYOUT keys är rel från elem_base - 51
 
 # Engine type bytes (Y2L blob[6700])
-Y2L_ENGINE_AWM2 = 0x0A   # AWM2  (≈ element_count + 2, default element_count=8 → 0x0A)
+Y2L_ENGINE_AWM2 = 0x00   # AWM2 — verified current Y2L engine identity
 Y2L_ENGINE_DRUM = 0x01   # Drum
 Y2L_ENGINE_FMX  = 0x02   # FM-X
 Y2L_ENGINE_ANX  = 0x03   # AN-X
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Filter cutoff konvertering
+# Filter cutoff conversion
 # ─────────────────────────────────────────────────────────────────────────────
 
-_MAX_FREQ = 20000.0
-
-def classic_cutoff_to_hz(raw: int) -> int:
-    """Konvertera klassisk cutoff (0-255, log-normaliserad) → Y2L Hz (0-20000).
-
-    Klassisk formel: norm = raw/255, freq = 2^(norm × log2(MAX_FREQ))
-    Y2L lagrar cutoff som u16le Hz direkt.
-    """
-    if raw <= 0:
-        return 0
-    if raw >= 255:
-        return int(_MAX_FREQ)
-    norm = raw / 255.0
-    hz = math.pow(2.0, norm * math.log2(_MAX_FREQ))
-    return max(0, min(int(_MAX_FREQ), round(hz)))
+def classic_cutoff_to_y2l(raw: int) -> int:
+    """Classic Yamaha cutoff 0..255 -> modern Y2L 0..1023."""
+    return legacy_cutoff_to_modern(raw)
 
 
-def hz_to_classic_cutoff(hz: int) -> int:
-    """Konvertera Y2L Hz → klassisk cutoff raw (0-255)."""
-    if hz <= 0:
-        return 0
-    if hz >= _MAX_FREQ:
-        return 255
-    norm = math.log2(hz) / math.log2(_MAX_FREQ)
-    return max(0, min(255, round(norm * 255)))
+def y2l_cutoff_to_classic(raw: int) -> int:
+    """Nearest inverse for modern Y2L cutoff 0..1023 -> classic 0..255."""
+    return modern_cutoff_to_legacy(raw)
+
+
+# Backward-compatible aliases for callers that imported the old helper names.
+# The values are NOT Hz; aliases remain only to avoid breaking external scripts.
+classic_cutoff_to_hz = classic_cutoff_to_y2l
+hz_to_classic_cutoff = y2l_cutoff_to_classic
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -245,8 +236,8 @@ _DIRECT_COPY_FIELDS = {
 # Fält som INTE mappas direkt (hanteras med speciallogik):
 # - waveform_number    : u16le → u16le (direkt men separat skrivning)
 # - filter_type        : index-konvertering (17→21)
-# - filter_cutoff      : 0-255 → u16le Hz
-# - hpf_cutoff         : 0-255 → u16le Hz
+# - filter_cutoff      : 0..255 → u16le 0..1023
+# - hpf_cutoff         : 0..255 → u16le 0..1023
 # - feg_depth          : c64 i klassisk (64=0), c104 i Y2L (104=0)
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -499,13 +490,13 @@ def transcode_element(classic: ClassicPartElement,
     y2l_ft = classic_filter_type_to_y2l(classic.filter_type)
     w(201, y2l_ft)
 
-    # ── 4. Filter cutoff (0-255 → u16le Hz) ──────────────────────────────
-    cutoff_hz = classic_cutoff_to_hz(classic.filter_cutoff_frequency)
-    w16(203, cutoff_hz)
+    # ── 4. Filter cutoff (0..255 → u16le 0..1023) ───────────────────────
+    cutoff_modern = classic_cutoff_to_y2l(classic.filter_cutoff_frequency)
+    w16(203, cutoff_modern)
 
-    # ── 5. HPF cutoff (0-255 → u16le Hz) ─────────────────────────────────
-    hpf_hz = classic_cutoff_to_hz(classic.hpf_cutoff_frequency)
-    w16(211, hpf_hz)
+    # ── 5. HPF cutoff (0..255 → u16le 0..1023) ───────────────────────────
+    hpf_modern = classic_cutoff_to_y2l(classic.hpf_cutoff_frequency)
+    w16(211, hpf_modern)
 
     # ── 6. enable / element switch ────────────────────────────────────────
     # element_switch kopierades redan via _DIRECT_COPY_FIELDS[element_switch]=0
@@ -634,14 +625,15 @@ def build_y2l_blob(classic_perf: ClassicPerformance,
         common = bytearray(SUBBLOB_COMMON_SIZE)
         # Sub-blob 1 prefix
         common[0:4] = SUBBLOB_PREFIX
-        # Performance name (blob[4:24] = 20-byte field)
-        name_bytes = (classic_perf.name[:20]).encode('latin-1', 'replace')
+        # Performance name (bytes 4-23, 18 bytes + null)
+        name_bytes = (classic_perf.name[:18]).encode('latin-1', 'replace')
         common[4:4+len(name_bytes)] = name_bytes
 
-    # Write full Yamaha Performance name to blob[4:24] (20 bytes).
-    # A name may fill all 20 bytes; no terminator is required inside this field.
-    name_bytes = (classic_perf.name[:20]).encode('latin-1', 'replace')
-    common[4:24] = name_bytes.ljust(20, b'\x00')
+    # Skriv performance-namn till Common (bytes 4..23)
+    name_bytes = (classic_perf.name[:18]).encode('latin-1', 'replace')
+    name_padded = name_bytes.ljust(18, b'\x00')
+    common[4:22] = name_padded
+    common[22] = 0  # null terminator
 
     # Uppdatera max_active_part (byte 6695 = offset inom Common)
     common[6695] = n_parts
